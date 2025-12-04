@@ -36,6 +36,14 @@ const DashboardLayout = () => {
     const location = useLocation();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
+    const navigate = useNavigate();
+
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        navigate('/');
+    };
+
     const menuItems = [
         { icon: LayoutDashboard, label: 'Início', path: '/dashboard' },
         { icon: Users, label: 'Colaboradores', path: '/dashboard/collaborators' },
@@ -71,7 +79,10 @@ const DashboardLayout = () => {
                 </nav>
 
                 <div className="p-4 border-t border-gray-800">
-                    <button className="w-full flex items-center space-x-3 px-4 py-3 text-gray-400 hover:bg-white/10 hover:text-white rounded-xl transition-colors">
+                    <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center space-x-3 px-4 py-3 text-gray-400 hover:bg-white/10 hover:text-white rounded-xl transition-colors"
+                    >
                         <LogOut className="h-5 w-5" />
                         <span>Sair</span>
                     </button>
@@ -104,7 +115,10 @@ const DashboardLayout = () => {
                                 active={location.pathname === item.path}
                             />
                         ))}
-                        <button className="w-full flex items-center space-x-3 px-4 py-3 text-gray-400 hover:bg-white/10 hover:text-white rounded-xl transition-colors">
+                        <button
+                            onClick={handleLogout}
+                            className="w-full flex items-center space-x-3 px-4 py-3 text-gray-400 hover:bg-white/10 hover:text-white rounded-xl transition-colors"
+                        >
                             <LogOut className="h-5 w-5" />
                             <span>Sair</span>
                         </button>
