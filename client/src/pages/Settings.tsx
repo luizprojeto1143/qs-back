@@ -16,11 +16,7 @@ const Settings = () => {
     ];
 
     const handleNavigate = (path: string) => {
-        if (['/dashboard/companies', '/dashboard/sectors', '/dashboard/areas', '/dashboard/collaborators'].includes(path)) {
-            navigate(path);
-        } else {
-            alert('Funcionalidade em desenvolvimento: ' + path);
-        }
+        navigate(path);
     };
 
     return (

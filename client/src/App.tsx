@@ -20,6 +20,8 @@ import CompaniesList from './pages/settings/CompaniesList';
 import SectorsList from './pages/settings/SectorsList';
 import AreasList from './pages/settings/AreasList';
 import ReportViewer from './pages/ReportViewer';
+import TermsOfUse from './pages/settings/TermsOfUse';
+import FeedCategories from './pages/settings/FeedCategories';
 
 function App() {
   return (
@@ -44,7 +46,8 @@ function App() {
           <Route path="companies" element={<CompaniesList />} />
           <Route path="sectors" element={<SectorsList />} />
           <Route path="areas" element={<AreasList />} />
-          {/* Add other routes here */}
+          <Route path="terms" element={<TermsOfUse />} />
+          <Route path="feed-categories" element={<FeedCategories />} />
         </Route>
 
         {/* RH Routes */}
