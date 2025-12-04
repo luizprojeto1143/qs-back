@@ -19,6 +19,7 @@ import Schedules from './pages/Schedules';
 import CompaniesList from './pages/settings/CompaniesList';
 import SectorsList from './pages/settings/SectorsList';
 import AreasList from './pages/settings/AreasList';
+import ReportViewer from './pages/ReportViewer';
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
           <Route path="feed" element={<Feed />} />
           <Route path="schedules" element={<Schedules />} />
           <Route path="reports" element={<Reports />} />
+          <Route path="report-viewer" element={<ReportViewer />} />
           <Route path="settings" element={<Settings />} />
 
           {/* Settings Routes */}
