@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Mail, Phone, Building, LogOut } from 'lucide-react';
+import { User, Mail, Building, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const MobileProfile = () => {
