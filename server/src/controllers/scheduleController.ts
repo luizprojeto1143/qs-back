@@ -1,12 +1,10 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../prisma';
 import { AuthRequest } from '../middleware/authMiddleware';
-
-const prisma = new PrismaClient();
 
 export const createSchedule = async (req: Request, res: Response) => {
     try {
-        const { date, time, reason } = req.body;
+        const { date, time, reason, collaboratorId } = req.body;
         const user = (req as AuthRequest).user;
 
         if (!user || !user.companyId) {
@@ -14,6 +12,7 @@ export const createSchedule = async (req: Request, res: Response) => {
         }
 
         // Combine date and time into a single DateTime string
+        // Assuming date is YYYY-MM-DD and time is HH:MM
         const scheduleDate = new Date(`${date}T${time}:00.000Z`);
 
         const schedule = await prisma.schedule.create({
@@ -22,9 +21,8 @@ export const createSchedule = async (req: Request, res: Response) => {
                 status: 'PENDENTE',
                 companyId: user.companyId,
                 requesterId: user.userId,
+                collaboratorId: collaboratorId || null,
                 notes: reason,
-                // If the user is a collaborator, link their profile
-                // For now we assume the requester is the one needing support
             }
         });
 
@@ -50,6 +48,14 @@ export const listSchedules = async (req: Request, res: Response) => {
             include: {
                 requester: {
                     select: { name: true, role: true }
+                },
+                collaborator: {
+                    include: {
+                        user: {
+                            select: { name: true }
+                        },
+                        area: true
+                    }
                 }
             },
             orderBy: {
@@ -57,7 +63,19 @@ export const listSchedules = async (req: Request, res: Response) => {
             }
         });
 
-        res.json(schedules);
+        // Format for frontend
+        const formattedSchedules = schedules.map(s => ({
+            id: s.id,
+            date: s.date,
+            time: s.date.toISOString().split('T')[1].substring(0, 5), // Extract HH:MM
+            reason: s.notes,
+            status: s.status,
+            requester: s.requester.name,
+            collaborator: s.collaborator?.user.name,
+            area: s.collaborator?.area.name
+        }));
+
+        res.json(formattedSchedules);
     } catch (error) {
         console.error('Error listing schedules:', error);
         res.status(500).json({ error: 'Error listing schedules' });

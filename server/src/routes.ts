@@ -61,4 +61,9 @@ router.get('/schedules', scheduleController.listSchedules);
 import * as dashboardController from './controllers/dashboardController';
 router.get('/dashboard/rh', dashboardController.getRHDashboardStats);
 
+// Report Routes
+import * as reportController from './controllers/reportController';
+router.get('/reports', reportController.listReports);
+router.post('/reports', reportController.generateReport);
+
 export default router;
