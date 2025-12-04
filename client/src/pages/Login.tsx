@@ -23,7 +23,7 @@ const Login = () => {
                 localStorage.setItem('user', JSON.stringify(data.user));
                 navigate('/dashboard');
             } else {
-                alert(data.error || 'Erro ao fazer login');
+                alert(data.error + (data.details ? `: ${data.details}` : '') || 'Erro ao fazer login');
             }
         } catch (error) {
             console.error('Login error', error);
