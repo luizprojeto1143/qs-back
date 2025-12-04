@@ -28,7 +28,7 @@ function App() {
           <Route path="visits" element={<VisitRecording />} />
           <Route path="pendencies" element={<Pendencies />} />
           <Route path="collaborators" element={<CollaboratorsList />} />
-          <Route path="collaborators" element={<CollaboratorsList />} />
+
           <Route path="feed" element={<Feed />} />
           <Route path="settings" element={<Settings />} />
           {/* Add other routes here */}

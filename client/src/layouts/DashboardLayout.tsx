@@ -18,6 +18,7 @@ const SidebarItem = ({ icon: Icon, label, path, active }: any) => {
     const navigate = useNavigate();
     return (
         <button
+            type="button"
             onClick={() => navigate(path)}
             className={`
         w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors ${active
