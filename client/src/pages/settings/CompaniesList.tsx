@@ -1,0 +1,148 @@
+import { useState, useEffect } from 'react';
+import { Building, Plus, Search } from 'lucide-react';
+
+const CompaniesList = () => {
+    const [companies, setCompanies] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [newCompany, setNewCompany] = useState({ name: '', cnpj: '' });
+
+    const fetchCompanies = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/companies`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await response.json();
+            setCompanies(data);
+        } catch (error) {
+            console.error('Error fetching companies', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchCompanies();
+    }, []);
+
+    const handleCreate = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/companies`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(newCompany)
+            });
+
+            if (response.ok) {
+                setIsModalOpen(false);
+                setNewCompany({ name: '', cnpj: '' });
+                fetchCompanies();
+                alert('Empresa cadastrada com sucesso!');
+            } else {
+                alert('Erro ao cadastrar empresa.');
+            }
+        } catch (error) {
+            console.error('Error creating company', error);
+        }
+    };
+
+    return (
+        <div className="space-y-6">
+            <div className="flex items-center justify-between">
+                <h1 className="text-2xl font-bold text-gray-900">Cadastro de Empresas</h1>
+                <button
+                    onClick={() => setIsModalOpen(true)}
+                    className="btn-primary flex items-center space-x-2"
+                >
+                    <Plus className="h-4 w-4" />
+                    <span>Nova Empresa</span>
+                </button>
+            </div>
+
+            {loading ? (
+                <div className="text-center py-10">Carregando...</div>
+            ) : (
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <table className="w-full text-left">
+                        <thead className="bg-gray-50 border-b border-gray-100">
+                            <tr>
+                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Nome</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">CNPJ</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                            {companies.map((company) => (
+                                <tr key={company.id} className="hover:bg-gray-50 transition-colors">
+                                    <td className="px-6 py-4 font-medium text-gray-900">
+                                        <div className="flex items-center space-x-3">
+                                            <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                                                <Building className="h-5 w-5" />
+                                            </div>
+                                            <span>{company.name}</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-gray-500">{company.cnpj}</td>
+                                    <td className="px-6 py-4">
+                                        <button className="text-primary hover:text-blue-700 text-sm font-medium">Editar</button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+
+            {/* Modal */}
+            {isModalOpen && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl w-full max-w-md p-6">
+                        <h2 className="text-xl font-bold mb-4">Nova Empresa</h2>
+                        <form onSubmit={handleCreate} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Nome da Empresa</label>
+                                <input
+                                    type="text"
+                                    required
+                                    className="input-field"
+                                    value={newCompany.name}
+                                    onChange={e => setNewCompany({ ...newCompany, name: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">CNPJ</label>
+                                <input
+                                    type="text"
+                                    required
+                                    className="input-field"
+                                    value={newCompany.cnpj}
+                                    onChange={e => setNewCompany({ ...newCompany, cnpj: e.target.value })}
+                                />
+                            </div>
+                            <div className="flex justify-end space-x-3 mt-6">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsModalOpen(false)}
+                                    className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                                >
+                                    Cancelar
+                                </button>
+                                <button type="submit" className="btn-primary">
+                                    Salvar
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default CompaniesList;

@@ -16,6 +16,9 @@ import MobileHome from './pages/mobile/MobileHome';
 import MobileSchedule from './pages/mobile/MobileSchedule';
 import MobileProfile from './pages/mobile/MobileProfile';
 import Schedules from './pages/Schedules';
+import CompaniesList from './pages/settings/CompaniesList';
+import SectorsList from './pages/settings/SectorsList';
+import AreasList from './pages/settings/AreasList';
 
 function App() {
   return (
@@ -34,6 +37,11 @@ function App() {
           <Route path="schedules" element={<Schedules />} />
           <Route path="reports" element={<Reports />} />
           <Route path="settings" element={<Settings />} />
+
+          {/* Settings Routes */}
+          <Route path="companies" element={<CompaniesList />} />
+          <Route path="sectors" element={<SectorsList />} />
+          <Route path="areas" element={<AreasList />} />
           {/* Add other routes here */}
         </Route>
 
