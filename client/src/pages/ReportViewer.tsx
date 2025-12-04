@@ -114,7 +114,57 @@ const ReportViewer = () => {
                     </div>
                 );
 
+            case 'SECTOR_REPORT':
+                return (
+                    <div className="space-y-6">
+                        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6">
+                            <h2 className="text-xl font-bold text-gray-800">{reportData.sector?.name}</h2>
+                            <p className="text-gray-500">Relatório consolidado do setor</p>
+                        </div>
+                        <h3 className="text-lg font-bold mb-4">Visitas por Área</h3>
+                        <table className="w-full text-sm text-left">
+                            <thead className="bg-gray-100">
+                                <tr>
+                                    <th className="p-2">Data</th>
+                                    <th className="p-2">Área</th>
+                                    <th className="p-2">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {reportData.visits.map((v: any) => (
+                                    <tr key={v.id} className="border-b">
+                                        <td className="p-2">{new Date(v.date).toLocaleDateString()}</td>
+                                        <td className="p-2">{v.area?.name || '-'}</td>
+                                        <td className="p-2">Realizada</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                );
+
             default:
+                if (reportData.metrics) {
+                    return (
+                        <div className="space-y-8">
+                            <div className="grid grid-cols-3 gap-6">
+                                {reportData.metrics.map((m: any, i: number) => (
+                                    <div key={i} className="p-6 bg-white rounded-xl border border-gray-200 shadow-sm text-center">
+                                        <h3 className="text-sm text-gray-500 uppercase tracking-wider mb-2">{m.label}</h3>
+                                        <p className="text-3xl font-bold text-primary">{m.value}</p>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
+                                <h3 className="text-lg font-bold mb-2">Resumo Executivo</h3>
+                                <p className="text-gray-700 leading-relaxed">{reportData.details}</p>
+                            </div>
+                            <div className="h-64 bg-gray-100 rounded-xl flex items-center justify-center border-2 border-dashed border-gray-300">
+                                <p className="text-gray-400">Gráficos detalhados seriam exibidos aqui.</p>
+                            </div>
+                        </div>
+                    );
+                }
                 return <pre className="bg-gray-100 p-4 rounded overflow-auto">{JSON.stringify(reportData, null, 2)}</pre>;
         }
     };
