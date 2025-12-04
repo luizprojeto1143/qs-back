@@ -15,6 +15,7 @@ import MobileLayout from './layouts/MobileLayout';
 import MobileHome from './pages/mobile/MobileHome';
 import MobileSchedule from './pages/mobile/MobileSchedule';
 import MobileProfile from './pages/mobile/MobileProfile';
+import Schedules from './pages/Schedules';
 
 function App() {
   return (
@@ -30,6 +31,8 @@ function App() {
           <Route path="collaborators" element={<CollaboratorsList />} />
 
           <Route path="feed" element={<Feed />} />
+          <Route path="schedules" element={<Schedules />} />
+          <Route path="reports" element={<Reports />} />
           <Route path="settings" element={<Settings />} />
           {/* Add other routes here */}
         </Route>
