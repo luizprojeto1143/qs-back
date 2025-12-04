@@ -57,3 +57,34 @@ export const createArea = async (req: Request, res: Response) => {
         res.status(500).json({ error: 'Error creating area' });
     }
 };
+
+export const listCompanies = async (req: Request, res: Response) => {
+    try {
+        const companies = await prisma.company.findMany();
+        res.json(companies);
+    } catch (error) {
+        res.status(500).json({ error: 'Error fetching companies' });
+    }
+};
+
+export const listSectors = async (req: Request, res: Response) => {
+    try {
+        const sectors = await prisma.sector.findMany({
+            include: { company: true }
+        });
+        res.json(sectors);
+    } catch (error) {
+        res.status(500).json({ error: 'Error fetching sectors' });
+    }
+};
+
+export const listAreas = async (req: Request, res: Response) => {
+    try {
+        const areas = await prisma.area.findMany({
+            include: { sector: true }
+        });
+        res.json(areas);
+    } catch (error) {
+        res.status(500).json({ error: 'Error fetching areas' });
+    }
+};

@@ -19,8 +19,14 @@ router.get('/me', (req, res) => {
 
 // Structure Routes
 router.get('/structure', companyController.getStructure);
+
+router.get('/companies', companyController.listCompanies);
 router.post('/companies', companyController.createCompany);
+
+router.get('/sectors', companyController.listSectors);
 router.post('/sectors', companyController.createSector);
+
+router.get('/areas', companyController.listAreas);
 router.post('/areas', companyController.createArea);
 
 // Collaborator Routes
