@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Building, Plus, Search } from 'lucide-react';
+import { Building, Plus } from 'lucide-react';
 
 const CompaniesList = () => {
     const [companies, setCompanies] = useState<any[]>([]);
