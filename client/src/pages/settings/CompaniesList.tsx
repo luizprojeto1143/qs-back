@@ -45,7 +45,8 @@ const CompaniesList = () => {
                 fetchCompanies();
                 alert('Empresa cadastrada com sucesso!');
             } else {
-                alert('Erro ao cadastrar empresa.');
+                const errorData = await response.json();
+                alert(errorData.error || 'Erro ao cadastrar empresa.');
             }
         } catch (error) {
             console.error('Error creating company', error);

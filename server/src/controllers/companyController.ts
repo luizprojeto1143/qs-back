@@ -29,8 +29,12 @@ export const createCompany = async (req: Request, res: Response) => {
             data: { name, cnpj }
         });
         res.status(201).json(company);
-    } catch (error) {
-        res.status(500).json({ error: 'Error creating company' });
+    } catch (error: any) {
+        console.error('Error creating company:', error);
+        if (error.code === 'P2002') {
+            return res.status(400).json({ error: 'Já existe uma empresa com este CNPJ.' });
+        }
+        res.status(500).json({ error: 'Erro interno ao criar empresa', details: error.message });
     }
 };
 
