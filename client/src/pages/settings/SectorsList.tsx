@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Layers, Plus } from 'lucide-react';
+import { Layers, Plus, X } from 'lucide-react';
 
 const SectorsList = () => {
     const [sectors, setSectors] = useState<any[]>([]);
@@ -111,7 +111,12 @@ const SectorsList = () => {
             {isModalOpen && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-2xl w-full max-w-md p-6">
-                        <h2 className="text-xl font-bold mb-4">Novo Setor</h2>
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-xl font-bold">Novo Setor</h2>
+                            <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                                <X className="h-6 w-6" />
+                            </button>
+                        </div>
                         <form onSubmit={handleCreate} className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Empresa</label>
@@ -122,7 +127,7 @@ const SectorsList = () => {
                                     onChange={e => setNewSector({ ...newSector, companyId: e.target.value })}
                                 >
                                     <option value="">Selecione...</option>
-                                    {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                    {Array.isArray(companies) && companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                 </select>
                             </div>
                             <div>

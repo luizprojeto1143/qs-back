@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Building, Plus } from 'lucide-react';
+import { Building, Plus, X } from 'lucide-react';
 
 const CompaniesList = () => {
     const [companies, setCompanies] = useState<any[]>([]);
@@ -78,7 +78,7 @@ const CompaniesList = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
-                            {companies.map((company) => (
+                            {Array.isArray(companies) && companies.map((company) => (
                                 <tr key={company.id} className="hover:bg-gray-50 transition-colors">
                                     <td className="px-6 py-4 font-medium text-gray-900">
                                         <div className="flex items-center space-x-3">
@@ -103,7 +103,12 @@ const CompaniesList = () => {
             {isModalOpen && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-2xl w-full max-w-md p-6">
-                        <h2 className="text-xl font-bold mb-4">Nova Empresa</h2>
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-xl font-bold">Nova Empresa</h2>
+                            <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                                <X className="h-6 w-6" />
+                            </button>
+                        </div>
                         <form onSubmit={handleCreate} className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Nome da Empresa</label>

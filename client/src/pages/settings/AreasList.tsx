@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MapPin, Plus } from 'lucide-react';
+import { MapPin, Plus, X } from 'lucide-react';
 
 const AreasList = () => {
     const [areas, setAreas] = useState<any[]>([]);
@@ -111,7 +111,12 @@ const AreasList = () => {
             {isModalOpen && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-2xl w-full max-w-md p-6">
-                        <h2 className="text-xl font-bold mb-4">Nova Área</h2>
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-xl font-bold">Nova Área</h2>
+                            <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                                <X className="h-6 w-6" />
+                            </button>
+                        </div>
                         <form onSubmit={handleCreate} className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Setor</label>
@@ -122,7 +127,7 @@ const AreasList = () => {
                                     onChange={e => setNewArea({ ...newArea, sectorId: e.target.value })}
                                 >
                                     <option value="">Selecione...</option>
-                                    {sectors.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                    {Array.isArray(sectors) && sectors.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                                 </select>
                             </div>
                             <div>
