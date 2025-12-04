@@ -46,6 +46,12 @@ router.get('/visits', visitController.listVisits);
 router.post('/visits', visitController.createVisit);
 router.get('/visits/:id', visitController.getVisit);
 
+// Pendency Routes
+import * as pendencyController from './controllers/pendencyController';
+router.get('/pendencies', pendencyController.listPendencies);
+router.post('/pendencies', pendencyController.createPendency);
+router.put('/pendencies/:id', pendencyController.updatePendency);
+
 // Schedule Routes
 import * as scheduleController from './controllers/scheduleController';
 router.post('/schedules', scheduleController.createSchedule);
