@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Save } from 'lucide-react';
+import { Save } from 'lucide-react';
 
 const Availability = () => {
     const [availability, setAvailability] = useState({

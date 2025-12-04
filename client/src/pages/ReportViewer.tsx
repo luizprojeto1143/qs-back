@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Printer, Download } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { ArrowLeft, Printer } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const ReportViewer = () => {
     const location = useLocation();
     const navigate = useNavigate();
-    const { reportType, data, filters } = location.state || {};
-    const [reportData, setReportData] = useState<any>(data);
+    const { reportType, data } = location.state || {};
+    const [reportData] = useState<any>(data);
 
     useEffect(() => {
         if (!reportData) {
@@ -21,8 +21,6 @@ const ReportViewer = () => {
     const handlePrint = () => {
         window.print();
     };
-
-    const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
     const renderContent = () => {
         switch (reportType) {

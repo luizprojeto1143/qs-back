@@ -81,3 +81,19 @@ export const listSchedules = async (req: Request, res: Response) => {
         res.status(500).json({ error: 'Error listing schedules' });
     }
 };
+
+export const updateScheduleStatus = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { status } = req.body; // 'APROVADO' | 'RECUSADO'
+
+        const schedule = await prisma.schedule.update({
+            where: { id },
+            data: { status }
+        });
+
+        res.json(schedule);
+    } catch (error) {
+        res.status(500).json({ error: 'Error updating schedule status' });
+    }
+};
