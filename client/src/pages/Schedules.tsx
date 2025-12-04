@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Clock, Plus, X, User } from 'lucide-react';
+import { Calendar, Clock, Plus, X, User, Check } from 'lucide-react';
 
 const Schedules = () => {
     const [schedules, setSchedules] = useState<any[]>([]);
@@ -36,6 +36,26 @@ const Schedules = () => {
     useEffect(() => {
         fetchData();
     }, []);
+
+    const handleStatusUpdate = async (id: string, status: string) => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/schedules/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ status })
+            });
+
+            if (response.ok) {
+                fetchData();
+            }
+        } catch (error) {
+            console.error('Error updating status', error);
+        }
+    };
 
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -112,12 +132,32 @@ const Schedules = () => {
                                     </div>
                                 </div>
                             </div>
-                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${schedule.status === 'CONFIRMADO' ? 'bg-green-100 text-green-700' :
-                                schedule.status === 'PENDENTE' ? 'bg-yellow-100 text-yellow-700' :
-                                    'bg-gray-100 text-gray-700'
-                                }`}>
-                                {schedule.status}
-                            </span>
+                            <div className="flex items-center space-x-2">
+                                {schedule.status === 'PENDENTE' && (
+                                    <>
+                                        <button
+                                            onClick={() => handleStatusUpdate(schedule.id, 'APROVADO')}
+                                            className="p-1 text-green-600 hover:bg-green-50 rounded"
+                                            title="Aprovar"
+                                        >
+                                            <Check className="h-5 w-5" />
+                                        </button>
+                                        <button
+                                            onClick={() => handleStatusUpdate(schedule.id, 'RECUSADO')}
+                                            className="p-1 text-red-600 hover:bg-red-50 rounded"
+                                            title="Recusar"
+                                        >
+                                            <X className="h-5 w-5" />
+                                        </button>
+                                    </>
+                                )}
+                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${schedule.status === 'APROVADO' ? 'bg-green-100 text-green-700' :
+                                    schedule.status === 'PENDENTE' ? 'bg-yellow-100 text-yellow-700' :
+                                        'bg-red-100 text-red-700'
+                                    }`}>
+                                    {schedule.status}
+                                </span>
+                            </div>
                         </div>
                     ))}
                 </div>

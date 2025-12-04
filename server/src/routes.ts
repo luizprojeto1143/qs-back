@@ -56,6 +56,7 @@ router.put('/pendencies/:id', pendencyController.updatePendency);
 import * as scheduleController from './controllers/scheduleController';
 router.post('/schedules', scheduleController.createSchedule);
 router.get('/schedules', scheduleController.listSchedules);
+router.put('/schedules/:id', scheduleController.updateScheduleStatus);
 
 // Dashboard Routes
 import * as dashboardController from './controllers/dashboardController';

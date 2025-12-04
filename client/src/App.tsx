@@ -22,6 +22,8 @@ import AreasList from './pages/settings/AreasList';
 import ReportViewer from './pages/ReportViewer';
 import TermsOfUse from './pages/settings/TermsOfUse';
 import FeedCategories from './pages/settings/FeedCategories';
+import ShiftsList from './pages/settings/ShiftsList';
+import Availability from './pages/settings/Availability';
 
 function App() {
   return (
@@ -48,6 +50,8 @@ function App() {
           <Route path="areas" element={<AreasList />} />
           <Route path="terms" element={<TermsOfUse />} />
           <Route path="feed-categories" element={<FeedCategories />} />
+          <Route path="shifts" element={<ShiftsList />} />
+          <Route path="availability" element={<Availability />} />
         </Route>
 
         {/* RH Routes */}
