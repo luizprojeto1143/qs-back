@@ -7,11 +7,28 @@ const Login = () => {
     const [password, setPassword] = useState('');
     const navigate = useNavigate();
 
-    const handleLogin = (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        // TODO: Implement actual login logic
-        console.log('Login attempt', { email, password });
-        navigate('/dashboard');
+        try {
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('user', JSON.stringify(data.user));
+                navigate('/dashboard');
+            } else {
+                alert(data.error || 'Erro ao fazer login');
+            }
+        } catch (error) {
+            console.error('Login error', error);
+            alert('Erro de conexão ao fazer login');
+        }
     };
 
     return (
