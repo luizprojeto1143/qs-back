@@ -66,4 +66,12 @@ import * as reportController from './controllers/reportController';
 router.get('/reports', reportController.listReports);
 router.post('/reports', reportController.generateReport);
 
+// Settings Routes
+import * as settingsController from './controllers/settingsController';
+router.get('/settings/terms', settingsController.getTerms);
+router.post('/settings/terms', settingsController.updateTerms);
+router.get('/settings/feed-categories', settingsController.getFeedCategories);
+router.post('/settings/feed-categories', settingsController.createFeedCategory);
+router.delete('/settings/feed-categories/:name', settingsController.deleteFeedCategory);
+
 export default router;
