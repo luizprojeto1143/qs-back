@@ -22,4 +22,4 @@ const Pendencies = () => {
 
 export default Pendencies;
 
-export default Pendencies;
+

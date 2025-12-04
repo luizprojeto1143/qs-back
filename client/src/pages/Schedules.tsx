@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Clock, User } from 'lucide-react';
+import { Calendar, Clock } from 'lucide-react';
 
 const Schedules = () => {
     const [schedules, setSchedules] = useState<any[]>([]);
@@ -62,8 +62,8 @@ const Schedules = () => {
                                 </div>
                             </div>
                             <span className={`px-3 py-1 rounded-full text-xs font-medium ${schedule.status === 'CONFIRMADO' ? 'bg-green-100 text-green-700' :
-                                    schedule.status === 'PENDENTE' ? 'bg-yellow-100 text-yellow-700' :
-                                        'bg-gray-100 text-gray-700'
+                                schedule.status === 'PENDENTE' ? 'bg-yellow-100 text-yellow-700' :
+                                    'bg-gray-100 text-gray-700'
                                 }`}>
                                 {schedule.status}
                             </span>
