@@ -1,0 +1,191 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums are not supported in SQLite, so we use String with validation in code
+
+// Core Models
+
+model Company {
+  id        String   @id @default(uuid())
+  name      String
+  cnpj      String   @unique
+  logo      String?
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users         User[]
+  sectors       Sector[]
+  visits        Visit[]
+  pendingItems  PendingItem[]
+  feedPosts     FeedPost[]
+  schedules     Schedule[]
+}
+
+model Sector {
+  id        String   @id @default(uuid())
+  name      String
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id])
+  areas     Area[]
+}
+
+model Area {
+  id        String   @id @default(uuid())
+  name      String
+  sectorId  String
+  sector    Sector   @relation(fields: [sectorId], references: [id])
+  
+  collaborators CollaboratorProfile[]
+  pendingItems  PendingItem[]
+  visits        Visit[]
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   // MASTER, RH, LIDER, COLABORADOR
+  avatar    String?
+  
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
+
+  collaboratorProfile CollaboratorProfile?
+
+  createdVisits     Visit[] @relation("MasterVisits")
+  requestedSchedules Schedule[] @relation("RequestedSchedules")
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CollaboratorProfile {
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id])
+  
+  matricula      String
+  areaId         String
+  area           Area     @relation(fields: [areaId], references: [id])
+  
+  shift          String   // MANHA, TARDE, NOITE, ESCALA_12X36, PERSONALIZADO
+  disabilityType String
+  needsDescription String?
+  
+  visits         Visit[] @relation("CollaboratorVisits")
+  pendingItems   PendingItem[]
+  schedules      Schedule[] @relation("CollaboratorSchedules")
+}
+
+model Visit {
+  id        String   @id @default(uuid())
+  date      DateTime @default(now())
+  
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  
+  areaId    String?
+  area      Area?   @relation(fields: [areaId], references: [id])
+  
+  masterId  String
+  master    User    @relation("MasterVisits", fields: [masterId], references: [id])
+
+  collaborators CollaboratorProfile[] @relation("CollaboratorVisits")
+
+  relatoLideranca      String?
+  audioLiderancaUrl    String?
+  relatoColaborador    String?
+  audioColaboradorUrl  String?
+  observacoesMaster    String?
+
+  avaliacaoArea        String? // JSON
+  avaliacaoLideranca   String? // JSON
+  avaliacaoColaborador String? // JSON
+
+  generatedPendencies  PendingItem[]
+  attachments          VisitAttachment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model VisitAttachment {
+  id        String   @id @default(uuid())
+  visitId   String
+  visit     Visit    @relation(fields: [visitId], references: [id])
+  type      String   // PHOTO, VIDEO, DOCUMENT, AUDIO
+  url       String
+  name      String?
+}
+
+model PendingItem {
+  id          String   @id @default(uuid())
+  description String
+  responsible String
+  priority    String   // BAIXA, MEDIA, ALTA
+  deadline    DateTime?
+  status      String   @default("PENDENTE") // PENDENTE, RESOLVIDA, CONCLUIDA
+  
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
+  
+  areaId      String?
+  area        Area?    @relation(fields: [areaId], references: [id])
+  
+  collaboratorId String?
+  collaborator   CollaboratorProfile? @relation(fields: [collaboratorId], references: [id])
+
+  visitId     String?
+  visit       Visit?   @relation(fields: [visitId], references: [id])
+
+  createdAt   DateTime @default(now())
+  resolvedAt  DateTime?
+}
+
+model Schedule {
+  id        String   @id @default(uuid())
+  date      DateTime
+  status    String   // PENDENTE, APROVADO, RECUSADO, REMARCADO
+  
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id])
+  
+  requesterId String
+  requester   User     @relation("RequestedSchedules", fields: [requesterId], references: [id])
+  
+  collaboratorId String?
+  collaborator   CollaboratorProfile? @relation("CollaboratorSchedules", fields: [collaboratorId], references: [id])
+  
+  notes     String?
+  createdAt DateTime @default(now())
+}
+
+model FeedPost {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  category    String   // CARDAPIO, VAGA, AVISO, BENEFICIO, CAMPANHA, OUTRO
+  imageUrl    String?
+  videoLibrasUrl String?
+  
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
+  
+  createdAt   DateTime @default(now())
+}
+
+model TermOfUse {
+  id        String   @id @default(uuid())
+  version   String
+  content   String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
