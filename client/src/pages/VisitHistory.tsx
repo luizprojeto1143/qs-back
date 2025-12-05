@@ -47,7 +47,7 @@ const VisitHistory = () => {
                             className="pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
                     </div>
-                    <button className="btn-secondary flex items-center space-x-2">
+                    <button onClick={() => alert('Funcionalidade de filtros em desenvolvimento.')} className="btn-secondary flex items-center space-x-2">
                         <Filter className="h-4 w-4" />
                         <span>Filtros</span>
                     </button>

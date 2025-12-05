@@ -6,6 +6,7 @@ const AreasList = () => {
     const [sectors, setSectors] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingId, setEditingId] = useState<string | null>(null);
     const [newArea, setNewArea] = useState({ name: '', sectorId: '' });
 
     const fetchData = async () => {
@@ -38,8 +39,14 @@ const AreasList = () => {
         e.preventDefault();
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/areas`, {
-                method: 'POST',
+            const url = editingId
+                ? `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/areas/${editingId}`
+                : `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/areas`;
+
+            const method = editingId ? 'PUT' : 'POST';
+
+            const response = await fetch(url, {
+                method: method,
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
@@ -50,14 +57,24 @@ const AreasList = () => {
             if (response.ok) {
                 setIsModalOpen(false);
                 setNewArea({ name: '', sectorId: '' });
+                setEditingId(null);
                 fetchData();
-                alert('Área cadastrada com sucesso!');
+                alert(editingId ? 'Área atualizada com sucesso!' : 'Área cadastrada com sucesso!');
             } else {
-                alert('Erro ao cadastrar área.');
+                alert('Erro ao salvar área.');
             }
         } catch (error) {
-            console.error('Error creating area', error);
+            console.error('Error saving area', error);
         }
+    };
+
+    const handleEdit = (area: any) => {
+        setNewArea({
+            name: area.name,
+            sectorId: area.sectorId
+        });
+        setEditingId(area.id);
+        setIsModalOpen(true);
     };
 
     return (
@@ -98,7 +115,7 @@ const AreasList = () => {
                                     </td>
                                     <td className="px-6 py-4 text-gray-500">{area.sector?.name}</td>
                                     <td className="px-6 py-4">
-                                        <button className="text-primary hover:text-blue-700 text-sm font-medium">Editar</button>
+                                        <button onClick={() => handleEdit(area)} className="text-primary hover:text-blue-700 text-sm font-medium">Editar</button>
                                     </td>
                                 </tr>
                             ))}
@@ -112,8 +129,8 @@ const AreasList = () => {
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-2xl w-full max-w-md p-6">
                         <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-bold">Nova Área</h2>
-                            <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                            <h2 className="text-xl font-bold">{editingId ? 'Editar Área' : 'Nova Área'}</h2>
+                            <button onClick={() => { setIsModalOpen(false); setEditingId(null); }} className="text-gray-400 hover:text-gray-600">
                                 <X className="h-6 w-6" />
                             </button>
                         </div>
@@ -143,7 +160,7 @@ const AreasList = () => {
                             <div className="flex justify-end space-x-3 mt-6">
                                 <button
                                     type="button"
-                                    onClick={() => setIsModalOpen(false)}
+                                    onClick={() => { setIsModalOpen(false); setEditingId(null); }}
                                     className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
                                 >
                                     Cancelar

@@ -5,7 +5,8 @@ const CompaniesList = () => {
     const [companies, setCompanies] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [newCompany, setNewCompany] = useState({ name: '', cnpj: '' });
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [newCompany, setNewCompany] = useState({ name: '', cnpj: '', email: '', password: '' });
 
     const fetchCompanies = async () => {
         try {
@@ -30,8 +31,14 @@ const CompaniesList = () => {
         e.preventDefault();
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/companies`, {
-                method: 'POST',
+            const url = editingId
+                ? `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/companies/${editingId}`
+                : `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/companies`;
+
+            const method = editingId ? 'PUT' : 'POST';
+
+            const response = await fetch(url, {
+                method: method,
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
@@ -41,16 +48,28 @@ const CompaniesList = () => {
 
             if (response.ok) {
                 setIsModalOpen(false);
-                setNewCompany({ name: '', cnpj: '' });
+                setNewCompany({ name: '', cnpj: '', email: '', password: '' });
+                setEditingId(null);
                 fetchCompanies();
-                alert('Empresa cadastrada com sucesso!');
+                alert(editingId ? 'Empresa atualizada com sucesso!' : 'Empresa cadastrada com sucesso!');
             } else {
                 const errorData = await response.json();
-                alert(errorData.error || 'Erro ao cadastrar empresa.');
+                alert(errorData.error || 'Erro ao salvar empresa.');
             }
         } catch (error) {
-            console.error('Error creating company', error);
+            console.error('Error saving company', error);
         }
+    };
+
+    const handleEdit = (company: any) => {
+        setNewCompany({
+            name: company.name,
+            cnpj: company.cnpj,
+            email: '', // Don't populate sensitive/unknown data if not needed, or fetch if available
+            password: ''
+        });
+        setEditingId(company.id);
+        setIsModalOpen(true);
     };
 
     return (
@@ -91,7 +110,7 @@ const CompaniesList = () => {
                                     </td>
                                     <td className="px-6 py-4 text-gray-500">{company.cnpj}</td>
                                     <td className="px-6 py-4">
-                                        <button className="text-primary hover:text-blue-700 text-sm font-medium">Editar</button>
+                                        <button onClick={() => handleEdit(company)} className="text-primary hover:text-blue-700 text-sm font-medium">Editar</button>
                                     </td>
                                 </tr>
                             ))}
@@ -105,8 +124,8 @@ const CompaniesList = () => {
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-2xl w-full max-w-md p-6">
                         <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-bold">Nova Empresa</h2>
-                            <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                            <h2 className="text-xl font-bold">{editingId ? 'Editar Empresa' : 'Nova Empresa'}</h2>
+                            <button onClick={() => { setIsModalOpen(false); setEditingId(null); }} className="text-gray-400 hover:text-gray-600">
                                 <X className="h-6 w-6" />
                             </button>
                         </div>
@@ -131,10 +150,31 @@ const CompaniesList = () => {
                                     onChange={e => setNewCompany({ ...newCompany, cnpj: e.target.value })}
                                 />
                             </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Email do Responsável (RH)</label>
+                                <input
+                                    type="email"
+                                    required
+                                    className="input-field"
+                                    value={newCompany.email}
+                                    onChange={e => setNewCompany({ ...newCompany, email: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Senha {editingId && '(Deixe em branco para manter)'}</label>
+                                <input
+                                    type="password"
+                                    required={!editingId}
+                                    className="input-field"
+                                    value={newCompany.password}
+                                    onChange={e => setNewCompany({ ...newCompany, password: e.target.value })}
+                                    placeholder="Mínimo 6 caracteres"
+                                />
+                            </div>
                             <div className="flex justify-end space-x-3 mt-6">
                                 <button
                                     type="button"
-                                    onClick={() => setIsModalOpen(false)}
+                                    onClick={() => { setIsModalOpen(false); setEditingId(null); }}
                                     className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
                                 >
                                     Cancelar

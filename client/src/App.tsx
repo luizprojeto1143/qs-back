@@ -60,6 +60,7 @@ function App() {
           <Route path="collaborators" element={<CollaboratorsList />} />
           <Route path="reports" element={<Reports />} />
           <Route path="history" element={<VisitHistory />} />
+          <Route path="schedules" element={<Schedules />} />
           {/* Reuse components where possible */}
         </Route>
         {/* Mobile App Routes */}

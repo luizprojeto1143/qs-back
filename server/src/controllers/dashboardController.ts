@@ -79,4 +79,40 @@ export const getRHDashboardStats = async (req: Request, res: Response) => {
         console.error('Error fetching dashboard stats:', error);
         res.status(500).json({ error: 'Error fetching stats' });
     }
-};
+    export const getMasterDashboardStats = async (req: Request, res: Response) => {
+        try {
+            // 1. Total Collaborators (System wide or filtered if needed, but Master usually sees all)
+            const totalCollaborators = await prisma.user.count({
+                where: { role: 'COLABORADOR' }
+            });
+
+            // 2. Total Visits (Acompanhamentos)
+            const totalVisits = await prisma.visit.count();
+
+            // 3. Open Pendencies
+            const openPendencies = await prisma.pendingItem.count({
+                where: { status: 'PENDENTE' }
+            });
+
+            // 4. Schedules (Agendamentos) - Future
+            const futureSchedules = await prisma.schedule.count({
+                where: {
+                    date: {
+                        gte: new Date()
+                    }
+                }
+            });
+
+            res.json({
+                stats: {
+                    collaborators: totalCollaborators,
+                    visits: totalVisits,
+                    pendencies: openPendencies,
+                    schedules: futureSchedules
+                }
+            });
+        } catch (error) {
+            console.error('Error fetching master dashboard stats:', error);
+            res.status(500).json({ error: 'Error fetching stats' });
+        }
+    };

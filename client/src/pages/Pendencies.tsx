@@ -99,7 +99,7 @@ const Pendencies = () => {
             <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold text-gray-900">Gestão de Pendências</h1>
                 <div className="flex space-x-3">
-                    <button className="btn-secondary flex items-center space-x-2">
+                    <button onClick={() => alert('Funcionalidade de filtros em desenvolvimento.')} className="btn-secondary flex items-center space-x-2">
                         <Filter className="h-4 w-4" />
                         <span>Filtrar</span>
                     </button>

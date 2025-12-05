@@ -37,14 +37,20 @@ export const listSchedules = async (req: Request, res: Response) => {
     try {
         const user = (req as AuthRequest).user;
 
-        if (!user || !user.companyId) {
-            return res.status(400).json({ error: 'User or Company not found' });
+        if (!user) {
+            return res.status(400).json({ error: 'User not found' });
+        }
+
+        const where: any = {};
+        if (user.role !== 'MASTER') {
+            if (!user.companyId) {
+                return res.status(400).json({ error: 'Company not found' });
+            }
+            where.companyId = user.companyId;
         }
 
         const schedules = await prisma.schedule.findMany({
-            where: {
-                companyId: user.companyId
-            },
+            where,
             include: {
                 requester: {
                     select: { name: true, role: true }

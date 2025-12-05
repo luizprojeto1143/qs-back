@@ -104,29 +104,11 @@ const RHDashboard = () => {
                 </div>
 
                 {/* Inclusion Stats (Static for now as logic is complex) */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                {/* Inclusion Stats - Hidden until implemented */}
+                {/* <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                     <h3 className="text-lg font-bold text-gray-900 mb-4">Métricas de Inclusão</h3>
-                    <div className="space-y-4">
-                        <div className="space-y-2">
-                            <div className="flex justify-between text-sm">
-                                <span className="text-gray-600">Cota PCD Preenchida</span>
-                                <span className="font-bold text-gray-900">85%</span>
-                            </div>
-                            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                                <div className="h-full bg-green-500 w-[85%]" />
-                            </div>
-                        </div>
-                        <div className="space-y-2">
-                            <div className="flex justify-between text-sm">
-                                <span className="text-gray-600">Satisfação Média</span>
-                                <span className="font-bold text-gray-900">4.8/5.0</span>
-                            </div>
-                            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                                <div className="h-full bg-blue-500 w-[96%]" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                    <p className="text-gray-500 text-sm">Em breve...</p>
+                </div> */}
             </div>
         </div>
     );

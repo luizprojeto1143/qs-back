@@ -7,6 +7,7 @@ const CollaboratorsList = () => {
     const [companies, setCompanies] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingId, setEditingId] = useState<string | null>(null);
 
     // New Collaborator State
     const [newCollab, setNewCollab] = useState({
@@ -17,7 +18,8 @@ const CollaboratorsList = () => {
         areaId: '',
         shift: 'MANHA',
         disabilityType: 'NENHUMA',
-        needsDescription: ''
+        needsDescription: '',
+        password: ''
     });
 
     const fetchData = async () => {
@@ -49,8 +51,14 @@ const CollaboratorsList = () => {
         e.preventDefault();
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/collaborators`, {
-                method: 'POST',
+            const url = editingId
+                ? `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/collaborators/${editingId}`
+                : `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/collaborators`;
+
+            const method = editingId ? 'PUT' : 'POST';
+
+            const response = await fetch(url, {
+                method: method,
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
@@ -62,16 +70,33 @@ const CollaboratorsList = () => {
                 setIsModalOpen(false);
                 setNewCollab({
                     name: '', email: '', matricula: '', companyId: '', areaId: '',
-                    shift: 'MANHA', disabilityType: 'NENHUMA', needsDescription: ''
+                    shift: 'MANHA', disabilityType: 'NENHUMA', needsDescription: '', password: ''
                 });
+                setEditingId(null);
                 fetchData();
-                alert('Colaborador cadastrado com sucesso!');
+                alert(editingId ? 'Colaborador atualizado com sucesso!' : 'Colaborador cadastrado com sucesso!');
             } else {
-                alert('Erro ao cadastrar colaborador.');
+                alert('Erro ao salvar colaborador.');
             }
         } catch (error) {
-            console.error('Error creating collaborator', error);
+            console.error('Error saving collaborator', error);
         }
+    };
+
+    const handleEdit = (collab: any) => {
+        setNewCollab({
+            name: collab.name,
+            email: collab.email,
+            matricula: collab.collaboratorProfile?.matricula || '',
+            companyId: collab.companyId,
+            areaId: collab.collaboratorProfile?.areaId || '',
+            shift: collab.collaboratorProfile?.shift || 'MANHA',
+            disabilityType: collab.collaboratorProfile?.disabilityType || 'NENHUMA',
+            needsDescription: collab.collaboratorProfile?.needsDescription || '',
+            password: '' // Don't populate password
+        });
+        setEditingId(collab.id);
+        setIsModalOpen(true);
     };
 
     return (
@@ -108,7 +133,7 @@ const CollaboratorsList = () => {
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                     <div className="divide-y divide-gray-100">
                         {collaborators.map((collab) => (
-                            <div key={collab.id} className="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer group">
+                            <div key={collab.id} onClick={() => handleEdit(collab)} className="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer group">
                                 <div className="flex items-center space-x-4">
                                     <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden text-gray-400">
                                         <User className="h-6 w-6" />
@@ -132,8 +157,8 @@ const CollaboratorsList = () => {
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-2xl w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto">
                         <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-xl font-bold">Novo Colaborador</h2>
-                            <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                            <h2 className="text-xl font-bold">{editingId ? 'Editar Colaborador' : 'Novo Colaborador'}</h2>
+                            <button onClick={() => { setIsModalOpen(false); setEditingId(null); }} className="text-gray-400 hover:text-gray-600">
                                 <X className="h-6 w-6" />
                             </button>
                         </div>
@@ -158,6 +183,17 @@ const CollaboratorsList = () => {
                                         className="input-field"
                                         value={newCollab.email}
                                         onChange={e => setNewCollab({ ...newCollab, email: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Senha {editingId && '(Deixe em branco para manter)'}</label>
+                                    <input
+                                        type="password"
+                                        required={!editingId}
+                                        className="input-field"
+                                        value={newCollab.password}
+                                        onChange={e => setNewCollab({ ...newCollab, password: e.target.value })}
+                                        placeholder="Mínimo 6 caracteres"
                                     />
                                 </div>
                                 <div>
@@ -238,7 +274,7 @@ const CollaboratorsList = () => {
                             <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-100">
                                 <button
                                     type="button"
-                                    onClick={() => setIsModalOpen(false)}
+                                    onClick={() => { setIsModalOpen(false); setEditingId(null); }}
                                     className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
                                 >
                                     Cancelar
@@ -249,9 +285,9 @@ const CollaboratorsList = () => {
                             </div>
                         </form>
                     </div>
-                </div>
+                </div >
             )}
-        </div>
+        </div >
     );
 };
 

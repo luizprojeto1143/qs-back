@@ -24,15 +24,34 @@ export const getStructure = async (req: Request, res: Response) => {
 
 export const createCompany = async (req: Request, res: Response) => {
     try {
-        const { name, cnpj } = req.body;
-        const company = await prisma.company.create({
-            data: { name, cnpj }
+        const { name, cnpj, email, password } = req.body;
+
+        const result = await prisma.$transaction(async (prisma) => {
+            const company = await prisma.company.create({
+                data: { name, cnpj }
+            });
+
+            if (email && password) {
+                const hashedPassword = await import('bcryptjs').then(bcrypt => bcrypt.hash(password, 10));
+                await prisma.user.create({
+                    data: {
+                        name: `Admin ${name}`,
+                        email,
+                        password: hashedPassword,
+                        role: 'RH',
+                        companyId: company.id
+                    }
+                });
+            }
+
+            return company;
         });
-        res.status(201).json(company);
+
+        res.status(201).json(result);
     } catch (error: any) {
         console.error('Error creating company:', error);
         if (error.code === 'P2002') {
-            return res.status(400).json({ error: 'Já existe uma empresa com este CNPJ.' });
+            return res.status(400).json({ error: 'Já existe uma empresa com este CNPJ ou email.' });
         }
         res.status(500).json({ error: 'Erro interno ao criar empresa', details: error.message });
     }

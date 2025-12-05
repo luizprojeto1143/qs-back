@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { Plus, Trash2, Clock } from 'lucide-react';
 
 // Mock data since we don't have a specific backend table yet
-const MOCK_SHIFTS = ['MANHÃ (08:00 - 12:00)', 'TARDE (13:00 - 17:00)', 'NOITE (18:00 - 22:00)', 'ESCALA 12x36'];
+// Shifts managed locally for now
+const DEFAULT_SHIFTS: string[] = [];
 
 const ShiftsList = () => {
     const [shifts, setShifts] = useState<string[]>([]);
@@ -11,7 +12,7 @@ const ShiftsList = () => {
     useEffect(() => {
         // Simulate fetching
         const saved = localStorage.getItem('shifts');
-        setShifts(saved ? JSON.parse(saved) : MOCK_SHIFTS);
+        setShifts(saved ? JSON.parse(saved) : DEFAULT_SHIFTS);
     }, []);
 
     const handleAdd = (e: React.FormEvent) => {

@@ -61,6 +61,7 @@ router.put('/schedules/:id', scheduleController.updateScheduleStatus);
 // Dashboard Routes
 import * as dashboardController from './controllers/dashboardController';
 router.get('/dashboard/rh', dashboardController.getRHDashboardStats);
+router.get('/dashboard/master', dashboardController.getMasterDashboardStats);
 
 // Report Routes
 import * as reportController from './controllers/reportController';

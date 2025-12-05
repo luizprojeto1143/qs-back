@@ -21,7 +21,22 @@ const Login = () => {
             if (response.ok) {
                 localStorage.setItem('token', data.token);
                 localStorage.setItem('user', JSON.stringify(data.user));
-                navigate('/dashboard');
+
+                // Redirect based on role
+                switch (data.user.role) {
+                    case 'MASTER':
+                        navigate('/dashboard');
+                        break;
+                    case 'RH':
+                        navigate('/rh');
+                        break;
+                    case 'COLABORADOR':
+                    case 'LIDER':
+                        navigate('/app');
+                        break;
+                    default:
+                        navigate('/dashboard');
+                }
             } else {
                 alert(data.error + (data.details ? `: ${data.details}` : '') || 'Erro ao fazer login');
             }
@@ -85,7 +100,7 @@ const Login = () => {
                     </button>
 
                     <div className="text-center">
-                        <a href="#" className="text-sm text-gray-500 hover:text-primary transition-colors">
+                        <a href="#" onClick={(e) => { e.preventDefault(); alert('Por favor, entre em contato com o administrador para redefinir sua senha.'); }} className="text-sm text-gray-500 hover:text-primary transition-colors">
                             Esqueceu sua senha?
                         </a>
                     </div>

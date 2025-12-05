@@ -6,6 +6,7 @@ const SectorsList = () => {
     const [companies, setCompanies] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingId, setEditingId] = useState<string | null>(null);
     const [newSector, setNewSector] = useState({ name: '', companyId: '' });
 
     const fetchData = async () => {
@@ -38,8 +39,14 @@ const SectorsList = () => {
         e.preventDefault();
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/sectors`, {
-                method: 'POST',
+            const url = editingId
+                ? `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/sectors/${editingId}`
+                : `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/sectors`;
+
+            const method = editingId ? 'PUT' : 'POST';
+
+            const response = await fetch(url, {
+                method: method,
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
@@ -50,14 +57,24 @@ const SectorsList = () => {
             if (response.ok) {
                 setIsModalOpen(false);
                 setNewSector({ name: '', companyId: '' });
+                setEditingId(null);
                 fetchData();
-                alert('Setor cadastrado com sucesso!');
+                alert(editingId ? 'Setor atualizado com sucesso!' : 'Setor cadastrado com sucesso!');
             } else {
-                alert('Erro ao cadastrar setor.');
+                alert('Erro ao salvar setor.');
             }
         } catch (error) {
-            console.error('Error creating sector', error);
+            console.error('Error saving sector', error);
         }
+    };
+
+    const handleEdit = (sector: any) => {
+        setNewSector({
+            name: sector.name,
+            companyId: sector.companyId
+        });
+        setEditingId(sector.id);
+        setIsModalOpen(true);
     };
 
     return (
@@ -98,7 +115,7 @@ const SectorsList = () => {
                                     </td>
                                     <td className="px-6 py-4 text-gray-500">{sector.company?.name}</td>
                                     <td className="px-6 py-4">
-                                        <button className="text-primary hover:text-blue-700 text-sm font-medium">Editar</button>
+                                        <button onClick={() => handleEdit(sector)} className="text-primary hover:text-blue-700 text-sm font-medium">Editar</button>
                                     </td>
                                 </tr>
                             ))}
@@ -112,8 +129,8 @@ const SectorsList = () => {
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-2xl w-full max-w-md p-6">
                         <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-bold">Novo Setor</h2>
-                            <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                            <h2 className="text-xl font-bold">{editingId ? 'Editar Setor' : 'Novo Setor'}</h2>
+                            <button onClick={() => { setIsModalOpen(false); setEditingId(null); }} className="text-gray-400 hover:text-gray-600">
                                 <X className="h-6 w-6" />
                             </button>
                         </div>
@@ -143,7 +160,7 @@ const SectorsList = () => {
                             <div className="flex justify-end space-x-3 mt-6">
                                 <button
                                     type="button"
-                                    onClick={() => setIsModalOpen(false)}
+                                    onClick={() => { setIsModalOpen(false); setEditingId(null); }}
                                     className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
                                 >
                                     Cancelar
