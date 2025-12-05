@@ -206,9 +206,9 @@ const DashboardLayout = () => {
             )}
 
             {/* Main Content */}
-            <main className="flex-1 md:ml-64 p-4 md:p-8 pt-20 md:pt-8 relative">
-                {/* Desktop Notification Bell (Absolute Positioned) */}
-                <div className="hidden md:block absolute top-6 right-8 z-30">
+            <main className="flex-1 md:ml-64 bg-gray-50 min-h-screen flex flex-col">
+                {/* Desktop Header */}
+                <header className="hidden md:flex justify-end items-center px-8 py-4 bg-white border-b border-gray-100 sticky top-0 z-40">
                     <div className="relative">
                         <button
                             onClick={() => setShowNotifications(!showNotifications)}
@@ -264,9 +264,11 @@ const DashboardLayout = () => {
                             </div>
                         )}
                     </div>
-                </div>
+                </header>
 
-                <Outlet />
+                <div className="p-4 md:p-8 flex-1 overflow-y-auto">
+                    <Outlet />
+                </div>
             </main>
         </div>
     );
