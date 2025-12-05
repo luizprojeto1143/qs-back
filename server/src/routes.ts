@@ -13,8 +13,26 @@ router.post('/auth/login', authController.login);
 // Protected Routes
 router.use(authenticateToken);
 
-router.get('/me', (req, res) => {
-    res.json({ user: (req as any).user });
+import prisma from './prisma';
+
+router.get('/me', async (req, res) => {
+    try {
+        const userId = (req as any).user.userId;
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            include: { company: true }
+        });
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Remove password from response
+        const { password, ...userWithoutPassword } = user;
+        res.json({ user: userWithoutPassword });
+    } catch (error) {
+        res.status(500).json({ error: 'Error fetching user profile' });
+    }
 });
 
 // Structure Routes
@@ -22,23 +40,28 @@ router.get('/structure', companyController.getStructure);
 
 router.get('/companies', companyController.listCompanies);
 router.post('/companies', companyController.createCompany);
+router.put('/companies/:id', companyController.updateCompany);
 
 router.get('/sectors', companyController.listSectors);
 router.post('/sectors', companyController.createSector);
+router.put('/sectors/:id', companyController.updateSector);
 
 router.get('/areas', companyController.listAreas);
 router.post('/areas', companyController.createArea);
+router.put('/areas/:id', companyController.updateArea);
 
 // Collaborator Routes
 router.get('/collaborators', collaboratorController.listCollaborators);
 router.post('/collaborators', collaboratorController.createCollaborator);
 router.get('/collaborators/:id', collaboratorController.getCollaborator);
+router.put('/collaborators/:id', collaboratorController.updateCollaborator);
 
-// Feed Routes
 // Feed Routes
 import * as feedController from './controllers/feedController';
 router.get('/feed', feedController.listPosts);
 router.post('/feed', feedController.createPost);
+router.put('/feed/:id', feedController.updatePost);
+router.delete('/feed/:id', feedController.deletePost);
 
 // Visit Routes
 import * as visitController from './controllers/visitController';
@@ -51,6 +74,7 @@ import * as pendencyController from './controllers/pendencyController';
 router.get('/pendencies', pendencyController.listPendencies);
 router.post('/pendencies', pendencyController.createPendency);
 router.put('/pendencies/:id', pendencyController.updatePendency);
+router.delete('/pendencies/:id', pendencyController.deletePendency);
 
 // Schedule Routes
 import * as scheduleController from './controllers/scheduleController';
@@ -74,6 +98,31 @@ router.get('/settings/terms', settingsController.getTerms);
 router.post('/settings/terms', settingsController.updateTerms);
 router.get('/settings/feed-categories', settingsController.getFeedCategories);
 router.post('/settings/feed-categories', settingsController.createFeedCategory);
-router.delete('/settings/feed-categories/:name', settingsController.deleteFeedCategory);
+router.delete('/settings/feed-categories/:id', settingsController.deleteFeedCategory);
+
+router.get('/settings/shifts', settingsController.getShifts);
+router.post('/settings/shifts', settingsController.createShift);
+router.delete('/settings/shifts/:id', settingsController.deleteShift);
+
+// Availability
+router.get('/settings/availability', settingsController.getAvailability);
+router.post('/settings/availability', settingsController.updateAvailability);
+
+// User Management (MASTER only)
+import * as userController from './controllers/userController';
+router.get('/users', userController.listUsers);
+router.post('/users', userController.createUser);
+router.put('/users/:id', userController.updateUser);
+router.delete('/users/:id', userController.deleteUser);
+
+// Upload Routes
+import * as uploadController from './controllers/uploadController';
+router.post('/upload', uploadController.uploadMiddleware, uploadController.uploadFile);
+
+// Notification Routes
+import * as notificationController from './controllers/notificationController';
+router.get('/notifications', notificationController.listNotifications);
+router.put('/notifications/:id/read', notificationController.markAsRead);
+router.put('/notifications/read-all', notificationController.markAllAsRead);
 
 export default router;

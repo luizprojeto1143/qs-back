@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Lock } from 'lucide-react';
+import { toast } from 'sonner';
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -25,7 +26,8 @@ const Login = () => {
                 // Redirect based on role
                 switch (data.user.role) {
                     case 'MASTER':
-                        navigate('/dashboard');
+                        // Force reload to ensure CompanyContext initializes
+                        window.location.href = '/dashboard';
                         break;
                     case 'RH':
                         navigate('/rh');
@@ -38,11 +40,11 @@ const Login = () => {
                         navigate('/dashboard');
                 }
             } else {
-                alert(data.error + (data.details ? `: ${data.details}` : '') || 'Erro ao fazer login');
+                toast.error(data.error + (data.details ? `: ${data.details}` : '') || 'Erro ao fazer login');
             }
         } catch (error) {
             console.error('Login error', error);
-            alert('Erro de conexão ao fazer login');
+            toast.error('Erro de conexão ao fazer login');
         }
     };
 
@@ -65,7 +67,7 @@ const Login = () => {
                                 <User className="h-5 w-5 text-gray-400" />
                             </div>
                             <input
-                                type="email"
+                                type="text"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
@@ -100,9 +102,9 @@ const Login = () => {
                     </button>
 
                     <div className="text-center">
-                        <a href="#" onClick={(e) => { e.preventDefault(); alert('Por favor, entre em contato com o administrador para redefinir sua senha.'); }} className="text-sm text-gray-500 hover:text-primary transition-colors">
+                        <button type="button" onClick={() => toast.info('Por favor, entre em contato com o administrador para redefinir sua senha.')} className="text-sm text-gray-500 hover:text-primary transition-colors">
                             Esqueceu sua senha?
-                        </a>
+                        </button>
                     </div>
                 </form>
             </div>

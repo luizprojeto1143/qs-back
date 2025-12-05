@@ -1,54 +1,112 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FileText, BarChart2, Users, Building, AlertCircle, PieChart, TrendingUp, ClipboardList, Loader } from 'lucide-react';
+import { FileText, BarChart2, Users, Building, AlertCircle, PieChart, TrendingUp, ClipboardList, Loader, X } from 'lucide-react';
+import { api } from '../lib/api';
+import { toast } from 'sonner';
 
 const reportTypes = [
-    { id: 'VISIT_INDIVIDUAL', label: 'Relatório de Visita Individual', icon: ClipboardList, desc: 'Detalhes completos de uma visita específica.' },
-    { id: 'COMPANY_MONTHLY', label: 'Relatório Mensal da Empresa', icon: Building, desc: 'Visão geral do mês para RH e diretoria.' },
-    { id: 'COLLABORATOR_HISTORY', label: 'Histórico do Colaborador', icon: Users, desc: 'Evolução individual e histórico de visitas.' },
-    { id: 'AREA_REPORT', label: 'Relatório de Área', icon: BarChart2, desc: 'Desempenho e pendências por área.' },
-    { id: 'SECTOR_REPORT', label: 'Relatório de Setor', icon: PieChart, desc: 'Comparativo entre áreas do mesmo setor.' },
-    { id: 'PENDENCIES_REPORT', label: 'Relatório de Pendências', icon: AlertCircle, desc: 'Status de todas as pendências e prazos.' },
-    { id: 'COLLABORATOR_EVOLUTION', label: 'Evolução do Colaborador', icon: TrendingUp, desc: 'Gráficos de desempenho e adaptação.' },
-    { id: 'AREA_EVOLUTION', label: 'Evolução da Área', icon: TrendingUp, desc: 'Impacto do trabalho no ambiente.' },
-    { id: 'LEADERSHIP_REPORT', label: 'Relatório da Liderança', icon: Users, desc: 'Avaliação e desempenho dos líderes.' },
-    { id: 'EXECUTIVE_SUMMARY', label: 'Relatório Executivo (Anual)', icon: FileText, desc: 'Painel estratégico para diretoria.' },
-    { id: 'INCLUSION_DIAGNOSIS', label: 'Diagnóstico de Inclusão', icon: ClipboardList, desc: 'Mapeamento de barreiras e acessibilidade.' },
-    { id: 'OPERATIONAL_REPORT', label: 'Relatório Operacional QS', icon: FileText, desc: 'Controle interno de produtividade.' },
+    { id: 'VISIT_INDIVIDUAL', label: 'Relatório de Visita Individual', icon: ClipboardList, desc: 'Detalhes completos de uma visita específica.', param: 'visitId' },
+    { id: 'COMPANY_MONTHLY', label: 'Relatório Mensal da Empresa', icon: Building, desc: 'Visão geral do mês para RH e diretoria.', param: null },
+    { id: 'COLLABORATOR_HISTORY', label: 'Histórico do Colaborador', icon: Users, desc: 'Evolução individual e histórico de visitas.', param: 'collaboratorId' },
+    { id: 'AREA_REPORT', label: 'Relatório de Área', icon: BarChart2, desc: 'Desempenho e pendências por área.', param: 'areaId' },
+    { id: 'SECTOR_REPORT', label: 'Relatório de Setor', icon: PieChart, desc: 'Comparativo entre áreas do mesmo setor.', param: 'sectorId' },
+    { id: 'PENDENCIES_REPORT', label: 'Relatório de Pendências', icon: AlertCircle, desc: 'Status de todas as pendências e prazos.', param: null },
+    { id: 'COLLABORATOR_EVOLUTION', label: 'Evolução do Colaborador', icon: TrendingUp, desc: 'Gráficos de desempenho e adaptação.', param: 'collaboratorId' },
+    { id: 'AREA_EVOLUTION', label: 'Evolução da Área', icon: TrendingUp, desc: 'Impacto do trabalho no ambiente.', param: 'areaId' },
+    { id: 'LEADERSHIP_REPORT', label: 'Relatório da Liderança', icon: Users, desc: 'Avaliação e desempenho dos líderes.', param: null },
+    { id: 'EXECUTIVE_SUMMARY', label: 'Relatório Executivo (Anual)', icon: FileText, desc: 'Painel estratégico para diretoria.', param: null },
+    { id: 'INCLUSION_DIAGNOSIS', label: 'Diagnóstico de Inclusão', icon: ClipboardList, desc: 'Mapeamento de barreiras e acessibilidade.', param: null },
+    { id: 'OPERATIONAL_REPORT', label: 'Relatório Operacional QS', icon: FileText, desc: 'Controle interno de produtividade.', param: null },
 ];
 
 const Reports = () => {
     const navigate = useNavigate();
+    // const { selectedCompanyId } = useCompany();
     const [generating, setGenerating] = useState<string | null>(null);
+    const [modalOpen, setModalOpen] = useState(false);
+    const [selectedReport, setSelectedReport] = useState<any>(null);
+    const [selectedValue, setSelectedValue] = useState('');
 
-    const handleGenerate = async (type: string) => {
+    // Data for dropdowns
+    const [visits, setVisits] = useState<any[]>([]);
+    const [collaborators, setCollaborators] = useState<any[]>([]);
+    const [areas, setAreas] = useState<any[]>([]);
+    const [sectors, setSectors] = useState<any[]>([]);
+    const [loadingData, setLoadingData] = useState(false);
+
+    useEffect(() => {
+        if (modalOpen && selectedReport?.param) {
+            fetchDropdownData(selectedReport.param);
+        }
+    }, [modalOpen, selectedReport]);
+
+    const fetchDropdownData = async (paramType: string) => {
+        setLoadingData(true);
+        try {
+            if (paramType === 'visitId') {
+                const res = await api.get('/visits');
+                setVisits(res.data);
+            } else if (paramType === 'collaboratorId') {
+                const res = await api.get('/collaborators');
+                setCollaborators(res.data);
+            } else if (paramType === 'areaId') {
+                const res = await api.get('/areas');
+                setAreas(res.data);
+            } else if (paramType === 'sectorId') {
+                const res = await api.get('/sectors');
+                setSectors(res.data);
+            }
+        } catch (error) {
+            console.error('Error fetching dropdown data', error);
+            toast.error('Erro ao carregar opções.');
+        } finally {
+            setLoadingData(false);
+        }
+    };
+
+    const handleReportClick = (report: any) => {
+        if (report.param) {
+            setSelectedReport(report);
+            setSelectedValue('');
+            setModalOpen(true);
+        } else {
+            generateReport(report.id);
+        }
+    };
+
+    const generateReport = async (type: string, paramValue?: string) => {
         setGenerating(type);
         try {
-            const token = localStorage.getItem('token');
-            // Defaulting to current month/year.
-            // In a real scenario, we would open a modal to ask for Date/ID first.
-            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/reports`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ type, filters: { month: new Date().getMonth(), year: new Date().getFullYear() } })
-            });
+            let filters: any = { month: new Date().getMonth(), year: new Date().getFullYear() };
 
-            const result = await response.json();
+            if (paramValue) {
+                const paramName = reportTypes.find(r => r.id === type)?.param;
+                if (paramName) filters[paramName] = paramValue;
+            }
 
-            if (result.success) {
-                navigate('/dashboard/report-viewer', { state: { reportType: type, data: result.data } });
+            const response = await api.post('/reports', { type, filters });
+
+            if (response.data.success) {
+                navigate('/dashboard/report-viewer', { state: { reportType: type, data: response.data.data } });
+                setModalOpen(false);
             } else {
-                alert('Erro ao gerar relatório: ' + result.error);
+                toast.error('Erro ao gerar relatório: ' + response.data.error);
             }
         } catch (error) {
             console.error('Error generating report', error);
-            alert('Erro ao gerar relatório.');
+            toast.error('Erro ao gerar relatório.');
         } finally {
             setGenerating(null);
         }
+    };
+
+    const handleModalSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedValue) {
+            toast.error('Por favor, selecione uma opção.');
+            return;
+        }
+        generateReport(selectedReport.id, selectedValue);
     };
 
     return (
@@ -62,7 +120,7 @@ const Reports = () => {
                 {reportTypes.map((report) => (
                     <button
                         key={report.id}
-                        onClick={() => handleGenerate(report.id)}
+                        onClick={() => handleReportClick(report)}
                         disabled={generating !== null}
                         className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all text-left group disabled:opacity-50"
                     >
@@ -77,6 +135,63 @@ const Reports = () => {
                     </button>
                 ))}
             </div>
+
+            {/* Selection Modal */}
+            {modalOpen && selectedReport && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl w-full max-w-md p-6">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-bold text-gray-900">{selectedReport.label}</h3>
+                            <button onClick={() => setModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                                <X className="h-5 w-5" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleModalSubmit} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Selecione {selectedReport.param === 'visitId' ? 'a Visita' :
+                                        selectedReport.param === 'collaboratorId' ? 'o Colaborador' :
+                                            selectedReport.param === 'areaId' ? 'a Área' : 'o Setor'}
+                                </label>
+
+                                {loadingData ? (
+                                    <div className="text-center py-4 text-gray-500">Carregando opções...</div>
+                                ) : (
+                                    <select
+                                        className="input-field"
+                                        value={selectedValue}
+                                        onChange={(e) => setSelectedValue(e.target.value)}
+                                        required
+                                    >
+                                        <option value="">Selecione...</option>
+                                        {selectedReport.param === 'visitId' && visits.map(v => (
+                                            <option key={v.id} value={v.id}>{new Date(v.date).toLocaleDateString()} - {v.area?.name}</option>
+                                        ))}
+                                        {selectedReport.param === 'collaboratorId' && collaborators.map(c => (
+                                            <option key={c.id} value={c.id}>{c.name}</option>
+                                        ))}
+                                        {selectedReport.param === 'areaId' && areas.map(a => (
+                                            <option key={a.id} value={a.id}>{a.name}</option>
+                                        ))}
+                                        {selectedReport.param === 'sectorId' && sectors.map(s => (
+                                            <option key={s.id} value={s.id}>{s.name}</option>
+                                        ))}
+                                    </select>
+                                )}
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={loadingData || generating !== null}
+                                className="btn-primary w-full"
+                            >
+                                {generating ? 'Gerando...' : 'Gerar Relatório'}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

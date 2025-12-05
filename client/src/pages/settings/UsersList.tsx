@@ -1,0 +1,343 @@
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '../../lib/api';
+import { Plus, Pencil, Trash2, X, Check, Shield, Building2, MapPin } from 'lucide-react';
+import { toast } from 'sonner';
+
+interface User {
+    id: string;
+    name: string;
+    email: string;
+    role: 'MASTER' | 'RH' | 'LIDER';
+    companyId?: string;
+    areaId?: string;
+    company?: { name: string };
+    area?: { name: string };
+}
+
+interface Company {
+    id: string;
+    name: string;
+}
+
+interface Area {
+    id: string;
+    name: string;
+}
+
+export function UsersList() {
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingUser, setEditingUser] = useState<User | null>(null);
+    const [formData, setFormData] = useState({
+        name: '',
+        email: '',
+        password: '',
+        role: 'RH',
+        companyId: '',
+        areaId: ''
+    });
+
+    const queryClient = useQueryClient();
+
+    const { data: users, isLoading } = useQuery<User[]>({
+        queryKey: ['users'],
+        queryFn: async () => {
+            const response = await api.get('/users');
+            return response.data;
+        }
+    });
+
+    const { data: companies } = useQuery<Company[]>({
+        queryKey: ['companies'],
+        queryFn: async () => {
+            const response = await api.get('/companies');
+            return response.data;
+        }
+    });
+
+    const { data: areas } = useQuery<Area[]>({
+        queryKey: ['areas'],
+        queryFn: async () => {
+            const response = await api.get('/areas');
+            return response.data;
+        }
+    });
+
+    const createMutation = useMutation({
+        mutationFn: async (data: any) => {
+            await api.post('/users', data);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['users'] });
+            setIsModalOpen(false);
+            resetForm();
+            toast.success('Usuário criado com sucesso!');
+        },
+        onError: (error: any) => {
+            toast.error(error.response?.data?.error || 'Erro ao criar usuário');
+        }
+    });
+
+    const updateMutation = useMutation({
+        mutationFn: async (data: any) => {
+            await api.put(`/users/${editingUser?.id}`, data);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['users'] });
+            setIsModalOpen(false);
+            resetForm();
+            toast.success('Usuário atualizado com sucesso!');
+        },
+        onError: (error: any) => {
+            toast.error(error.response?.data?.error || 'Erro ao atualizar usuário');
+        }
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: async (id: string) => {
+            await api.delete(`/users/${id}`);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['users'] });
+            toast.success('Usuário removido com sucesso!');
+        },
+        onError: () => {
+            toast.error('Erro ao remover usuário');
+        }
+    });
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (editingUser) {
+            updateMutation.mutate(formData);
+        } else {
+            createMutation.mutate(formData);
+        }
+    };
+
+    const handleEdit = (user: User) => {
+        setEditingUser(user);
+        setFormData({
+            name: user.name,
+            email: user.email,
+            password: '', // Don't fill password on edit
+            role: user.role as string,
+            companyId: user.companyId || '',
+            areaId: user.areaId || ''
+        });
+        setIsModalOpen(true);
+    };
+
+    const handleDelete = (id: string) => {
+        if (confirm('Tem certeza que deseja remover este usuário?')) {
+            deleteMutation.mutate(id);
+        }
+    };
+
+    const resetForm = () => {
+        setEditingUser(null);
+        setFormData({
+            name: '',
+            email: '',
+            password: '',
+            role: 'RH',
+            companyId: '',
+            areaId: ''
+        });
+    };
+
+    return (
+        <div className="space-y-6">
+            <div className="flex justify-between items-center">
+                <div>
+                    <h2 className="text-2xl font-bold text-gray-800">Gestão de Usuários</h2>
+                    <p className="text-gray-600">Gerencie acessos de RH e Líderes</p>
+                </div>
+                <button
+                    onClick={() => { resetForm(); setIsModalOpen(true); }}
+                    className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                    <Plus size={20} />
+                    Novo Usuário
+                </button>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <table className="w-full text-left">
+                    <thead className="bg-gray-50 border-b border-gray-100">
+                        <tr>
+                            <th className="p-4 font-semibold text-gray-600">Nome</th>
+                            <th className="p-4 font-semibold text-gray-600">Email</th>
+                            <th className="p-4 font-semibold text-gray-600">Perfil</th>
+                            <th className="p-4 font-semibold text-gray-600">Empresa</th>
+                            <th className="p-4 font-semibold text-gray-600">Área (Líder)</th>
+                            <th className="p-4 font-semibold text-gray-600 text-right">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                        {isLoading ? (
+                            <tr><td colSpan={6} className="p-4 text-center">Carregando...</td></tr>
+                        ) : users?.map((user) => (
+                            <tr key={user.id} className="hover:bg-gray-50">
+                                <td className="p-4 font-medium text-gray-800">{user.name}</td>
+                                <td className="p-4 text-gray-600">{user.email}</td>
+                                <td className="p-4">
+                                    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium
+                    ${user.role === 'MASTER' ? 'bg-purple-100 text-purple-800' :
+                                            user.role === 'RH' ? 'bg-blue-100 text-blue-800' :
+                                                'bg-green-100 text-green-800'}`}>
+                                        <Shield size={12} />
+                                        {user.role}
+                                    </span>
+                                </td>
+                                <td className="p-4 text-gray-600">
+                                    {user.company?.name || '-'}
+                                </td>
+                                <td className="p-4 text-gray-600">
+                                    {user.area?.name || '-'}
+                                </td>
+                                <td className="p-4 text-right">
+                                    <div className="flex justify-end gap-2">
+                                        <button
+                                            onClick={() => handleEdit(user)}
+                                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                        >
+                                            <Pencil size={18} />
+                                        </button>
+                                        <button
+                                            onClick={() => handleDelete(user.id)}
+                                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+
+            {isModalOpen && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 m-4">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-xl font-bold text-gray-800">
+                                {editingUser ? 'Editar Usuário' : 'Novo Usuário'}
+                            </h3>
+                            <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                                <X size={24} />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Nome</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={formData.name}
+                                    onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                <input
+                                    type="email"
+                                    required
+                                    value={formData.email}
+                                    onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Senha</label>
+                                <input
+                                    type="password"
+                                    required={!editingUser}
+                                    placeholder={editingUser ? 'Deixe em branco para manter' : ''}
+                                    value={formData.password}
+                                    onChange={e => setFormData({ ...formData, password: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Perfil</label>
+                                <select
+                                    value={formData.role}
+                                    onChange={e => setFormData({ ...formData, role: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                >
+                                    <option value="RH">RH</option>
+                                    <option value="LIDER">Líder</option>
+                                    <option value="MASTER">Master</option>
+                                </select>
+                            </div>
+
+                            {formData.role !== 'MASTER' && (
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Empresa</label>
+                                    <div className="relative">
+                                        <Building2 className="absolute left-3 top-2.5 text-gray-400" size={18} />
+                                        <select
+                                            required
+                                            value={formData.companyId}
+                                            onChange={e => setFormData({ ...formData, companyId: e.target.value })}
+                                            className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                        >
+                                            <option value="">Selecione uma empresa...</option>
+                                            {companies?.map(company => (
+                                                <option key={company.id} value={company.id}>{company.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+                            )}
+
+                            {formData.role === 'LIDER' && (
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Área</label>
+                                    <div className="relative">
+                                        <MapPin className="absolute left-3 top-2.5 text-gray-400" size={18} />
+                                        <select
+                                            required
+                                            value={formData.areaId}
+                                            onChange={e => setFormData({ ...formData, areaId: e.target.value })}
+                                            className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                        >
+                                            <option value="">Selecione uma área...</option>
+                                            {areas?.map(area => (
+                                                <option key={area.id} value={area.id}>{area.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="flex justify-end gap-3 mt-6">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsModalOpen(false)}
+                                    className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                                >
+                                    <Check size={18} />
+                                    {editingUser ? 'Salvar Alterações' : 'Criar Usuário'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}

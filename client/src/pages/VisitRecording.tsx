@@ -1,21 +1,45 @@
-import { useState, useEffect } from 'react';
-import { Mic, Upload, CheckCircle, AlertCircle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+
+import { useState, useEffect, useRef } from 'react';
+import { Mic, Upload, CheckCircle, X, Square, Trash2, Plus } from 'lucide-react';
+import { toast } from 'sonner';
+import { useNavigate, useLocation } from 'react-router-dom';
+
+import { useCompany } from '../contexts/CompanyContext';
+import { api } from '../lib/api';
 
 const VisitRecording = () => {
     const navigate = useNavigate();
+    const location = useLocation();
+    const { selectedCompanyId, companies: contextCompanies } = useCompany();
     const [activeTab, setActiveTab] = useState(0);
     const [loading, setLoading] = useState(false);
 
+    // Recording State
+    const [isRecording, setIsRecording] = useState<string | null>(null); // 'lideranca' | 'colaborador' | null
+    const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+    const [recordingTime, setRecordingTime] = useState(0);
+    const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    // Pendency Modal State
+    const [isPendencyModalOpen, setIsPendencyModalOpen] = useState(false);
+    const [newPendency, setNewPendency] = useState({
+        description: '',
+        responsible: '',
+        priority: 'MEDIA',
+        deadline: ''
+    });
+
     // Form State
     const [formData, setFormData] = useState({
-        companyId: '',
+        companyId: selectedCompanyId || '',
         areaId: '',
         collaboratorIds: [] as string[],
         relatos: {
             lideranca: '',
             colaborador: '',
-            observacoes: ''
+            observacoes: '',
+            audioLideranca: null as string | null,
+            audioColaborador: null as string | null
         },
         avaliacoes: {
             area: {},
@@ -26,10 +50,20 @@ const VisitRecording = () => {
         anexos: [] as any[]
     });
 
+    // Update formData when selectedCompanyId changes
+    useEffect(() => {
+        if (selectedCompanyId) {
+            setFormData(prev => ({ ...prev, companyId: selectedCompanyId }));
+        }
+    }, [selectedCompanyId]);
+
     // Data for Selects
-    const [companies, setCompanies] = useState<any[]>([]);
+    const [companies, setCompanies] = useState<any[]>(contextCompanies);
     const [areas, setAreas] = useState<any[]>([]);
     const [collaborators, setCollaborators] = useState<any[]>([]);
+
+    // State for linked schedules
+    const [linkedScheduleIds, setLinkedScheduleIds] = useState<string[]>([]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -37,37 +71,292 @@ const VisitRecording = () => {
                 const token = localStorage.getItem('token');
                 const headers = { 'Authorization': `Bearer ${token}` };
 
-                // Fetch Companies
-                // Note: In a real multi-tenant app, the user might only see their own company.
-                // For Master, we might want to list all. For now, we'll assume the user's company or a list if Master.
-                // Since we don't have a specific 'list companies' endpoint for dropdowns yet that is public, 
-                // we will use the structure endpoint or similar.
-                // For simplicity in this iteration, we will fetch the user's structure.
-
-                const resStructure = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/structure`, { headers });
-                const structure = await resStructure.json();
-
-                if (structure.company) {
-                    setCompanies([structure.company]);
-                    // If the company has sectors and areas, we can populate areas
-                    const allAreas: any[] = [];
-                    structure.company.sectors.forEach((s: any) => {
-                        if (s.areas) allAreas.push(...s.areas);
-                    });
-                    setAreas(allAreas);
+                // Use context companies if available, otherwise fetch (fallback)
+                if (contextCompanies.length > 0) {
+                    setCompanies(contextCompanies);
+                } else {
+                    const resStructure = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/structure`, { headers });
+                    const structure = await resStructure.json();
+                    if (structure.company) setCompanies([structure.company]);
                 }
 
-                // Fetch Collaborators
-                const resCollaborators = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/collaborators`, { headers });
+                // Fetch Areas and Collaborators
+                const [resAreas, resCollaborators] = await Promise.all([
+                    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/areas`, { headers }),
+                    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/collaborators`, { headers })
+                ]);
+
+                const areasData = await resAreas.json();
                 const collaboratorsData = await resCollaborators.json();
+
+                setAreas(areasData);
                 setCollaborators(collaboratorsData);
 
+                // Handle Schedule Integration (Auto-Grouping)
+                if (location.state && location.state.scheduleId) {
+                    const { scheduleId, companyId, areaName, date } = location.state;
+
+                    // 1. Set Company
+                    if (companyId) {
+                        setFormData(prev => ({ ...prev, companyId }));
+                    }
+
+                    // 2. Find and Set Area
+                    if (areaName) {
+                        const area = areasData.find((a: any) => a.name === areaName);
+                        if (area) {
+                            setFormData(prev => ({ ...prev, areaId: area.id }));
+
+                            // 3. Auto-Group: Fetch other schedules for this Area + Date + Company
+                            const resSchedules = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/schedules`, { headers });
+                            const allSchedules = await resSchedules.json();
+
+                            const targetDate = new Date(date).toISOString().split('T')[0];
+
+                            const relatedSchedules = allSchedules.filter((s: any) => {
+                                const sDate = new Date(s.date).toISOString().split('T')[0];
+                                return s.status === 'PENDENTE' &&
+                                    sDate === targetDate &&
+                                    s.area === areaName &&
+                                    (!companyId || s.companyId === companyId);
+                            });
+
+                            // Collect IDs and Collaborators
+                            const ids = relatedSchedules.map((s: any) => s.id);
+                            if (!ids.includes(scheduleId)) ids.push(scheduleId);
+
+                            setLinkedScheduleIds(ids);
+
+                            // Add Collaborators
+                            const collaboratorsToAdd: string[] = [];
+                            relatedSchedules.forEach((s: any) => {
+                                const collab = collaboratorsData.find((c: any) => c.name === s.collaborator);
+                                if (collab && !collaboratorsToAdd.includes(collab.id)) {
+                                    collaboratorsToAdd.push(collab.id);
+                                }
+                            });
+
+                            if (location.state.collaboratorName) {
+                                const initialCollab = collaboratorsData.find((c: any) => c.name === location.state.collaboratorName);
+                                if (initialCollab && !collaboratorsToAdd.includes(initialCollab.id)) {
+                                    collaboratorsToAdd.push(initialCollab.id);
+                                }
+                            }
+
+                            setFormData(prev => ({ ...prev, areaId: area.id, collaboratorIds: collaboratorsToAdd }));
+
+                            if (ids.length > 1) {
+                                toast.info(`Encontrados ${ids.length} agendamentos para esta área hoje. Todos foram agrupados!`);
+                            }
+                        }
+                    }
+                }
             } catch (error) {
                 console.error('Error fetching data', error);
             }
         };
         fetchData();
-    }, []);
+    }, [location.state]);
+
+    // NEW: Pull Logic - Watch for Area changes
+    useEffect(() => {
+        const fetchApprovedSchedules = async () => {
+            if (!formData.areaId || !formData.companyId) return;
+
+            try {
+                const token = localStorage.getItem('token');
+                const headers = { 'Authorization': `Bearer ${token}` };
+
+                // Fetch schedules
+                const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/schedules`, { headers });
+                if (res.ok) {
+                    const allSchedules = await res.json();
+
+                    // Filter: Status APROVADO, Same Company, Same Area, Today (or recent?)
+                    // User said "todas as solicitações aceitas". Assuming for "today" or "pending execution".
+                    // Let's assume "today" for now to avoid pulling old stuff.
+                    const today = new Date().toISOString().split('T')[0];
+
+                    // Find the area name to match (since schedule stores area name currently)
+                    const selectedArea = areas.find(a => a.id === formData.areaId);
+                    const areaName = selectedArea?.name;
+
+                    if (!areaName) return;
+
+                    const approvedSchedules = allSchedules.filter((s: any) => {
+                        const sDate = new Date(s.date).toISOString().split('T')[0];
+                        return s.status === 'APROVADO' &&
+                            s.area === areaName &&
+                            sDate === today &&
+                            (!formData.companyId || s.companyId === formData.companyId);
+                    });
+
+                    if (approvedSchedules.length > 0) {
+                        // 1. Link Schedules
+                        const ids = approvedSchedules.map((s: any) => s.id);
+                        setLinkedScheduleIds(prev => [...new Set([...prev, ...ids])]);
+
+                        // 2. Add Collaborators
+                        const collaboratorsToAdd: string[] = [];
+                        approvedSchedules.forEach((s: any) => {
+                            const collab = collaborators.find((c: any) => c.name === s.collaborator);
+                            if (collab) collaboratorsToAdd.push(collab.id);
+                        });
+
+                        setFormData(prev => {
+                            const newCollabs = [...new Set([...prev.collaboratorIds, ...collaboratorsToAdd])];
+
+                            // 3. Pre-fill Report (Concatenate reasons)
+                            // Only append if not already present to avoid duplication on re-renders
+                            let newReport = prev.relatos.colaborador;
+                            const reasonsToAdd = approvedSchedules
+                                .map((s: any) => `${s.collaborator}: ${s.reason || 'Sem motivo'}`)
+                                .join('\n');
+
+                            if (reasonsToAdd && !newReport.includes(reasonsToAdd)) {
+                                newReport = newReport ? `${newReport}\n\n${reasonsToAdd}` : reasonsToAdd;
+                            }
+
+                            return {
+                                ...prev,
+                                collaboratorIds: newCollabs,
+                                relatos: {
+                                    ...prev.relatos,
+                                    colaborador: newReport
+                                }
+                            };
+                        });
+
+                        // Optional: Notify user
+                        // alert(`${approvedSchedules.length} agendamentos aprovados foram vinculados.`);
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching approved schedules', error);
+            }
+        };
+
+        fetchApprovedSchedules();
+    }, [formData.areaId, formData.companyId, areas, collaborators]);
+
+    // --- Voice Recording Logic ---
+    const startRecording = async (field: 'lideranca' | 'colaborador') => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const recorder = new MediaRecorder(stream);
+            const chunks: Blob[] = [];
+
+            recorder.ondataavailable = (e) => chunks.push(e.data);
+            recorder.onstop = async () => {
+                const blob = new Blob(chunks, { type: 'audio/webm' });
+
+                // Upload Audio
+                const audioFile = new File([blob], `audio-${field}-${Date.now()}.webm`, { type: 'audio/webm' });
+                const formDataUpload = new FormData();
+                formDataUpload.append('file', audioFile);
+
+                try {
+                    const res = await api.post('/upload', formDataUpload, {
+                        headers: { 'Content-Type': 'multipart/form-data' }
+                    });
+
+                    setFormData(prev => ({
+                        ...prev,
+                        relatos: {
+                            ...prev.relatos,
+                            [field === 'lideranca' ? 'audioLideranca' : 'audioColaborador']: res.data.url
+                        }
+                    }));
+                    toast.success('Áudio gravado e salvo!');
+                } catch (error) {
+                    console.error('Upload error', error);
+                    toast.error('Erro ao salvar áudio');
+                }
+
+                stream.getTracks().forEach(track => track.stop());
+            };
+
+            recorder.start();
+            setMediaRecorder(recorder);
+            setIsRecording(field);
+            setRecordingTime(0);
+            timerRef.current = setInterval(() => setRecordingTime(prev => prev + 1), 1000);
+
+        } catch (err) {
+            console.error('Error accessing microphone', err);
+            toast.error('Erro ao acessar microfone');
+        }
+    };
+
+    const stopRecording = () => {
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+            mediaRecorder.stop();
+            if (timerRef.current) clearInterval(timerRef.current);
+            setIsRecording(null);
+            setMediaRecorder(null);
+        }
+    };
+
+    const formatTime = (seconds: number) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    // --- File Upload Logic ---
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            const file = e.target.files[0];
+            const formDataUpload = new FormData();
+            formDataUpload.append('file', file);
+
+            try {
+                const res = await api.post('/upload', formDataUpload, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+
+                setFormData(prev => ({
+                    ...prev,
+                    anexos: [...prev.anexos, {
+                        name: file.name,
+                        url: res.data.url,
+                        type: file.type,
+                        size: file.size
+                    }]
+                }));
+                toast.success('Arquivo enviado com sucesso!');
+            } catch (error) {
+                console.error('Upload error', error);
+                toast.error('Erro ao enviar arquivo');
+            }
+        }
+    };
+
+    const removeAttachment = (index: number) => {
+        setFormData(prev => ({
+            ...prev,
+            anexos: prev.anexos.filter((_, i) => i !== index)
+        }));
+    };
+
+    // --- Pendency Logic ---
+    const handlePendencySubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        setFormData(prev => ({
+            ...prev,
+            pendencias: [...prev.pendencias, { ...newPendency, id: Date.now().toString() }] // Temp ID
+        }));
+        setNewPendency({ description: '', responsible: '', priority: 'MEDIA', deadline: '' });
+        setIsPendencyModalOpen(false);
+        toast.success('Pendência adicionada à lista!');
+    };
+
+    const removePendency = (index: number) => {
+        setFormData(prev => ({
+            ...prev,
+            pendencias: prev.pendencias.filter((_, i) => i !== index)
+        }));
+    };
 
     const handleSave = async () => {
         setLoading(true);
@@ -83,14 +372,28 @@ const VisitRecording = () => {
             });
 
             if (response.ok) {
-                alert('Acompanhamento salvo com sucesso!');
+                // Update linked schedules status
+                if (linkedScheduleIds.length > 0) {
+                    await Promise.all(linkedScheduleIds.map(id =>
+                        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/schedules/${id}`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                            },
+                            body: JSON.stringify({ status: 'REALIZADO' })
+                        })
+                    ));
+                }
+
+                toast.success('Acompanhamento salvo com sucesso!');
                 navigate('/dashboard');
             } else {
-                alert('Erro ao salvar acompanhamento');
+                toast.error('Erro ao salvar acompanhamento');
             }
         } catch (error) {
             console.error('Error saving visit', error);
-            alert('Erro ao conectar com o servidor');
+            toast.error('Erro ao conectar com o servidor');
         } finally {
             setLoading(false);
         }
@@ -109,9 +412,10 @@ const VisitRecording = () => {
                 <h1 className="text-2xl font-bold text-gray-900">Registrar Acompanhamento</h1>
                 <div className="flex space-x-3">
                     <select
-                        className="input-field max-w-xs"
+                        className={`input-field max-w-xs ${selectedCompanyId ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                         value={formData.companyId}
                         onChange={e => setFormData({ ...formData, companyId: e.target.value })}
+                        disabled={!!selectedCompanyId}
                     >
                         <option value="">Selecione a Empresa</option>
                         {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -125,6 +429,7 @@ const VisitRecording = () => {
                     <nav className="flex space-x-8 px-6 overflow-x-auto" aria-label="Tabs">
                         {tabs.map((tab, index) => (
                             <button
+                                type="button"
                                 key={tab.id}
                                 onClick={() => setActiveTab(index)}
                                 className={`
@@ -150,10 +455,9 @@ const VisitRecording = () => {
                                     <label className="text-sm font-medium text-gray-700">Área</label>
                                     <select
                                         className="input-field"
-                                        value={formData.areaId}
                                         onChange={e => setFormData({ ...formData, areaId: e.target.value })}
                                     >
-                                        <option value="">Selecione...</option>
+                                        <option value="">Selecione a Área</option>
                                         {areas.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
                                     </select>
                                 </div>
@@ -201,9 +505,40 @@ const VisitRecording = () => {
                                         value={formData.relatos.lideranca}
                                         onChange={e => setFormData({ ...formData, relatos: { ...formData.relatos, lideranca: e.target.value } })}
                                     />
-                                    <button className="absolute bottom-3 right-3 p-2 bg-primary text-white rounded-full hover:bg-blue-700 transition-colors">
-                                        <Mic className="h-4 w-4" />
-                                    </button>
+                                    <div className="absolute bottom-3 right-3 flex items-center gap-2">
+                                        {formData.relatos.audioLideranca ? (
+                                            <div className="flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-full">
+                                                <audio src={formData.relatos.audioLideranca} controls className="h-6 w-48" />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setFormData(prev => ({ ...prev, relatos: { ...prev.relatos, audioLideranca: null } }))}
+                                                    className="text-red-500 hover:text-red-700"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                        ) : isRecording === 'lideranca' ? (
+                                            <div className="flex items-center gap-2 bg-red-50 px-3 py-1.5 rounded-full animate-pulse">
+                                                <span className="text-xs font-medium text-red-600">Gravando {formatTime(recordingTime)}</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={stopRecording}
+                                                    className="p-1.5 bg-red-600 text-white rounded-full hover:bg-red-700"
+                                                >
+                                                    <Square size={14} />
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                onClick={() => startRecording('lideranca')}
+                                                className="p-2 bg-primary text-white rounded-full hover:bg-blue-700 transition-colors"
+                                                title="Gravar áudio"
+                                            >
+                                                <Mic className="h-4 w-4" />
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
 
@@ -217,9 +552,40 @@ const VisitRecording = () => {
                                         value={formData.relatos.colaborador}
                                         onChange={e => setFormData({ ...formData, relatos: { ...formData.relatos, colaborador: e.target.value } })}
                                     />
-                                    <button className="absolute bottom-3 right-3 p-2 bg-primary text-white rounded-full hover:bg-blue-700 transition-colors">
-                                        <Mic className="h-4 w-4" />
-                                    </button>
+                                    <div className="absolute bottom-3 right-3 flex items-center gap-2">
+                                        {formData.relatos.audioColaborador ? (
+                                            <div className="flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-full">
+                                                <audio src={formData.relatos.audioColaborador} controls className="h-6 w-48" />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setFormData(prev => ({ ...prev, relatos: { ...prev.relatos, audioColaborador: null } }))}
+                                                    className="text-red-500 hover:text-red-700"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                        ) : isRecording === 'colaborador' ? (
+                                            <div className="flex items-center gap-2 bg-red-50 px-3 py-1.5 rounded-full animate-pulse">
+                                                <span className="text-xs font-medium text-red-600">Gravando {formatTime(recordingTime)}</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={stopRecording}
+                                                    className="p-1.5 bg-red-600 text-white rounded-full hover:bg-red-700"
+                                                >
+                                                    <Square size={14} />
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                onClick={() => startRecording('colaborador')}
+                                                className="p-2 bg-primary text-white rounded-full hover:bg-blue-700 transition-colors"
+                                                title="Gravar áudio"
+                                            >
+                                                <Mic className="h-4 w-4" />
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
 
@@ -239,9 +605,13 @@ const VisitRecording = () => {
                     {/* Tab 2: Avaliações */}
                     {activeTab === 1 && (
                         <div className="space-y-8">
-                            {['Avaliação da Área', 'Avaliação da Liderança', 'Avaliação do Colaborador'].map((section) => (
-                                <div key={section} className="space-y-4">
-                                    <h3 className="text-lg font-medium text-gray-900">{section}</h3>
+                            {[
+                                { id: 'area', label: 'Avaliação da Área' },
+                                { id: 'lideranca', label: 'Avaliação da Liderança' },
+                                { id: 'colaborador', label: 'Avaliação do Colaborador' }
+                            ].map((section) => (
+                                <div key={section.id} className="space-y-4">
+                                    <h3 className="text-lg font-medium text-gray-900">{section.label}</h3>
                                     <div className="grid gap-4">
                                         {['Comunicação', 'Acolhimento', 'Acessibilidade', 'Relacionamento', 'Postura'].map((item) => (
                                             <div key={item} className="flex items-center justify-between bg-gray-50 p-3 rounded-xl">
@@ -249,8 +619,26 @@ const VisitRecording = () => {
                                                 <div className="flex space-x-2">
                                                     {[1, 2, 3, 4, 5].map((rating) => (
                                                         <button
+                                                            type="button"
                                                             key={rating}
-                                                            className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center hover:bg-primary hover:text-white hover:border-primary transition-all text-sm font-medium text-gray-600 bg-white"
+                                                            onClick={() => {
+                                                                setFormData(prev => ({
+                                                                    ...prev,
+                                                                    avaliacoes: {
+                                                                        ...prev.avaliacoes,
+                                                                        [section.id]: {
+                                                                            ...(prev.avaliacoes as any)[section.id],
+                                                                            [item]: rating
+                                                                        }
+                                                                    }
+                                                                }));
+                                                            }}
+                                                            className={`w-8 h-8 rounded-full border flex items-center justify-center transition-all text-sm font-medium
+                                                                ${((formData.avaliacoes as any)[section.id]?.[item] === rating)
+                                                                    ? 'bg-primary text-white border-primary'
+                                                                    : 'border-gray-200 text-gray-600 bg-white hover:bg-blue-50 hover:border-blue-200'
+                                                                }
+                                                            `}
                                                         >
                                                             {rating}
                                                         </button>
@@ -268,26 +656,90 @@ const VisitRecording = () => {
                     {activeTab === 2 && (
                         <div className="space-y-6">
                             <div className="flex justify-end">
-                                <button className="btn-primary flex items-center space-x-2">
-                                    <AlertCircle className="h-4 w-4" />
+                                <button
+                                    type="button"
+                                    onClick={() => setIsPendencyModalOpen(true)}
+                                    className="btn-primary flex items-center space-x-2"
+                                >
+                                    <Plus className="h-4 w-4" />
                                     <span>Nova Pendência</span>
                                 </button>
                             </div>
 
-                            <div className="text-center py-10 text-gray-500">
-                                <p>Nenhuma pendência registrada para este acompanhamento.</p>
-                            </div>
+                            {formData.pendencias.length === 0 ? (
+                                <div className="text-center py-10 text-gray-500">
+                                    <p>Nenhuma pendência registrada para este acompanhamento.</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    {formData.pendencias.map((p, index) => (
+                                        <div key={index} className="flex items-center justify-between bg-gray-50 p-4 rounded-xl border border-gray-100">
+                                            <div>
+                                                <h4 className="font-medium text-gray-900">{p.description}</h4>
+                                                <div className="flex items-center gap-3 text-sm text-gray-500 mt-1">
+                                                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${p.priority === 'ALTA' ? 'bg-red-100 text-red-800' :
+                                                        p.priority === 'MEDIA' ? 'bg-yellow-100 text-yellow-800' :
+                                                            'bg-blue-100 text-blue-800'
+                                                        }`}>
+                                                        {p.priority === 'MEDIA' ? 'Média' : p.priority === 'ALTA' ? 'Alta' : 'Baixa'}
+                                                    </span>
+                                                    <span>{p.responsible}</span>
+                                                    <span>{p.deadline ? new Date(p.deadline).toLocaleDateString('pt-BR') : 'Sem prazo'}</span>
+                                                </div>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => removePendency(index)}
+                                                className="text-gray-400 hover:text-red-500 p-2"
+                                            >
+                                                <Trash2 size={18} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     )}
 
                     {/* Tab 4: Anexos */}
                     {activeTab === 3 && (
                         <div className="space-y-6">
-                            <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-primary transition-colors cursor-pointer bg-gray-50">
+                            <label className="block border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-primary transition-colors cursor-pointer bg-gray-50">
+                                <input
+                                    type="file"
+                                    className="hidden"
+                                    onChange={handleFileUpload}
+                                    accept="image/*,application/pdf,video/*"
+                                />
                                 <Upload className="mx-auto h-10 w-10 text-gray-400" />
                                 <p className="mt-2 text-sm font-medium text-gray-900">Clique para enviar arquivo</p>
                                 <p className="text-xs text-gray-500">PNG, JPG, PDF, MP4 até 10MB</p>
-                            </div>
+                            </label>
+
+                            {formData.anexos.length > 0 && (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    {formData.anexos.map((file, index) => (
+                                        <div key={index} className="flex items-center justify-between bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
+                                            <div className="flex items-center gap-3 overflow-hidden">
+                                                <div className="bg-gray-100 p-2 rounded-lg">
+                                                    <Upload size={20} className="text-gray-500" />
+                                                </div>
+                                                <div className="truncate">
+                                                    <p className="text-sm font-medium text-gray-900 truncate">{file.name}</p>
+                                                    <p className="text-xs text-gray-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                                                </div>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => removeAttachment(index)}
+                                                className="text-gray-400 hover:text-red-500 p-2"
+                                            >
+                                                <X size={18} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
@@ -310,6 +762,79 @@ const VisitRecording = () => {
                     </button>
                 </div>
             </div>
+
+            {/* Pendency Modal */}
+            {isPendencyModalOpen && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl w-full max-w-lg p-6">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-xl font-bold">Nova Pendência</h2>
+                            <button type="button" onClick={() => setIsPendencyModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                                <X className="h-6 w-6" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handlePendencySubmit} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+                                <textarea
+                                    required
+                                    className="input-field"
+                                    rows={3}
+                                    value={newPendency.description}
+                                    onChange={e => setNewPendency({ ...newPendency, description: e.target.value })}
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Responsável</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        className="input-field"
+                                        value={newPendency.responsible}
+                                        onChange={e => setNewPendency({ ...newPendency, responsible: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Prazo</label>
+                                    <input
+                                        type="date"
+                                        className="input-field"
+                                        value={newPendency.deadline}
+                                        onChange={e => setNewPendency({ ...newPendency, deadline: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Prioridade</label>
+                                <select
+                                    className="input-field"
+                                    value={newPendency.priority}
+                                    onChange={e => setNewPendency({ ...newPendency, priority: e.target.value })}
+                                >
+                                    <option value="BAIXA">Baixa</option>
+                                    <option value="MEDIA">Média</option>
+                                    <option value="ALTA">Alta</option>
+                                </select>
+                            </div>
+
+                            <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-100">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsPendencyModalOpen(false)}
+                                    className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                                >
+                                    Cancelar
+                                </button>
+                                <button type="submit" className="btn-primary">
+                                    Adicionar Pendência
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

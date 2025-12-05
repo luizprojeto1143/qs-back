@@ -79,40 +79,71 @@ export const getRHDashboardStats = async (req: Request, res: Response) => {
         console.error('Error fetching dashboard stats:', error);
         res.status(500).json({ error: 'Error fetching stats' });
     }
-    export const getMasterDashboardStats = async (req: Request, res: Response) => {
-        try {
-            // 1. Total Collaborators (System wide or filtered if needed, but Master usually sees all)
-            const totalCollaborators = await prisma.user.count({
-                where: { role: 'COLABORADOR' }
-            });
+};
 
-            // 2. Total Visits (Acompanhamentos)
-            const totalVisits = await prisma.visit.count();
+export const getMasterDashboardStats = async (req: Request, res: Response) => {
+    try {
+        const companyId = req.headers['x-company-id'] as string;
+        const whereClause = companyId ? { companyId } : {};
 
-            // 3. Open Pendencies
-            const openPendencies = await prisma.pendingItem.count({
-                where: { status: 'PENDENTE' }
-            });
+        // 1. Total Collaborators
+        const totalCollaborators = await prisma.user.count({
+            where: {
+                role: 'COLABORADOR',
+                ...whereClause
+            }
+        });
 
-            // 4. Schedules (Agendamentos) - Future
-            const futureSchedules = await prisma.schedule.count({
-                where: {
-                    date: {
-                        gte: new Date()
-                    }
-                }
-            });
+        // 2. Total Visits (Acompanhamentos)
+        const totalVisits = await prisma.visit.count({
+            where: whereClause
+        });
 
-            res.json({
-                stats: {
-                    collaborators: totalCollaborators,
-                    visits: totalVisits,
-                    pendencies: openPendencies,
-                    schedules: futureSchedules
-                }
-            });
-        } catch (error) {
-            console.error('Error fetching master dashboard stats:', error);
-            res.status(500).json({ error: 'Error fetching stats' });
-        }
-    };
+        // 3. Open Pendencies
+        const openPendencies = await prisma.pendingItem.count({
+            where: {
+                status: 'PENDENTE',
+                ...whereClause
+            }
+        });
+
+        // 4. Schedules (Agendamentos)
+        const futureSchedules = await prisma.schedule.count({
+            where: {
+                date: {
+                    gte: new Date()
+                },
+                ...whereClause
+            }
+        });
+
+        // 5. Recent Activity (Last 5 visits)
+        const recentActivity = await prisma.visit.findMany({
+            where: whereClause,
+            take: 5,
+            orderBy: { date: 'desc' },
+            include: {
+                area: { select: { name: true } },
+                master: { select: { name: true } }
+            }
+        });
+
+        res.json({
+            stats: {
+                collaborators: totalCollaborators,
+                visits: totalVisits,
+                pendencies: openPendencies,
+                schedules: futureSchedules
+            },
+            recentActivity: recentActivity.map(visit => ({
+                id: visit.id,
+                description: `Nova visita registrada: ${visit.area?.name || 'Geral'}`,
+                time: visit.date,
+                author: visit.master.name
+            }))
+        });
+    } catch (error) {
+        console.error('Error fetching master dashboard stats:', error);
+        res.status(500).json({ error: 'Error fetching stats' });
+    }
+};

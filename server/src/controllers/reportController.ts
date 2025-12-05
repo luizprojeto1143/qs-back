@@ -3,15 +3,25 @@ import prisma from '../prisma';
 import { AuthRequest } from '../middleware/authMiddleware';
 
 export const listReports = async (req: Request, res: Response) => {
-    // In a real app, this would query a 'Report' table
-    res.json([]);
+    // Since we don't have a Report history table yet, we return the available types
+    // In a future version, this could return saved reports
+    const reportTypes = [
+        { id: 'VISIT_INDIVIDUAL', name: 'Visita Individual', description: 'Detalhes de uma visita específica' },
+        { id: 'COMPANY_MONTHLY', name: 'Mensal da Empresa', description: 'Resumo mensal de atividades' },
+        { id: 'COLLABORATOR_HISTORY', name: 'Histórico do Colaborador', description: 'Atividades de um colaborador' },
+        { id: 'AREA_REPORT', name: 'Relatório de Área', description: 'Análise por área' },
+        { id: 'PENDENCIES_REPORT', name: 'Relatório de Pendências', description: 'Status de pendências' },
+        { id: 'SECTOR_REPORT', name: 'Relatório de Setor', description: 'Análise por setor' },
+        { id: 'LEADERSHIP_REPORT', name: 'Relatório de Liderança', description: 'Desempenho da liderança' },
+        { id: 'EXECUTIVE_SUMMARY', name: 'Resumo Executivo', description: 'Visão geral estratégica' }
+    ];
+    res.json(reportTypes);
 };
 
 export const generateReport = async (req: Request, res: Response) => {
     try {
         const user = (req as AuthRequest).user;
         const { type, filters } = req.body;
-        // filters can include: dateRange, collaboratorId, areaId, sectorId, visitId, month, year
 
         if (!user || !user.companyId) {
             return res.status(400).json({ error: 'User or Company not found' });
@@ -37,7 +47,6 @@ export const generateReport = async (req: Request, res: Response) => {
                 break;
 
             case 'COMPANY_MONTHLY':
-                // Default to current month if not specified
                 const now = new Date();
                 const month = filters?.month !== undefined ? filters.month : now.getMonth();
                 const year = filters?.year || now.getFullYear();
@@ -107,7 +116,7 @@ export const generateReport = async (req: Request, res: Response) => {
                 break;
 
             case 'PENDENCIES_REPORT':
-                const pendencyStatus = filters?.status; // Optional filter
+                const pendencyStatus = filters?.status;
                 const whereClause: any = { companyId };
                 if (pendencyStatus) whereClause.status = pendencyStatus;
 
@@ -135,29 +144,64 @@ export const generateReport = async (req: Request, res: Response) => {
                 data = { sector, visits: sectorVisits };
                 break;
 
-            case 'COLLABORATOR_EVOLUTION':
-            case 'AREA_EVOLUTION':
             case 'LEADERSHIP_REPORT':
-            case 'EXECUTIVE_SUMMARY':
-            case 'INCLUSION_DIAGNOSIS':
-            case 'OPERATIONAL_REPORT':
-                // For these complex reports, we will return a structured mock for now to demonstrate the UI,
-                // as they require complex historical data analysis or specific business logic definitions not yet fully detailed.
-                // In a real scenario, this would involve heavy aggregation queries.
+                // Real implementation for Leadership Report
+                // Aggregates leadership evaluation scores from visits
+                const leadershipVisits = await prisma.visit.findMany({
+                    where: { companyId },
+                    select: { avaliacaoLideranca: true, date: true }
+                });
+
+                let leadershipScores: number[] = [];
+                leadershipVisits.forEach(v => {
+                    try {
+                        const ratings = v.avaliacaoLideranca ? JSON.parse(v.avaliacaoLideranca) : {};
+                        const values = Object.values(ratings).map((val: any) => Number(val)).filter(val => !isNaN(val));
+                        leadershipScores.push(...values);
+                    } catch (e) { }
+                });
+
+                const avgLeadershipScore = leadershipScores.length > 0
+                    ? (leadershipScores.reduce((a, b) => a + b, 0) / leadershipScores.length).toFixed(1)
+                    : "0.0";
+
                 data = {
                     type,
                     generatedAt: new Date(),
-                    summary: "Relatório gerado com base nos dados disponíveis.",
+                    summary: `Análise de Liderança baseada em ${leadershipVisits.length} visitas.`,
                     metrics: [
-                        { label: "Total de Registros", value: 150 },
-                        { label: "Média de Avaliação", value: 4.8 },
-                        { label: "Taxa de Resolução", value: "92%" }
+                        { label: "Total de Avaliações", value: leadershipScores.length },
+                        { label: "Média Geral de Liderança", value: avgLeadershipScore }
                     ],
-                    details: "Este relatório consolida as informações do período selecionado para análise estratégica."
+                    details: "Relatório consolidado de desempenho da liderança."
                 };
                 break;
 
-            case 'GENERAL':
+            case 'EXECUTIVE_SUMMARY':
+                // Real implementation for Executive Summary
+                const [totalExecVisits, totalExecPendencies, resolvedExecPendencies] = await Promise.all([
+                    prisma.visit.count({ where: { companyId } }),
+                    prisma.pendingItem.count({ where: { companyId } }),
+                    prisma.pendingItem.count({ where: { companyId, status: 'RESOLVIDA' } })
+                ]);
+
+                const execResolutionRate = totalExecPendencies > 0
+                    ? Math.round((resolvedExecPendencies / totalExecPendencies) * 100)
+                    : 0;
+
+                data = {
+                    type,
+                    generatedAt: new Date(),
+                    summary: "Resumo Executivo Geral da Empresa.",
+                    metrics: [
+                        { label: "Total de Visitas", value: totalExecVisits },
+                        { label: "Total de Pendências", value: totalExecPendencies },
+                        { label: "Taxa de Resolução", value: `${execResolutionRate}%` }
+                    ],
+                    details: "Visão geral estratégica dos indicadores de desempenho."
+                };
+                break;
+
             default:
                 const [visits, pendencies, collaborators] = await Promise.all([
                     prisma.visit.count({ where: { companyId } }),

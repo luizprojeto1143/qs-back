@@ -1,13 +1,19 @@
 import { useState, useEffect } from 'react';
-import { AlertCircle, CheckCircle, Clock, Filter, Plus, X, User } from 'lucide-react';
+import { AlertCircle, CheckCircle, Clock, Filter, Plus, X, User, MoreHorizontal, Edit, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
+
+import { useCompany } from '../contexts/CompanyContext';
 
 const Pendencies = () => {
+    const { selectedCompanyId, companies: contextCompanies } = useCompany();
     const [pendencies, setPendencies] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
 
     // Dropdown Data
-    const [companies, setCompanies] = useState<any[]>([]);
+    const [companies, setCompanies] = useState<any[]>(contextCompanies);
     const [areas, setAreas] = useState<any[]>([]);
 
 
@@ -16,15 +22,23 @@ const Pendencies = () => {
         responsible: '',
         priority: 'MEDIA',
         deadline: '',
-        companyId: '',
+        companyId: selectedCompanyId || '',
         areaId: '',
         collaboratorId: ''
     });
+
+    // Update newPendency when selectedCompanyId changes
+    useEffect(() => {
+        if (selectedCompanyId) {
+            setNewPendency(prev => ({ ...prev, companyId: selectedCompanyId }));
+        }
+    }, [selectedCompanyId]);
 
     const fetchData = async () => {
         try {
             const token = localStorage.getItem('token');
             const headers = { 'Authorization': `Bearer ${token}` };
+            if (selectedCompanyId) (headers as any)['x-company-id'] = selectedCompanyId;
 
             const [resPendencies, resCompanies, resAreas] = await Promise.all([
                 fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/pendencies`, { headers }),
@@ -45,18 +59,27 @@ const Pendencies = () => {
 
     useEffect(() => {
         fetchData();
-    }, []);
+    }, [selectedCompanyId]); // Re-fetch when company changes
 
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/pendencies`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
+            const headers: any = {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            };
+            if (selectedCompanyId) headers['x-company-id'] = selectedCompanyId;
+
+            const url = editingId
+                ? `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/pendencies/${editingId}`
+                : `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/pendencies`;
+
+            const method = editingId ? 'PUT' : 'POST';
+
+            const response = await fetch(url, {
+                method,
+                headers,
                 body: JSON.stringify(newPendency)
             });
 
@@ -64,47 +87,122 @@ const Pendencies = () => {
                 setIsModalOpen(false);
                 setNewPendency({
                     description: '', responsible: '', priority: 'MEDIA', deadline: '',
-                    companyId: '', areaId: '', collaboratorId: ''
+                    companyId: selectedCompanyId || '', areaId: '', collaboratorId: ''
                 });
+                setEditingId(null);
                 fetchData();
-                alert('Pendência registrada com sucesso!');
+                toast.success(editingId ? 'Pendência atualizada com sucesso!' : 'Pendência registrada com sucesso!');
             } else {
-                alert('Erro ao registrar pendência.');
+                toast.error('Erro ao salvar pendência.');
             }
         } catch (error) {
-            console.error('Error creating pendency', error);
+            console.error('Error saving pendency', error);
+            toast.error('Erro ao salvar pendência.');
         }
+    };
+
+    const handleEdit = (item: any) => {
+        setNewPendency({
+            description: item.description,
+            responsible: item.responsible,
+            priority: item.priority,
+            deadline: item.deadline ? new Date(item.deadline).toISOString().split('T')[0] : '',
+            companyId: item.companyId,
+            areaId: item.areaId || '',
+            collaboratorId: item.collaboratorId || ''
+        });
+        setEditingId(item.id);
+        setIsModalOpen(true);
+        setActiveMenuId(null);
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!confirm('Tem certeza que deseja excluir esta pendência?')) return;
+        try {
+            const token = localStorage.getItem('token');
+            const headers: any = { 'Authorization': `Bearer ${token}` };
+            if (selectedCompanyId) headers['x-company-id'] = selectedCompanyId;
+
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/pendencies/${id}`, {
+                method: 'DELETE',
+                headers
+            });
+
+            if (response.ok) {
+                fetchData();
+                toast.success('Pendência excluída com sucesso!');
+            } else {
+                toast.error('Erro ao excluir pendência.');
+            }
+        } catch (error) {
+            console.error('Error deleting pendency', error);
+            toast.error('Erro ao excluir pendência.');
+        }
+        setActiveMenuId(null);
     };
 
     const handleResolve = async (id: string) => {
         if (!confirm('Marcar pendência como resolvida?')) return;
         try {
             const token = localStorage.getItem('token');
+            const headers: any = {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            };
+            if (selectedCompanyId) headers['x-company-id'] = selectedCompanyId;
+
             await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/pendencies/${id}`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
+                headers,
                 body: JSON.stringify({ status: 'RESOLVIDA' })
             });
             fetchData();
+            toast.success('Pendência resolvida!');
         } catch (error) {
             console.error('Error resolving pendency', error);
+            toast.error('Erro ao resolver pendência.');
         }
     };
 
+    const [filters, setFilters] = useState({
+        status: '',
+        priority: '',
+        responsible: ''
+    });
+
+    const [showFilters, setShowFilters] = useState(false);
+
+    const filteredPendencies = pendencies.filter(p => {
+        const matchesStatus = !filters.status || p.status === filters.status;
+        const matchesPriority = !filters.priority || p.priority === filters.priority;
+        const matchesResponsible = !filters.responsible || p.responsible.toLowerCase().includes(filters.responsible.toLowerCase());
+        return matchesStatus && matchesPriority && matchesResponsible;
+    });
+
     return (
-        <div className="space-y-6">
+        <div className="space-y-6" onClick={() => setActiveMenuId(null)}>
             <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold text-gray-900">Gestão de Pendências</h1>
                 <div className="flex space-x-3">
-                    <button onClick={() => alert('Funcionalidade de filtros em desenvolvimento.')} className="btn-secondary flex items-center space-x-2">
+                    <button
+                        type="button"
+                        onClick={() => setShowFilters(!showFilters)}
+                        className={`btn-secondary flex items-center space-x-2 ${showFilters ? 'bg-gray-200' : ''}`}
+                    >
                         <Filter className="h-4 w-4" />
                         <span>Filtrar</span>
                     </button>
                     <button
-                        onClick={() => setIsModalOpen(true)}
+                        type="button"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setIsModalOpen(true);
+                            setEditingId(null);
+                            setNewPendency({
+                                description: '', responsible: '', priority: 'MEDIA', deadline: '',
+                                companyId: selectedCompanyId || '', areaId: '', collaboratorId: ''
+                            });
+                        }}
                         className="btn-primary flex items-center space-x-2"
                     >
                         <Plus className="h-4 w-4" />
@@ -113,19 +211,59 @@ const Pendencies = () => {
                 </div>
             </div>
 
+            {showFilters && (
+                <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                        <select
+                            className="input-field"
+                            value={filters.status}
+                            onChange={e => setFilters({ ...filters, status: e.target.value })}
+                        >
+                            <option value="">Todos</option>
+                            <option value="PENDENTE">Pendente</option>
+                            <option value="RESOLVIDA">Resolvida</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Prioridade</label>
+                        <select
+                            className="input-field"
+                            value={filters.priority}
+                            onChange={e => setFilters({ ...filters, priority: e.target.value })}
+                        >
+                            <option value="">Todas</option>
+                            <option value="BAIXA">Baixa</option>
+                            <option value="MEDIA">Média</option>
+                            <option value="ALTA">Alta</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Responsável</label>
+                        <input
+                            type="text"
+                            className="input-field"
+                            placeholder="Buscar por nome..."
+                            value={filters.responsible}
+                            onChange={e => setFilters({ ...filters, responsible: e.target.value })}
+                        />
+                    </div>
+                </div>
+            )}
+
             {loading ? (
                 <div className="text-center py-10">Carregando...</div>
-            ) : pendencies.length === 0 ? (
+            ) : filteredPendencies.length === 0 ? (
                 <div className="bg-white rounded-xl p-10 text-center border border-gray-100 shadow-sm">
                     <AlertCircle className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900">Nenhuma pendência registrada</h3>
-                    <p className="text-gray-500">Tudo certo por aqui! Nenhuma pendência em aberto.</p>
+                    <h3 className="text-lg font-medium text-gray-900">Nenhuma pendência encontrada</h3>
+                    <p className="text-gray-500">Tente ajustar os filtros ou adicione uma nova pendência.</p>
                 </div>
             ) : (
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                     <div className="divide-y divide-gray-100">
-                        {pendencies.map((item) => (
-                            <div key={item.id} className="p-6 hover:bg-gray-50 transition-colors">
+                        {filteredPendencies.map((item) => (
+                            <div key={item.id} className="p-6 hover:bg-gray-50 transition-colors relative">
                                 <div className="flex items-start justify-between">
                                     <div className="flex items-start space-x-4">
                                         <div className={`p-2 rounded-lg ${item.priority === 'ALTA' ? 'bg-red-50 text-red-600' :
@@ -143,7 +281,7 @@ const Pendencies = () => {
                                                 </span>
                                                 <span className="flex items-center">
                                                     <Clock className="h-4 w-4 mr-1" />
-                                                    {item.deadline ? new Date(item.deadline).toLocaleDateString() : 'Sem prazo'}
+                                                    {item.deadline ? new Date(item.deadline).toLocaleDateString('pt-BR') : 'Sem prazo'}
                                                 </span>
                                                 {item.area && (
                                                     <span className="bg-gray-100 px-2 py-0.5 rounded text-xs">
@@ -160,12 +298,42 @@ const Pendencies = () => {
                                         </span>
                                         {item.status !== 'RESOLVIDA' && (
                                             <button
+                                                type="button"
                                                 onClick={() => handleResolve(item.id)}
                                                 className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors" title="Resolver"
                                             >
                                                 <CheckCircle className="h-5 w-5" />
                                             </button>
                                         )}
+
+                                        <div className="relative">
+                                            <button
+                                                type="button"
+                                                onClick={(e) => { e.stopPropagation(); setActiveMenuId(activeMenuId === item.id ? null : item.id); }}
+                                                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                                            >
+                                                <MoreHorizontal className="h-5 w-5" />
+                                            </button>
+
+                                            {activeMenuId === item.id && (
+                                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-10">
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); handleEdit(item); }}
+                                                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center"
+                                                    >
+                                                        <Edit className="h-4 w-4 mr-2" />
+                                                        Editar
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }}
+                                                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center"
+                                                    >
+                                                        <Trash2 className="h-4 w-4 mr-2" />
+                                                        Excluir
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -176,11 +344,11 @@ const Pendencies = () => {
 
             {/* Modal */}
             {isModalOpen && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={(e) => e.stopPropagation()}>
                     <div className="bg-white rounded-2xl w-full max-w-lg p-6">
                         <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-xl font-bold">Nova Pendência</h2>
-                            <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                            <h2 className="text-xl font-bold">{editingId ? 'Editar Pendência' : 'Nova Pendência'}</h2>
+                            <button type="button" onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
                                 <X className="h-6 w-6" />
                             </button>
                         </div>
@@ -246,12 +414,13 @@ const Pendencies = () => {
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Empresa</label>
                                 <select
                                     required
-                                    className="input-field"
+                                    className={`input-field ${selectedCompanyId ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                                     value={newPendency.companyId}
                                     onChange={e => setNewPendency({ ...newPendency, companyId: e.target.value })}
+                                    disabled={!!selectedCompanyId}
                                 >
                                     <option value="">Selecione...</option>
-                                    {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                    {(companies.length > 0 ? companies : contextCompanies).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                 </select>
                             </div>
 
@@ -264,7 +433,7 @@ const Pendencies = () => {
                                     Cancelar
                                 </button>
                                 <button type="submit" className="btn-primary">
-                                    Salvar Pendência
+                                    {editingId ? 'Salvar Alterações' : 'Salvar Pendência'}
                                 </button>
                             </div>
                         </form>

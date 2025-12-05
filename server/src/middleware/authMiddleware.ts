@@ -21,6 +21,15 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
 
     try {
         const verified = jwt.verify(token, JWT_SECRET) as any;
+
+        // Allow MASTER users to switch company context via header
+        if (verified.role === 'MASTER' && req.headers['x-company-id']) {
+            const contextCompanyId = req.headers['x-company-id'] as string;
+            // Ideally we should verify if this company exists, but for now we trust the ID format
+            // or we could do a quick check if needed, but let's keep it lightweight
+            verified.companyId = contextCompanyId;
+        }
+
         (req as AuthRequest).user = verified;
         next();
     } catch (error) {

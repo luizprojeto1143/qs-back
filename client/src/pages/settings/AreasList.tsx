@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
 import { MapPin, Plus, X } from 'lucide-react';
+import { useCompany } from '../../contexts/CompanyContext';
+import { api } from '../../lib/api';
 
 const AreasList = () => {
+    const { selectedCompanyId } = useCompany();
     const [areas, setAreas] = useState<any[]>([]);
     const [sectors, setSectors] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -11,19 +14,16 @@ const AreasList = () => {
 
     const fetchData = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const headers = { 'Authorization': `Bearer ${token}` };
+            // const token = localStorage.getItem('token');
+            // const headers = { 'Authorization': `Bearer ${token}` };
 
             const [resAreas, resSectors] = await Promise.all([
-                fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/areas`, { headers }),
-                fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/sectors`, { headers })
+                api.get('/areas'),
+                api.get('/sectors')
             ]);
 
-            const areasData = await resAreas.json();
-            const sectorsData = await resSectors.json();
-
-            setAreas(areasData);
-            setSectors(sectorsData);
+            setAreas(resAreas.data);
+            setSectors(resSectors.data);
         } catch (error) {
             console.error('Error fetching data', error);
         } finally {
@@ -33,38 +33,24 @@ const AreasList = () => {
 
     useEffect(() => {
         fetchData();
-    }, []);
+    }, [selectedCompanyId]);
 
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const token = localStorage.getItem('token');
-            const url = editingId
-                ? `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/areas/${editingId}`
-                : `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/areas`;
+            const url = editingId ? `/areas/${editingId}` : '/areas';
+            const method = editingId ? 'put' : 'post';
 
-            const method = editingId ? 'PUT' : 'POST';
+            await api[method](url, newArea);
 
-            const response = await fetch(url, {
-                method: method,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(newArea)
-            });
-
-            if (response.ok) {
-                setIsModalOpen(false);
-                setNewArea({ name: '', sectorId: '' });
-                setEditingId(null);
-                fetchData();
-                alert(editingId ? 'Área atualizada com sucesso!' : 'Área cadastrada com sucesso!');
-            } else {
-                alert('Erro ao salvar área.');
-            }
+            setIsModalOpen(false);
+            setNewArea({ name: '', sectorId: '' });
+            setEditingId(null);
+            fetchData();
+            alert(editingId ? 'Área atualizada com sucesso!' : 'Área cadastrada com sucesso!');
         } catch (error) {
             console.error('Error saving area', error);
+            alert('Erro ao salvar área.');
         }
     };
 
@@ -77,11 +63,22 @@ const AreasList = () => {
         setIsModalOpen(true);
     };
 
+    // Filter sectors based on selectedCompanyId (if set)
+    const filteredSectors = sectors.filter(sector => !selectedCompanyId || sector.companyId === selectedCompanyId);
+
+    // Filter areas based on filtered sectors
+    const filteredAreas = areas.filter(area => {
+        if (!selectedCompanyId) return true;
+        const sector = sectors.find(s => s.id === area.sectorId);
+        return sector && sector.companyId === selectedCompanyId;
+    });
+
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold text-gray-900">Cadastro de Áreas</h1>
                 <button
+                    type="button"
                     onClick={() => setIsModalOpen(true)}
                     className="btn-primary flex items-center space-x-2"
                 >
@@ -99,11 +96,12 @@ const AreasList = () => {
                             <tr>
                                 <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Nome da Área</th>
                                 <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Setor</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Empresa</th>
                                 <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Ações</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
-                            {areas.map((area) => (
+                            {filteredAreas.map((area) => (
                                 <tr key={area.id} className="hover:bg-gray-50 transition-colors">
                                     <td className="px-6 py-4 font-medium text-gray-900">
                                         <div className="flex items-center space-x-3">
@@ -114,8 +112,11 @@ const AreasList = () => {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 text-gray-500">{area.sector?.name}</td>
+                                    <td className="px-6 py-4 text-gray-500">
+                                        {area.sector?.company?.name || '-'}
+                                    </td>
                                     <td className="px-6 py-4">
-                                        <button onClick={() => handleEdit(area)} className="text-primary hover:text-blue-700 text-sm font-medium">Editar</button>
+                                        <button type="button" onClick={() => handleEdit(area)} className="text-primary hover:text-blue-700 text-sm font-medium">Editar</button>
                                     </td>
                                 </tr>
                             ))}
@@ -130,7 +131,7 @@ const AreasList = () => {
                     <div className="bg-white rounded-2xl w-full max-w-md p-6">
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-bold">{editingId ? 'Editar Área' : 'Nova Área'}</h2>
-                            <button onClick={() => { setIsModalOpen(false); setEditingId(null); }} className="text-gray-400 hover:text-gray-600">
+                            <button type="button" onClick={() => { setIsModalOpen(false); setEditingId(null); }} className="text-gray-400 hover:text-gray-600">
                                 <X className="h-6 w-6" />
                             </button>
                         </div>
@@ -144,7 +145,7 @@ const AreasList = () => {
                                     onChange={e => setNewArea({ ...newArea, sectorId: e.target.value })}
                                 >
                                     <option value="">Selecione...</option>
-                                    {Array.isArray(sectors) && sectors.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                    {filteredSectors.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                                 </select>
                             </div>
                             <div>

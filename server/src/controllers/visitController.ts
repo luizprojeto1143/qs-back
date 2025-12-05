@@ -80,7 +80,15 @@ export const createVisit = async (req: Request, res: Response) => {
 
 export const listVisits = async (req: Request, res: Response) => {
     try {
+        const user = (req as any).user;
+        const companyId = req.headers['x-company-id'] as string || user.companyId;
+
+        if (!companyId) {
+            return res.status(400).json({ error: 'Company context required' });
+        }
+
         const visits = await prisma.visit.findMany({
+            where: { companyId },
             include: {
                 company: true,
                 area: true,
@@ -92,6 +100,7 @@ export const listVisits = async (req: Request, res: Response) => {
         });
         res.json(visits);
     } catch (error) {
+        console.error('Error fetching visits:', error);
         res.status(500).json({ error: 'Error fetching visits' });
     }
 };
@@ -99,6 +108,9 @@ export const listVisits = async (req: Request, res: Response) => {
 export const getVisit = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
+        const user = (req as any).user;
+        const companyId = req.headers['x-company-id'] as string || user.companyId;
+
         const visit = await prisma.visit.findUnique({
             where: { id },
             include: {
@@ -110,6 +122,13 @@ export const getVisit = async (req: Request, res: Response) => {
                 attachments: true
             }
         });
+
+        if (!visit) return res.status(404).json({ error: 'Visit not found' });
+
+        // Security check
+        if (visit.companyId !== companyId) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
 
         if (!visit) return res.status(404).json({ error: 'Visit not found' });
 

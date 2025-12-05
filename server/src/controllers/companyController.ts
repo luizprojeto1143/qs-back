@@ -1,12 +1,18 @@
 import { Request, Response } from 'express';
 import prisma from '../prisma';
+import { AuthRequest } from '../middleware/authMiddleware';
 
 export const getStructure = async (req: Request, res: Response) => {
     try {
-        // In a real app, filter by the authenticated user's company
-        // const companyId = (req as any).user.companyId;
+        const user = (req as AuthRequest).user;
+        const companyId = req.headers['x-company-id'] as string || user?.companyId;
+
+        if (!companyId) {
+            return res.status(400).json({ error: 'Company context required' });
+        }
 
         const companies = await prisma.company.findMany({
+            where: { id: companyId },
             include: {
                 sectors: {
                     include: {
@@ -60,6 +66,15 @@ export const createCompany = async (req: Request, res: Response) => {
 export const createSector = async (req: Request, res: Response) => {
     try {
         const { name, companyId } = req.body;
+        const user = (req as AuthRequest).user;
+
+        if (!user) return res.status(401).json({ error: 'Unauthorized' });
+
+        // Security check
+        if (user.role !== 'MASTER' && user.companyId !== companyId) {
+            return res.status(403).json({ error: 'Unauthorized to create sector for this company' });
+        }
+
         const sector = await prisma.sector.create({
             data: { name, companyId }
         });
@@ -72,6 +87,18 @@ export const createSector = async (req: Request, res: Response) => {
 export const createArea = async (req: Request, res: Response) => {
     try {
         const { name, sectorId } = req.body;
+        const user = (req as AuthRequest).user;
+
+        if (!user) return res.status(401).json({ error: 'Unauthorized' });
+
+        // Verify sector ownership
+        const sector = await prisma.sector.findUnique({ where: { id: sectorId } });
+        if (!sector) return res.status(404).json({ error: 'Sector not found' });
+
+        if (user.role !== 'MASTER' && sector.companyId !== user.companyId) {
+            return res.status(403).json({ error: 'Unauthorized to create area in this sector' });
+        }
+
         const area = await prisma.area.create({
             data: { name, sectorId }
         });
@@ -83,17 +110,38 @@ export const createArea = async (req: Request, res: Response) => {
 
 export const listCompanies = async (req: Request, res: Response) => {
     try {
-        const companies = await prisma.company.findMany();
+        const user = (req as AuthRequest).user;
+        if (!user) return res.status(401).json({ error: 'Unauthorized' });
+
+        const where: any = {};
+        if (user.role !== 'MASTER') {
+            where.id = user.companyId;
+        }
+
+        const companies = await prisma.company.findMany({ where });
         res.json(companies);
     } catch (error) {
-        res.status(500).json({ error: 'Error fetching companies' });
+        console.error('Error in listCompanies:', error);
+        res.status(500).json({ error: 'Error fetching companies', details: error });
     }
 };
 
 export const listSectors = async (req: Request, res: Response) => {
     try {
+        const user = (req as AuthRequest).user;
+        const companyId = req.headers['x-company-id'] as string || user?.companyId;
+
+        const where: any = {};
+        if (companyId) {
+            where.companyId = companyId;
+        } else if (user?.role !== 'MASTER') {
+            return res.status(400).json({ error: 'Company context required' });
+        }
+
         const sectors = await prisma.sector.findMany({
-            include: { company: true }
+            where,
+            include: { company: true },
+            orderBy: { name: 'asc' }
         });
         res.json(sectors);
     } catch (error) {
@@ -103,11 +151,99 @@ export const listSectors = async (req: Request, res: Response) => {
 
 export const listAreas = async (req: Request, res: Response) => {
     try {
+        const user = (req as AuthRequest).user;
+        const companyId = req.headers['x-company-id'] as string || user?.companyId;
+
+        const where: any = {};
+        if (companyId) {
+            where.sector = { companyId };
+        } else if (user?.role !== 'MASTER') {
+            return res.status(400).json({ error: 'Company context required' });
+        }
+
         const areas = await prisma.area.findMany({
-            include: { sector: true }
+            where,
+            include: {
+                sector: {
+                    include: { company: true }
+                }
+            },
+            orderBy: { name: 'asc' }
         });
         res.json(areas);
     } catch (error) {
         res.status(500).json({ error: 'Error fetching areas' });
+    }
+};
+
+export const updateCompany = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { name, cnpj } = req.body;
+        const user = (req as AuthRequest).user;
+
+        if (!user) return res.status(401).json({ error: 'Unauthorized' });
+
+        if (user.role !== 'MASTER' && user.companyId !== id) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        const company = await prisma.company.update({
+            where: { id },
+            data: { name, cnpj }
+        });
+        res.json(company);
+    } catch (error) {
+        res.status(500).json({ error: 'Error updating company' });
+    }
+};
+
+export const updateSector = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { name, companyId } = req.body;
+        const user = (req as AuthRequest).user;
+
+        if (!user) return res.status(401).json({ error: 'Unauthorized' });
+
+        const existingSector = await prisma.sector.findUnique({ where: { id } });
+        if (!existingSector) return res.status(404).json({ error: 'Sector not found' });
+
+        if (user.role !== 'MASTER' && existingSector.companyId !== user.companyId) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        const sector = await prisma.sector.update({
+            where: { id },
+            data: { name, companyId: user.role === 'MASTER' ? companyId : undefined }
+        });
+        res.json(sector);
+    } catch (error) {
+        res.status(500).json({ error: 'Error updating sector' });
+    }
+};
+
+export const updateArea = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { name, sectorId } = req.body;
+        const user = (req as AuthRequest).user;
+
+        if (!user) return res.status(401).json({ error: 'Unauthorized' });
+
+        const existingArea = await prisma.area.findUnique({ where: { id }, include: { sector: true } });
+        if (!existingArea) return res.status(404).json({ error: 'Area not found' });
+
+        if (user.role !== 'MASTER' && existingArea.sector.companyId !== user.companyId) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        const area = await prisma.area.update({
+            where: { id },
+            data: { name, sectorId }
+        });
+        res.json(area);
+    } catch (error) {
+        res.status(500).json({ error: 'Error updating area' });
     }
 };

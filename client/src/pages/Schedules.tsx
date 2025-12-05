@@ -1,11 +1,63 @@
-import { useState, useEffect } from 'react';
-import { Calendar, Clock, Plus, X, User, Check } from 'lucide-react';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Calendar as CalendarIcon, Clock, Plus, X, User, Check, Clipboard, List } from 'lucide-react';
+import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
+import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
+import { format } from 'date-fns';
+import { parse } from 'date-fns';
+import { startOfWeek } from 'date-fns';
+import { getDay } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import 'react-big-calendar/lib/css/react-big-calendar.css';
+import { useCompany } from '../contexts/CompanyContext';
+
+const locales = {
+    'pt-BR': ptBR,
+};
+
+const localizer = dateFnsLocalizer({
+    format,
+    parse,
+    startOfWeek,
+    getDay,
+    locales,
+});
 
 const Schedules = () => {
-    const [schedules, setSchedules] = useState<any[]>([]);
-    const [collaborators, setCollaborators] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
+    const navigate = useNavigate();
+    const { selectedCompanyId } = useCompany();
+    const queryClient = useQueryClient();
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
+
+    const { data: schedules = [], isLoading: loadingSchedules } = useQuery({
+        queryKey: ['schedules'],
+        queryFn: async () => {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/schedules`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) throw new Error('Failed to fetch schedules');
+            return response.json();
+        },
+        initialData: []
+    });
+
+    const { data: collaborators = [] } = useQuery({
+        queryKey: ['collaborators'],
+        queryFn: async () => {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/collaborators`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) throw new Error('Failed to fetch collaborators');
+            return response.json();
+        },
+        initialData: []
+    });
+
+    const loading = loadingSchedules;
 
     const [newSchedule, setNewSchedule] = useState({
         date: '',
@@ -14,31 +66,22 @@ const Schedules = () => {
         collaboratorId: ''
     });
 
-    const fetchData = async () => {
-        try {
-            const token = localStorage.getItem('token');
-            const headers = { 'Authorization': `Bearer ${token}` };
+    // Filter data based on selectedCompanyId
+    const filteredCollaborators = collaborators.filter((c: any) => !selectedCompanyId || c.companyId === selectedCompanyId);
 
-            const [resSchedules, resCollabs] = await Promise.all([
-                fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/schedules`, { headers }),
-                fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/collaborators`, { headers })
-            ]);
-
-            setSchedules(await resSchedules.json());
-            setCollaborators(await resCollabs.json());
-        } catch (error) {
-            console.error('Error fetching data', error);
-        } finally {
-            setLoading(false);
+    const filteredSchedules = schedules.filter((s: any) => {
+        if (!selectedCompanyId) return true;
+        if (s.collaborator && typeof s.collaborator === 'object' && s.collaborator.companyId) {
+            return s.collaborator.companyId === selectedCompanyId;
         }
-    };
+        if (s.collaboratorId) {
+            return filteredCollaborators.find((c: any) => c.id === s.collaboratorId);
+        }
+        return true;
+    });
 
-    useEffect(() => {
-        fetchData();
-    }, []);
-
-    const handleStatusUpdate = async (id: string, status: string) => {
-        try {
+    const updateStatusMutation = useMutation({
+        mutationFn: async ({ id, status }: { id: string; status: string }) => {
             const token = localStorage.getItem('token');
             const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/schedules/${id}`, {
                 method: 'PUT',
@@ -48,18 +91,20 @@ const Schedules = () => {
                 },
                 body: JSON.stringify({ status })
             });
-
-            if (response.ok) {
-                fetchData();
-            }
-        } catch (error) {
-            console.error('Error updating status', error);
+            if (!response.ok) throw new Error('Failed to update status');
+            return response.json();
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['schedules'] });
+            toast.success('Status atualizado com sucesso!');
+        },
+        onError: () => {
+            toast.error('Erro ao atualizar status.');
         }
-    };
+    });
 
-    const handleCreate = async (e: React.FormEvent) => {
-        e.preventDefault();
-        try {
+    const createScheduleMutation = useMutation({
+        mutationFn: async (newSchedule: any) => {
             const token = localStorage.getItem('token');
             const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/schedules`, {
                 method: 'POST',
@@ -69,54 +114,115 @@ const Schedules = () => {
                 },
                 body: JSON.stringify(newSchedule)
             });
-
-            if (response.ok) {
-                setIsModalOpen(false);
-                setNewSchedule({ date: '', time: '', reason: '', collaboratorId: '' });
-                fetchData();
-                alert('Agendamento criado com sucesso!');
-            } else {
-                alert('Erro ao criar agendamento.');
-            }
-        } catch (error) {
-            console.error('Error creating schedule', error);
+            if (!response.ok) throw new Error('Failed to create schedule');
+            return response.json();
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['schedules'] });
+            setIsModalOpen(false);
+            setNewSchedule({ date: '', time: '', reason: '', collaboratorId: '' });
+            toast.success('Agendamento criado com sucesso!');
+        },
+        onError: () => {
+            toast.error('Erro ao criar agendamento.');
         }
+    });
+
+    const handleStatusUpdate = (id: string, status: string) => {
+        updateStatusMutation.mutate({ id, status });
     };
+
+    const handleCreate = (e: React.FormEvent) => {
+        e.preventDefault();
+        createScheduleMutation.mutate(newSchedule);
+    };
+
+    const calendarEvents = filteredSchedules.map((s: any) => ({
+        id: s.id,
+        title: `${s.reason} - ${s.collaborator || 'Sem colaborador'}`,
+        start: new Date(`${s.date.split('T')[0]}T${s.time}`),
+        end: new Date(new Date(`${s.date.split('T')[0]}T${s.time}`).getTime() + 60 * 60 * 1000), // Assumes 1h duration
+        resource: s
+    }));
 
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold text-gray-900">Agendamentos</h1>
-                <button
-                    onClick={() => setIsModalOpen(true)}
-                    className="btn-primary flex items-center space-x-2"
-                >
-                    <Plus className="h-4 w-4" />
-                    <span>Novo Agendamento</span>
-                </button>
+                <div className="flex space-x-2">
+                    <div className="bg-gray-100 p-1 rounded-lg flex">
+                        <button
+                            onClick={() => setViewMode('list')}
+                            className={`p-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-white shadow text-primary' : 'text-gray-500 hover:text-gray-700'}`}
+                        >
+                            <List className="h-4 w-4" />
+                        </button>
+                        <button
+                            onClick={() => setViewMode('calendar')}
+                            className={`p-2 rounded-md transition-all ${viewMode === 'calendar' ? 'bg-white shadow text-primary' : 'text-gray-500 hover:text-gray-700'}`}
+                        >
+                            <CalendarIcon className="h-4 w-4" />
+                        </button>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => setIsModalOpen(true)}
+                        className="btn-primary flex items-center space-x-2"
+                    >
+                        <Plus className="h-4 w-4" />
+                        <span>Novo Agendamento</span>
+                    </button>
+                </div>
             </div>
 
             {loading ? (
                 <div className="text-center py-10">Carregando agendamentos...</div>
-            ) : schedules.length === 0 ? (
+            ) : viewMode === 'calendar' ? (
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-[600px]">
+                    <Calendar
+                        localizer={localizer}
+                        events={calendarEvents}
+                        startAccessor="start"
+                        endAccessor="end"
+                        style={{ height: '100%' }}
+                        culture='pt-BR'
+                        messages={{
+                            next: "Próximo",
+                            previous: "Anterior",
+                            today: "Hoje",
+                            month: "Mês",
+                            week: "Semana",
+                            day: "Dia",
+                            agenda: "Agenda",
+                            date: "Data",
+                            time: "Hora",
+                            event: "Evento",
+                            noEventsInRange: "Sem eventos neste período."
+                        }}
+                        onSelectEvent={(event: any) => {
+                            toast.info(`Agendamento: ${event.title}`);
+                        }}
+                    />
+                </div>
+            ) : filteredSchedules.length === 0 ? (
                 <div className="bg-white rounded-xl p-10 text-center border border-gray-100 shadow-sm">
-                    <Calendar className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                    <CalendarIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-900">Nenhum agendamento</h3>
                     <p className="text-gray-500">Não há agendamentos registrados no momento.</p>
                 </div>
             ) : (
                 <div className="grid gap-4">
-                    {schedules.map((schedule) => (
+                    {filteredSchedules.map((schedule: any) => (
                         <div key={schedule.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
                             <div className="flex items-center space-x-4">
                                 <div className="p-3 bg-blue-50 rounded-lg">
-                                    <Calendar className="h-6 w-6 text-blue-600" />
+                                    <CalendarIcon className="h-6 w-6 text-blue-600" />
                                 </div>
                                 <div>
                                     <h3 className="font-medium text-gray-900">{schedule.reason || 'Agendamento'}</h3>
                                     <div className="flex items-center space-x-4 text-sm text-gray-500 mt-1">
                                         <span className="flex items-center">
-                                            <Calendar className="h-3 w-3 mr-1" />
+                                            <CalendarIcon className="h-3 w-3 mr-1" />
                                             {new Date(schedule.date).toLocaleDateString()}
                                         </span>
                                         <span className="flex items-center">
@@ -136,6 +242,23 @@ const Schedules = () => {
                                 {schedule.status === 'PENDENTE' && (
                                     <>
                                         <button
+                                            type="button"
+                                            onClick={() => navigate('/dashboard/visits', {
+                                                state: {
+                                                    scheduleId: schedule.id,
+                                                    companyId: selectedCompanyId,
+                                                    areaName: schedule.area,
+                                                    collaboratorName: schedule.collaborator,
+                                                    date: schedule.date
+                                                }
+                                            })}
+                                            className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                                            title="Registrar Visita"
+                                        >
+                                            <Clipboard className="h-5 w-5" />
+                                        </button>
+                                        <button
+                                            type="button"
                                             onClick={() => handleStatusUpdate(schedule.id, 'APROVADO')}
                                             className="p-1 text-green-600 hover:bg-green-50 rounded"
                                             title="Aprovar"
@@ -143,6 +266,7 @@ const Schedules = () => {
                                             <Check className="h-5 w-5" />
                                         </button>
                                         <button
+                                            type="button"
                                             onClick={() => handleStatusUpdate(schedule.id, 'RECUSADO')}
                                             className="p-1 text-red-600 hover:bg-red-50 rounded"
                                             title="Recusar"
@@ -153,7 +277,8 @@ const Schedules = () => {
                                 )}
                                 <span className={`px-3 py-1 rounded-full text-xs font-medium ${schedule.status === 'APROVADO' ? 'bg-green-100 text-green-700' :
                                     schedule.status === 'PENDENTE' ? 'bg-yellow-100 text-yellow-700' :
-                                        'bg-red-100 text-red-700'
+                                        schedule.status === 'REALIZADO' ? 'bg-blue-100 text-blue-700' :
+                                            'bg-red-100 text-red-700'
                                     }`}>
                                     {schedule.status}
                                 </span>
@@ -169,7 +294,7 @@ const Schedules = () => {
                     <div className="bg-white rounded-2xl w-full max-w-md p-6">
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-xl font-bold">Novo Agendamento</h2>
-                            <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                            <button type="button" onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
                                 <X className="h-6 w-6" />
                             </button>
                         </div>
@@ -215,7 +340,7 @@ const Schedules = () => {
                                     onChange={e => setNewSchedule({ ...newSchedule, collaboratorId: e.target.value })}
                                 >
                                     <option value="">Selecione...</option>
-                                    {collaborators.map(c => <option key={c.id} value={c.collaboratorProfile?.id}>{c.name}</option>)}
+                                    {filteredCollaborators.map((c: any) => <option key={c.id} value={c.collaboratorProfile?.id}>{c.name}</option>)}
                                 </select>
                             </div>
 

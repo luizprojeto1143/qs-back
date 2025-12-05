@@ -66,7 +66,7 @@ const MobileProfile = () => {
                         </div>
                         <div>
                             <p className="text-xs text-gray-500">Empresa</p>
-                            <p className="text-sm font-medium text-gray-900">Tech Solutions</p>
+                            <p className="text-sm font-medium text-gray-900">{user.company?.name || 'Não vinculada'}</p>
                         </div>
                     </div>
                 </div>

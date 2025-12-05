@@ -13,5 +13,8 @@
     "prisma",
     "node_modules",
     "dist"
+  ],
+  "include": [
+    "src/**/*"
   ]
 }

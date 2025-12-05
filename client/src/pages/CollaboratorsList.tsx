@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Search, Plus, ChevronRight, User, X } from 'lucide-react';
+import { useCompany } from '../contexts/CompanyContext';
 
 const CollaboratorsList = () => {
+    const { selectedCompanyId, companies: contextCompanies } = useCompany();
     const [collaborators, setCollaborators] = useState<any[]>([]);
     const [areas, setAreas] = useState<any[]>([]);
-    const [companies, setCompanies] = useState<any[]>([]);
+    const [companies, setCompanies] = useState<any[]>(contextCompanies);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -14,7 +16,7 @@ const CollaboratorsList = () => {
         name: '',
         email: '',
         matricula: '',
-        companyId: '',
+        companyId: selectedCompanyId || '',
         areaId: '',
         shift: 'MANHA',
         disabilityType: 'NENHUMA',
@@ -22,20 +24,33 @@ const CollaboratorsList = () => {
         password: ''
     });
 
+    // Update newCollab when selectedCompanyId changes
+    useEffect(() => {
+        if (selectedCompanyId) {
+            setNewCollab(prev => ({ ...prev, companyId: selectedCompanyId }));
+        }
+    }, [selectedCompanyId]);
+
     const fetchData = async () => {
         try {
             const token = localStorage.getItem('token');
             const headers = { 'Authorization': `Bearer ${token}` };
 
-            const [resCollabs, resAreas, resCompanies] = await Promise.all([
+            // Use context companies if available, otherwise fetch
+            if (contextCompanies.length > 0) {
+                setCompanies(contextCompanies);
+            } else {
+                const resCompanies = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/companies`, { headers });
+                setCompanies(await resCompanies.json());
+            }
+
+            const [resCollabs, resAreas] = await Promise.all([
                 fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/collaborators`, { headers }),
-                fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/areas`, { headers }),
-                fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/companies`, { headers })
+                fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/areas`, { headers })
             ]);
 
             setCollaborators(await resCollabs.json());
             setAreas(await resAreas.json());
-            setCompanies(await resCompanies.json());
         } catch (error) {
             console.error('Error fetching data', error);
         } finally {
@@ -45,7 +60,7 @@ const CollaboratorsList = () => {
 
     useEffect(() => {
         fetchData();
-    }, []);
+    }, [contextCompanies]); // Re-fetch if context companies change
 
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -69,7 +84,7 @@ const CollaboratorsList = () => {
             if (response.ok) {
                 setIsModalOpen(false);
                 setNewCollab({
-                    name: '', email: '', matricula: '', companyId: '', areaId: '',
+                    name: '', email: '', matricula: '', companyId: selectedCompanyId || '', areaId: '',
                     shift: 'MANHA', disabilityType: 'NENHUMA', needsDescription: '', password: ''
                 });
                 setEditingId(null);
@@ -99,11 +114,15 @@ const CollaboratorsList = () => {
         setIsModalOpen(true);
     };
 
+    // Filter collaborators based on selectedCompanyId
+    const filteredCollaborators = collaborators.filter(collab => !selectedCompanyId || collab.companyId === selectedCompanyId);
+
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold text-gray-900">Colaboradores</h1>
                 <button
+                    type="button"
                     onClick={() => setIsModalOpen(true)}
                     className="btn-primary flex items-center space-x-2"
                 >
@@ -132,7 +151,7 @@ const CollaboratorsList = () => {
             ) : (
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                     <div className="divide-y divide-gray-100">
-                        {collaborators.map((collab) => (
+                        {filteredCollaborators.map((collab) => (
                             <div key={collab.id} onClick={() => handleEdit(collab)} className="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer group">
                                 <div className="flex items-center space-x-4">
                                     <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden text-gray-400">
@@ -158,7 +177,7 @@ const CollaboratorsList = () => {
                     <div className="bg-white rounded-2xl w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto">
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-xl font-bold">{editingId ? 'Editar Colaborador' : 'Novo Colaborador'}</h2>
-                            <button onClick={() => { setIsModalOpen(false); setEditingId(null); }} className="text-gray-400 hover:text-gray-600">
+                            <button type="button" onClick={() => { setIsModalOpen(false); setEditingId(null); }} className="text-gray-400 hover:text-gray-600">
                                 <X className="h-6 w-6" />
                             </button>
                         </div>
@@ -210,9 +229,10 @@ const CollaboratorsList = () => {
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Empresa</label>
                                     <select
                                         required
-                                        className="input-field"
+                                        className={`input-field ${selectedCompanyId ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                                         value={newCollab.companyId}
                                         onChange={e => setNewCollab({ ...newCollab, companyId: e.target.value })}
+                                        disabled={!!selectedCompanyId}
                                     >
                                         <option value="">Selecione...</option>
                                         {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}

@@ -1,29 +1,41 @@
 import { useState, useEffect } from 'react';
 import { Layers, Plus, X } from 'lucide-react';
+import { useCompany } from '../../contexts/CompanyContext';
+import { api } from '../../lib/api';
 
 const SectorsList = () => {
+    const { selectedCompanyId, companies: contextCompanies } = useCompany();
     const [sectors, setSectors] = useState<any[]>([]);
-    const [companies, setCompanies] = useState<any[]>([]);
+    const [companies, setCompanies] = useState<any[]>(contextCompanies);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
-    const [newSector, setNewSector] = useState({ name: '', companyId: '' });
+    const [newSector, setNewSector] = useState({ name: '', companyId: selectedCompanyId || '' });
+
+    // Update newSector when selectedCompanyId changes
+    useEffect(() => {
+        if (selectedCompanyId) {
+            setNewSector(prev => ({ ...prev, companyId: selectedCompanyId }));
+        }
+    }, [selectedCompanyId]);
 
     const fetchData = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const headers = { 'Authorization': `Bearer ${token}` };
+            // const token = localStorage.getItem('token');
+            // const headers = { 'Authorization': `Bearer ${token}` };
 
-            const [resSectors, resCompanies] = await Promise.all([
-                fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/sectors`, { headers }),
-                fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/companies`, { headers })
-            ]);
+            // Use context companies if available, otherwise fetch
+            // Use context companies if available, otherwise fetch
+            if (contextCompanies.length > 0) {
+                setCompanies(contextCompanies);
+            } else {
+                const resCompanies = await api.get('/companies');
+                setCompanies(resCompanies.data);
+            }
 
-            const sectorsData = await resSectors.json();
-            const companiesData = await resCompanies.json();
+            const resSectors = await api.get('/sectors');
+            setSectors(resSectors.data);
 
-            setSectors(sectorsData);
-            setCompanies(companiesData);
         } catch (error) {
             console.error('Error fetching data', error);
         } finally {
@@ -33,38 +45,24 @@ const SectorsList = () => {
 
     useEffect(() => {
         fetchData();
-    }, []);
+    }, [contextCompanies, selectedCompanyId]); // Re-fetch if context companies or selected company changes
 
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const token = localStorage.getItem('token');
-            const url = editingId
-                ? `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/sectors/${editingId}`
-                : `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/sectors`;
+            const url = editingId ? `/sectors/${editingId}` : '/sectors';
+            const method = editingId ? 'put' : 'post';
 
-            const method = editingId ? 'PUT' : 'POST';
+            await api[method](url, newSector);
 
-            const response = await fetch(url, {
-                method: method,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(newSector)
-            });
-
-            if (response.ok) {
-                setIsModalOpen(false);
-                setNewSector({ name: '', companyId: '' });
-                setEditingId(null);
-                fetchData();
-                alert(editingId ? 'Setor atualizado com sucesso!' : 'Setor cadastrado com sucesso!');
-            } else {
-                alert('Erro ao salvar setor.');
-            }
+            setIsModalOpen(false);
+            setNewSector({ name: '', companyId: selectedCompanyId || '' });
+            setEditingId(null);
+            fetchData();
+            alert(editingId ? 'Setor atualizado com sucesso!' : 'Setor cadastrado com sucesso!');
         } catch (error) {
             console.error('Error saving sector', error);
+            alert('Erro ao salvar setor.');
         }
     };
 
@@ -77,11 +75,15 @@ const SectorsList = () => {
         setIsModalOpen(true);
     };
 
+    // Filter sectors based on selectedCompanyId
+    const filteredSectors = sectors.filter(sector => !selectedCompanyId || sector.companyId === selectedCompanyId);
+
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold text-gray-900">Cadastro de Setores</h1>
                 <button
+                    type="button"
                     onClick={() => setIsModalOpen(true)}
                     className="btn-primary flex items-center space-x-2"
                 >
@@ -103,7 +105,7 @@ const SectorsList = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
-                            {sectors.map((sector) => (
+                            {filteredSectors.map((sector) => (
                                 <tr key={sector.id} className="hover:bg-gray-50 transition-colors">
                                     <td className="px-6 py-4 font-medium text-gray-900">
                                         <div className="flex items-center space-x-3">
@@ -113,9 +115,11 @@ const SectorsList = () => {
                                             <span>{sector.name}</span>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 text-gray-500">{sector.company?.name}</td>
+                                    <td className="px-6 py-4 text-gray-500">
+                                        {sector.company?.name || '-'}
+                                    </td>
                                     <td className="px-6 py-4">
-                                        <button onClick={() => handleEdit(sector)} className="text-primary hover:text-blue-700 text-sm font-medium">Editar</button>
+                                        <button type="button" onClick={() => handleEdit(sector)} className="text-primary hover:text-blue-700 text-sm font-medium">Editar</button>
                                     </td>
                                 </tr>
                             ))}
@@ -130,7 +134,7 @@ const SectorsList = () => {
                     <div className="bg-white rounded-2xl w-full max-w-md p-6">
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-bold">{editingId ? 'Editar Setor' : 'Novo Setor'}</h2>
-                            <button onClick={() => { setIsModalOpen(false); setEditingId(null); }} className="text-gray-400 hover:text-gray-600">
+                            <button type="button" onClick={() => { setIsModalOpen(false); setEditingId(null); }} className="text-gray-400 hover:text-gray-600">
                                 <X className="h-6 w-6" />
                             </button>
                         </div>
@@ -139,9 +143,10 @@ const SectorsList = () => {
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Empresa</label>
                                 <select
                                     required
-                                    className="input-field"
+                                    className={`input-field ${selectedCompanyId ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                                     value={newSector.companyId}
                                     onChange={e => setNewSector({ ...newSector, companyId: e.target.value })}
+                                    disabled={!!selectedCompanyId}
                                 >
                                     <option value="">Selecione...</option>
                                     {Array.isArray(companies) && companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}

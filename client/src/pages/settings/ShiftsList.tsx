@@ -1,33 +1,93 @@
 import { useState, useEffect } from 'react';
 import { Plus, Trash2, Clock } from 'lucide-react';
-
-// Shifts managed locally via localStorage
-const DEFAULT_SHIFTS: string[] = [];
+import { useCompany } from '../../contexts/CompanyContext';
+import { toast } from 'sonner';
 
 const ShiftsList = () => {
-    const [shifts, setShifts] = useState<string[]>([]);
+    const { selectedCompanyId } = useCompany();
+    const [shifts, setShifts] = useState<any[]>([]);
     const [newShift, setNewShift] = useState('');
+    const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        // Simulate fetching
-        const saved = localStorage.getItem('shifts');
-        setShifts(saved ? JSON.parse(saved) : DEFAULT_SHIFTS);
-    }, []);
+    const fetchShifts = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const headers: any = { 'Authorization': `Bearer ${token}` };
+            if (selectedCompanyId) headers['x-company-id'] = selectedCompanyId;
 
-    const handleAdd = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!newShift.trim()) return;
-        const updated = [...shifts, newShift.toUpperCase()];
-        setShifts(updated);
-        localStorage.setItem('shifts', JSON.stringify(updated));
-        setNewShift('');
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/settings/shifts`, {
+                headers
+            });
+            const data = await response.json();
+            setShifts(data);
+        } catch (error) {
+            console.error('Error fetching shifts', error);
+            toast.error('Erro ao carregar turnos');
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const handleDelete = (shift: string) => {
-        if (!confirm(`Remover turno "${shift}"?`)) return;
-        const updated = shifts.filter(s => s !== shift);
-        setShifts(updated);
-        localStorage.setItem('shifts', JSON.stringify(updated));
+    useEffect(() => {
+        if (selectedCompanyId) {
+            fetchShifts();
+        }
+    }, [selectedCompanyId]);
+
+    const handleAdd = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newShift.trim()) return;
+
+        try {
+            const token = localStorage.getItem('token');
+            const headers: any = {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            };
+            if (selectedCompanyId) headers['x-company-id'] = selectedCompanyId;
+
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/settings/shifts`, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({ name: newShift })
+            });
+
+            if (response.ok) {
+                setNewShift('');
+                fetchShifts();
+                toast.success('Turno adicionado com sucesso!');
+            } else {
+                toast.error('Erro ao adicionar turno');
+            }
+        } catch (error) {
+            console.error('Error adding shift', error);
+            toast.error('Erro ao adicionar turno');
+        }
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!confirm('Remover este turno?')) return;
+
+        try {
+            const token = localStorage.getItem('token');
+            const headers: any = { 'Authorization': `Bearer ${token}` };
+            if (selectedCompanyId) headers['x-company-id'] = selectedCompanyId;
+
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/settings/shifts/${id}`, {
+                method: 'DELETE',
+                headers
+            });
+
+            if (response.ok) {
+                fetchShifts();
+                toast.success('Turno removido com sucesso!');
+            } else {
+                toast.error('Erro ao remover turno');
+            }
+        } catch (error) {
+            console.error('Error deleting shift', error);
+            toast.error('Erro ao remover turno');
+        }
     };
 
     return (
@@ -58,22 +118,30 @@ const ShiftsList = () => {
 
                 <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                     <h3 className="text-lg font-bold mb-4">Turnos Ativos</h3>
-                    <div className="space-y-2">
-                        {shifts.map((shift) => (
-                            <div key={shift} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg group hover:bg-gray-100 transition-colors">
-                                <div className="flex items-center space-x-3">
-                                    <Clock className="h-4 w-4 text-gray-400" />
-                                    <span className="font-medium text-gray-700">{shift}</span>
+                    {loading ? (
+                        <div className="text-center py-4">Carregando...</div>
+                    ) : (
+                        <div className="space-y-2">
+                            {shifts.map((shift) => (
+                                <div key={shift.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg group hover:bg-gray-100 transition-colors">
+                                    <div className="flex items-center space-x-3">
+                                        <Clock className="h-4 w-4 text-gray-400" />
+                                        <span className="font-medium text-gray-700">{shift.name}</span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleDelete(shift.id)}
+                                        className="text-gray-400 hover:text-red-500 transition-colors p-1"
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </button>
                                 </div>
-                                <button
-                                    onClick={() => handleDelete(shift)}
-                                    className="text-gray-400 hover:text-red-500 transition-colors p-1"
-                                >
-                                    <Trash2 className="h-4 w-4" />
-                                </button>
-                            </div>
-                        ))}
-                    </div>
+                            ))}
+                            {shifts.length === 0 && (
+                                <p className="text-center text-gray-500 py-4">Nenhum turno cadastrado.</p>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

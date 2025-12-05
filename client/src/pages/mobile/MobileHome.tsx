@@ -95,10 +95,11 @@ const MobileHome = () => {
                     <h2 className="text-lg font-bold text-gray-900">Feed Acessível</h2>
                     <div className="space-y-4">
                         {feedItems.map((item) => (
-                            <div
+                            <button
+                                type="button"
                                 key={item.id}
                                 onClick={() => setSelectedPost(item)}
-                                className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex space-x-4 active:scale-95 transition-transform cursor-pointer"
+                                className="w-full text-left bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex space-x-4 active:scale-95 transition-transform cursor-pointer"
                             >
                                 <div className={`w-24 h-24 rounded-xl ${item.thumbnail} flex items-center justify-center flex-shrink-0`}>
                                     {item.type === 'video' ? (
@@ -119,7 +120,7 @@ const MobileHome = () => {
                                         {item.type === 'video' ? item.duration : item.readTime}
                                     </p>
                                 </div>
-                            </div>
+                            </button>
                         ))}
                     </div>
                 </div>
@@ -136,6 +137,7 @@ const MobileHome = () => {
                                 </div>
                             )}
                             <button
+                                type="button"
                                 onClick={() => setSelectedPost(null)}
                                 className="absolute top-4 right-4 p-2 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors"
                             >
@@ -180,6 +182,7 @@ const MobileHome = () => {
                             )}
 
                             <button
+                                type="button"
                                 onClick={() => setSelectedPost(null)}
                                 className="w-full btn-secondary mt-4"
                             >

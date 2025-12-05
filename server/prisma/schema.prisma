@@ -25,7 +25,10 @@ model Company {
   visits        Visit[]
   pendingItems  PendingItem[]
   feedPosts     FeedPost[]
+  feedCategories FeedCategory[]
   schedules     Schedule[]
+  shifts        Shift[]
+  availability  String?  // JSON string for availability settings
 }
 
 model Sector {
@@ -45,6 +48,7 @@ model Area {
   collaborators CollaboratorProfile[]
   pendingItems  PendingItem[]
   visits        Visit[]
+  users         User[]
 }
 
 model User {
@@ -58,13 +62,28 @@ model User {
   companyId String?
   company   Company? @relation(fields: [companyId], references: [id])
 
+  areaId    String?
+  area      Area?    @relation(fields: [areaId], references: [id])
+
   collaboratorProfile CollaboratorProfile?
 
   createdVisits     Visit[] @relation("MasterVisits")
   requestedSchedules Schedule[] @relation("RequestedSchedules")
+  notifications     Notification[]
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now())
 }
 
 model CollaboratorProfile {
@@ -182,10 +201,35 @@ model FeedPost {
   createdAt   DateTime @default(now())
 }
 
+model FeedCategory {
+  id        String   @id @default(uuid())
+  name      String
+  active    Boolean  @default(true)
+  
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+
 model TermOfUse {
   id        String   @id @default(uuid())
   version   String
   content   String
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
+}
+
+model Shift {
+  id        String   @id @default(uuid())
+  name      String
+  active    Boolean  @default(true)
+  
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

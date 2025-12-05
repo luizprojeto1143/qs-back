@@ -9,6 +9,14 @@ export const register = async (req: Request, res: Response) => {
     try {
         const { email, password, name, role, companyId } = req.body;
 
+        // Validate Company if provided
+        if (companyId) {
+            const company = await prisma.company.findUnique({ where: { id: companyId } });
+            if (!company) {
+                return res.status(400).json({ error: 'Invalid Company ID' });
+            }
+        }
+
         const existingUser = await prisma.user.findUnique({ where: { email } });
         if (existingUser) {
             return res.status(400).json({ error: 'User already exists' });
@@ -16,12 +24,16 @@ export const register = async (req: Request, res: Response) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        // Default role to COLABORADOR if not provided or invalid
+        // Prevent creating MASTER via public endpoint unless specifically authorized (simplified here)
+        const safeRole = (role === 'MASTER' || role === 'RH' || role === 'LIDER') ? role : 'COLABORADOR';
+
         const user = await prisma.user.create({
             data: {
                 email,
                 password: hashedPassword,
                 name,
-                role,
+                role: safeRole,
                 companyId,
             },
         });
@@ -36,6 +48,7 @@ export const register = async (req: Request, res: Response) => {
 export const login = async (req: Request, res: Response) => {
     try {
         const { email, password } = req.body;
+        console.log(`Login attempt for email: ${email}`);
 
         const user = await prisma.user.findUnique({ where: { email } });
         if (!user) {

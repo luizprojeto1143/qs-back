@@ -77,6 +77,7 @@ const CompaniesList = () => {
             <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold text-gray-900">Cadastro de Empresas</h1>
                 <button
+                    type="button"
                     onClick={() => setIsModalOpen(true)}
                     className="btn-primary flex items-center space-x-2"
                 >
@@ -110,7 +111,7 @@ const CompaniesList = () => {
                                     </td>
                                     <td className="px-6 py-4 text-gray-500">{company.cnpj}</td>
                                     <td className="px-6 py-4">
-                                        <button onClick={() => handleEdit(company)} className="text-primary hover:text-blue-700 text-sm font-medium">Editar</button>
+                                        <button type="button" onClick={() => handleEdit(company)} className="text-primary hover:text-blue-700 text-sm font-medium">Editar</button>
                                     </td>
                                 </tr>
                             ))}
@@ -125,7 +126,7 @@ const CompaniesList = () => {
                     <div className="bg-white rounded-2xl w-full max-w-md p-6">
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-bold">{editingId ? 'Editar Empresa' : 'Nova Empresa'}</h2>
-                            <button onClick={() => { setIsModalOpen(false); setEditingId(null); }} className="text-gray-400 hover:text-gray-600">
+                            <button type="button" onClick={() => { setIsModalOpen(false); setEditingId(null); }} className="text-gray-400 hover:text-gray-600">
                                 <X className="h-6 w-6" />
                             </button>
                         </div>

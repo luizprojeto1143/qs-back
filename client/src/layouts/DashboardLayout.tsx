@@ -11,10 +11,23 @@ import {
     Settings,
     LogOut,
     Menu,
-    X
+    X,
+    Moon,
+    Sun,
+    Shield
 } from 'lucide-react';
+import { useTheme } from '../contexts/ThemeContext';
+import { Bell } from 'lucide-react';
+import { api } from '../lib/api';
 
-const SidebarItem = ({ icon: Icon, label, path, active }: any) => {
+interface SidebarItemProps {
+    icon: any;
+    label: string;
+    path: string;
+    active: boolean;
+}
+
+const SidebarItem = ({ icon: Icon, label, path, active }: SidebarItemProps) => {
     const navigate = useNavigate();
     return (
         <button
@@ -32,11 +45,48 @@ const SidebarItem = ({ icon: Icon, label, path, active }: any) => {
     );
 };
 
+// ... (SidebarItem remains the same)
+
 const DashboardLayout = () => {
     const location = useLocation();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
-
+    const { theme, toggleTheme } = useTheme();
     const navigate = useNavigate();
+
+    // Notification State
+    const [notifications, setNotifications] = React.useState<any[]>([]);
+    const [unreadCount, setUnreadCount] = React.useState(0);
+    const [showNotifications, setShowNotifications] = React.useState(false);
+
+    const fetchNotifications = async () => {
+        try {
+            const res = await api.get('/notifications');
+            setNotifications(res.data);
+            setUnreadCount(res.data.filter((n: any) => !n.read).length);
+        } catch (error) {
+            console.error('Error fetching notifications', error);
+        }
+    };
+
+    React.useEffect(() => {
+        fetchNotifications();
+        const interval = setInterval(fetchNotifications, 30000); // Poll every 30s
+        return () => clearInterval(interval);
+    }, []);
+
+    const handleMarkAsRead = async (id: string, link?: string) => {
+        try {
+            await api.put(`/notifications/${id}/read`, {});
+            setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+            setUnreadCount(prev => Math.max(0, prev - 1));
+            if (link) {
+                navigate(link);
+                setShowNotifications(false);
+            }
+        } catch (error) {
+            console.error('Error marking as read', error);
+        }
+    };
 
     const handleLogout = () => {
         localStorage.removeItem('token');
@@ -53,6 +103,7 @@ const DashboardLayout = () => {
         { icon: Video, label: 'Feed Acessível', path: '/dashboard/feed' },
         { icon: FileText, label: 'Relatórios', path: '/dashboard/reports' },
         { icon: Settings, label: 'Configurações', path: '/dashboard/settings' },
+        { icon: Shield, label: 'Acessos', path: '/dashboard/users' },
     ];
 
     return (
@@ -76,10 +127,19 @@ const DashboardLayout = () => {
                             active={location.pathname === item.path}
                         />
                     ))}
+
+                    <button
+                        onClick={toggleTheme}
+                        className="w-full flex items-center space-x-3 px-4 py-3 text-gray-400 hover:bg-white/10 hover:text-white rounded-xl transition-colors mt-4"
+                    >
+                        {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+                        <span>{theme === 'light' ? 'Modo Escuro' : 'Modo Claro'}</span>
+                    </button>
                 </nav>
 
                 <div className="p-4 border-t border-gray-800">
                     <button
+                        type="button"
                         onClick={handleLogout}
                         className="w-full flex items-center space-x-3 px-4 py-3 text-gray-400 hover:bg-white/10 hover:text-white rounded-xl transition-colors"
                     >
@@ -97,9 +157,27 @@ const DashboardLayout = () => {
                     </div>
                     <span className="text-lg font-bold text-white">QS Inclusão</span>
                 </div>
-                <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
-                    {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-                </button>
+                <div className="flex items-center space-x-4">
+                    {/* Notification Bell Mobile */}
+                    <div className="relative">
+                        <button
+                            onClick={() => setShowNotifications(!showNotifications)}
+                            className="p-2 rounded-lg hover:bg-white/10 transition-colors relative"
+                        >
+                            <Bell className="h-5 w-5" />
+                            {unreadCount > 0 && (
+                                <span className="absolute top-1 right-1 h-2.5 w-2.5 bg-red-500 rounded-full border-2 border-[#0A192F]"></span>
+                            )}
+                        </button>
+                    </div>
+
+                    <button onClick={toggleTheme} className="p-2 rounded-lg hover:bg-white/10 transition-colors">
+                        {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+                    </button>
+                    <button type="button" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+                        {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+                    </button>
+                </div>
             </div>
 
             {/* Mobile Menu Overlay */}
@@ -116,6 +194,7 @@ const DashboardLayout = () => {
                             />
                         ))}
                         <button
+                            type="button"
                             onClick={handleLogout}
                             className="w-full flex items-center space-x-3 px-4 py-3 text-gray-400 hover:bg-white/10 hover:text-white rounded-xl transition-colors"
                         >
@@ -127,7 +206,66 @@ const DashboardLayout = () => {
             )}
 
             {/* Main Content */}
-            <main className="flex-1 md:ml-64 p-4 md:p-8 pt-20 md:pt-8">
+            <main className="flex-1 md:ml-64 p-4 md:p-8 pt-20 md:pt-8 relative">
+                {/* Desktop Notification Bell (Absolute Positioned) */}
+                <div className="hidden md:block absolute top-6 right-8 z-30">
+                    <div className="relative">
+                        <button
+                            onClick={() => setShowNotifications(!showNotifications)}
+                            className="p-2 bg-white rounded-full shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors relative"
+                        >
+                            <Bell className="h-5 w-5 text-gray-600" />
+                            {unreadCount > 0 && (
+                                <span className="absolute top-0 right-0 h-3 w-3 bg-red-500 rounded-full border-2 border-white"></span>
+                            )}
+                        </button>
+
+                        {/* Notification Dropdown */}
+                        {showNotifications && (
+                            <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
+                                <div className="px-4 py-2 border-b border-gray-100 flex justify-between items-center">
+                                    <h3 className="font-semibold text-gray-900">Notificações</h3>
+                                    {unreadCount > 0 && (
+                                        <button
+                                            onClick={async () => {
+                                                await api.put('/notifications/read-all', {});
+                                                setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+                                                setUnreadCount(0);
+                                            }}
+                                            className="text-xs text-blue-600 hover:text-blue-800"
+                                        >
+                                            Marcar todas como lidas
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="max-h-96 overflow-y-auto">
+                                    {notifications.length === 0 ? (
+                                        <div className="p-4 text-center text-gray-500 text-sm">
+                                            Nenhuma notificação.
+                                        </div>
+                                    ) : (
+                                        notifications.map(notification => (
+                                            <div
+                                                key={notification.id}
+                                                onClick={() => handleMarkAsRead(notification.id, notification.link)}
+                                                className={`px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-50 last:border-0 ${!notification.read ? 'bg-blue-50/50' : ''}`}
+                                            >
+                                                <p className={`text-sm ${!notification.read ? 'font-semibold text-gray-900' : 'text-gray-700'}`}>
+                                                    {notification.title}
+                                                </p>
+                                                <p className="text-xs text-gray-500 mt-1">{notification.message}</p>
+                                                <p className="text-[10px] text-gray-400 mt-1">
+                                                    {new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(notification.createdAt))}
+                                                </p>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
                 <Outlet />
             </main>
         </div>
