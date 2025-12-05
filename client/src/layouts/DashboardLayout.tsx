@@ -206,25 +206,25 @@ const DashboardLayout = () => {
             )}
 
             {/* Main Content */}
-            <main className="flex-1 md:ml-64 bg-gray-50 min-h-screen flex flex-col">
+            <main className="flex-1 md:ml-64 bg-gray-50 dark:bg-gray-900 min-h-screen flex flex-col transition-colors">
                 {/* Desktop Header */}
-                <header className="hidden md:flex justify-end items-center px-8 py-4 bg-white border-b border-gray-100 sticky top-0 z-40">
+                <header className="hidden md:flex justify-end items-center px-8 py-4 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 sticky top-0 z-[110] transition-colors">
                     <div className="relative">
                         <button
                             onClick={() => setShowNotifications(!showNotifications)}
-                            className="p-2 bg-white rounded-full shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors relative"
+                            className="p-2 bg-white dark:bg-gray-700 rounded-full shadow-sm border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors relative"
                         >
-                            <Bell className="h-5 w-5 text-gray-600" />
+                            <Bell className="h-5 w-5 text-gray-600 dark:text-gray-300" />
                             {unreadCount > 0 && (
-                                <span className="absolute top-0 right-0 h-3 w-3 bg-red-500 rounded-full border-2 border-white"></span>
+                                <span className="absolute top-0 right-0 h-3 w-3 bg-red-500 rounded-full border-2 border-white dark:border-gray-700"></span>
                             )}
                         </button>
 
                         {/* Notification Dropdown */}
                         {showNotifications && (
-                            <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
-                                <div className="px-4 py-2 border-b border-gray-100 flex justify-between items-center">
-                                    <h3 className="font-semibold text-gray-900">Notificações</h3>
+                            <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 py-2 z-50">
+                                <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
+                                    <h3 className="font-semibold text-gray-900 dark:text-white">Notificações</h3>
                                     {unreadCount > 0 && (
                                         <button
                                             onClick={async () => {
@@ -232,7 +232,7 @@ const DashboardLayout = () => {
                                                 setNotifications(prev => prev.map(n => ({ ...n, read: true })));
                                                 setUnreadCount(0);
                                             }}
-                                            className="text-xs text-blue-600 hover:text-blue-800"
+                                            className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
                                         >
                                             Marcar todas como lidas
                                         </button>
@@ -240,7 +240,7 @@ const DashboardLayout = () => {
                                 </div>
                                 <div className="max-h-96 overflow-y-auto">
                                     {notifications.length === 0 ? (
-                                        <div className="p-4 text-center text-gray-500 text-sm">
+                                        <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
                                             Nenhuma notificação.
                                         </div>
                                     ) : (
@@ -248,13 +248,13 @@ const DashboardLayout = () => {
                                             <div
                                                 key={notification.id}
                                                 onClick={() => handleMarkAsRead(notification.id, notification.link)}
-                                                className={`px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-50 last:border-0 ${!notification.read ? 'bg-blue-50/50' : ''}`}
+                                                className={`px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer border-b border-gray-50 dark:border-gray-700 last:border-0 ${!notification.read ? 'bg-blue-50/50 dark:bg-blue-900/20' : ''}`}
                                             >
-                                                <p className={`text-sm ${!notification.read ? 'font-semibold text-gray-900' : 'text-gray-700'}`}>
+                                                <p className={`text-sm ${!notification.read ? 'font-semibold text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}>
                                                     {notification.title}
                                                 </p>
-                                                <p className="text-xs text-gray-500 mt-1">{notification.message}</p>
-                                                <p className="text-[10px] text-gray-400 mt-1">
+                                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{notification.message}</p>
+                                                <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1">
                                                     {new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(notification.createdAt))}
                                                 </p>
                                             </div>

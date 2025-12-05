@@ -179,7 +179,7 @@ export const listAreas = async (req: Request, res: Response) => {
 export const updateCompany = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const { name, cnpj } = req.body;
+        const { name, cnpj, email, password } = req.body;
         const user = (req as AuthRequest).user;
 
         if (!user) return res.status(401).json({ error: 'Unauthorized' });
@@ -188,12 +188,43 @@ export const updateCompany = async (req: Request, res: Response) => {
             return res.status(403).json({ error: 'Access denied' });
         }
 
-        const company = await prisma.company.update({
-            where: { id },
-            data: { name, cnpj }
+        const result = await prisma.$transaction(async (prisma) => {
+            const company = await prisma.company.update({
+                where: { id },
+                data: { name, cnpj }
+            });
+
+            if (email || password) {
+                // Find the admin user (RH) for this company
+                // We assume the first RH user found is the main admin to be updated
+                const adminUser = await prisma.user.findFirst({
+                    where: {
+                        companyId: id,
+                        role: 'RH'
+                    }
+                });
+
+                if (adminUser) {
+                    const updateData: any = {};
+                    if (email) updateData.email = email;
+                    if (password) {
+                        const hashedPassword = await import('bcryptjs').then(bcrypt => bcrypt.hash(password, 10));
+                        updateData.password = hashedPassword;
+                    }
+
+                    await prisma.user.update({
+                        where: { id: adminUser.id },
+                        data: updateData
+                    });
+                }
+            }
+
+            return company;
         });
-        res.json(company);
+
+        res.json(result);
     } catch (error) {
+        console.error('Error updating company:', error);
         res.status(500).json({ error: 'Error updating company' });
     }
 };
