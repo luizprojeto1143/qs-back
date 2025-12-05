@@ -56,8 +56,9 @@ const CompaniesList = () => {
                 const errorData = await response.json();
                 alert(errorData.error || 'Erro ao salvar empresa.');
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error saving company', error);
+            alert(error.message || 'Erro ao salvar empresa.');
         }
     };
 

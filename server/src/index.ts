@@ -9,7 +9,11 @@ const PORT = process.env.PORT || 3001;
 
 import routes from './routes';
 
-app.use(cors());
+app.use(cors({
+  origin: ['https://qs-back.vercel.app', 'http://localhost:5173', 'http://localhost:3000'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-company-id']
+}));
 app.use(express.json());
 
 app.use('/api', routes);

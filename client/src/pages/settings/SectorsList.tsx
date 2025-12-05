@@ -60,9 +60,9 @@ const SectorsList = () => {
             setEditingId(null);
             fetchData();
             alert(editingId ? 'Setor atualizado com sucesso!' : 'Setor cadastrado com sucesso!');
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error saving sector', error);
-            alert('Erro ao salvar setor.');
+            alert(error.message || 'Erro ao salvar setor.');
         }
     };
 

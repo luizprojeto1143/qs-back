@@ -48,9 +48,9 @@ const AreasList = () => {
             setEditingId(null);
             fetchData();
             alert(editingId ? 'Área atualizada com sucesso!' : 'Área cadastrada com sucesso!');
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error saving area', error);
-            alert('Erro ao salvar área.');
+            alert(error.message || 'Erro ao salvar área.');
         }
     };
 
