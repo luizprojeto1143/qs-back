@@ -26,7 +26,7 @@ const VisitRecording = () => {
         anexos: [] as any[]
     });
 
-    // Mock Data for Selects (Replace with API calls later)
+    // Data for Selects
     const [companies, setCompanies] = useState<any[]>([]);
     const [areas, setAreas] = useState<any[]>([]);
     const [collaborators, setCollaborators] = useState<any[]>([]);

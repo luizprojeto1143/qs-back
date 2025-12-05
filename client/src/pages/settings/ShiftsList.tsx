@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, Trash2, Clock } from 'lucide-react';
 
-// Mock data since we don't have a specific backend table yet
-// Shifts managed locally for now
+// Shifts managed locally via localStorage
 const DEFAULT_SHIFTS: string[] = [];
 
 const ShiftsList = () => {

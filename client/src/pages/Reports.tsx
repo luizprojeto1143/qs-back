@@ -25,7 +25,7 @@ const Reports = () => {
         setGenerating(type);
         try {
             const token = localStorage.getItem('token');
-            // For demo purposes, we are sending empty filters. 
+            // Defaulting to current month/year.
             // In a real scenario, we would open a modal to ask for Date/ID first.
             const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/reports`, {
                 method: 'POST',
