@@ -6,6 +6,7 @@ import { useCompany } from '../contexts/CompanyContext';
 import { SkeletonCard } from '../components/Skeleton';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { api } from '../lib/api';
 
 const StatCard = ({ icon: Icon, label, value, color }: any) => (
     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center space-x-4">
@@ -27,18 +28,8 @@ const DashboardHome = () => {
     const { data, isLoading: loading } = useQuery({
         queryKey: ['dashboardStats', selectedCompanyId],
         queryFn: async () => {
-            const token = localStorage.getItem('token');
-            const headers: any = { 'Authorization': `Bearer ${token}` };
-
-            if (selectedCompanyId) {
-                headers['x-company-id'] = selectedCompanyId;
-            }
-
-            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/dashboard/master`, {
-                headers
-            });
-            const result = await response.json();
-            return result;
+            const result = await api.get('/dashboard/master');
+            return result.data;
         },
         initialData: { stats: { collaborators: 0, visits: 0, pendencies: 0, schedules: 0 }, recentActivity: [] }
     });

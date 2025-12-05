@@ -32,7 +32,7 @@ const handleResponse = async (response: Response) => {
     return { data, status: response.status };
 };
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+const BASE_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api`;
 
 export const api = {
     get: async (endpoint: string) => {

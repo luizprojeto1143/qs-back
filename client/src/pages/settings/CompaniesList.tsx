@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Building, Plus, X } from 'lucide-react';
+import { api } from '../../lib/api';
 
 const CompaniesList = () => {
     const [companies, setCompanies] = useState<any[]>([]);
@@ -10,12 +11,8 @@ const CompaniesList = () => {
 
     const fetchCompanies = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/companies`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const data = await response.json();
-            setCompanies(data);
+            const response = await api.get('/companies');
+            setCompanies(response.data);
         } catch (error) {
             console.error('Error fetching companies', error);
         } finally {
@@ -30,32 +27,16 @@ const CompaniesList = () => {
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const token = localStorage.getItem('token');
-            const url = editingId
-                ? `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/companies/${editingId}`
-                : `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/companies`;
+            const url = editingId ? `/companies/${editingId}` : '/companies';
+            const method = editingId ? 'put' : 'post';
 
-            const method = editingId ? 'PUT' : 'POST';
+            await api[method](url, newCompany);
 
-            const response = await fetch(url, {
-                method: method,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(newCompany)
-            });
-
-            if (response.ok) {
-                setIsModalOpen(false);
-                setNewCompany({ name: '', cnpj: '', email: '', password: '' });
-                setEditingId(null);
-                fetchCompanies();
-                alert(editingId ? 'Empresa atualizada com sucesso!' : 'Empresa cadastrada com sucesso!');
-            } else {
-                const errorData = await response.json();
-                alert(errorData.error || 'Erro ao salvar empresa.');
-            }
+            setIsModalOpen(false);
+            setNewCompany({ name: '', cnpj: '', email: '', password: '' });
+            setEditingId(null);
+            fetchCompanies();
+            alert(editingId ? 'Empresa atualizada com sucesso!' : 'Empresa cadastrada com sucesso!');
         } catch (error: any) {
             console.error('Error saving company', error);
             alert(error.message || 'Erro ao salvar empresa.');
