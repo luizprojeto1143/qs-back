@@ -10,7 +10,15 @@ const PORT = process.env.PORT || 3001;
 import routes from './routes';
 
 app.use(cors({
-  origin: ['https://qs-back.vercel.app', 'http://localhost:5173', 'http://localhost:3000'],
+  origin: (origin, callback) => {
+    const allowedOrigins = ['https://qs-back.vercel.app', 'http://localhost:5173', 'http://localhost:3000'];
+    // Allow Vercel preview deployments
+    if (!origin || allowedOrigins.includes(origin) || /\.vercel\.app$/.test(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-company-id']
 }));
