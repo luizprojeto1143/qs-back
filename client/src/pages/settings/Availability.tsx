@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Save, Clock } from 'lucide-react';
 import { useCompany } from '../../contexts/CompanyContext';
 import { toast } from 'sonner';
+import { api } from '../../lib/api';
 
 interface DaySchedule {
     start: string;
@@ -40,14 +41,8 @@ const Availability = () => {
         const fetchAvailability = async () => {
             if (!selectedCompanyId) return;
             try {
-                const token = localStorage.getItem('token');
-                const headers: any = { 'Authorization': `Bearer ${token}` };
-                headers['x-company-id'] = selectedCompanyId;
-
-                const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/settings/availability`, {
-                    headers
-                });
-                const data = await response.json();
+                const response = await api.get('/settings/availability');
+                const data = response.data;
 
                 if (Object.keys(data).length > 0) {
                     setAvailability(data);
@@ -65,24 +60,8 @@ const Availability = () => {
 
     const handleSave = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const headers: any = {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            };
-            if (selectedCompanyId) headers['x-company-id'] = selectedCompanyId;
-
-            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/settings/availability`, {
-                method: 'POST',
-                headers,
-                body: JSON.stringify(availability)
-            });
-
-            if (response.ok) {
-                toast.success('Disponibilidade salva com sucesso!');
-            } else {
-                toast.error('Erro ao salvar configurações');
-            }
+            await api.post('/settings/availability', availability);
+            toast.success('Disponibilidade salva com sucesso!');
         } catch (error) {
             console.error('Error saving availability', error);
             toast.error('Erro ao salvar configurações');
@@ -96,14 +75,14 @@ const Availability = () => {
         }));
     };
 
-    if (loading) return <div>Carregando...</div>;
+    if (loading) return <div className="text-gray-500 dark:text-gray-400">Carregando...</div>;
 
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Disponibilidade de Horários</h1>
-                    <p className="text-gray-500">Defina os horários disponíveis para cada dia da semana</p>
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Disponibilidade de Horários</h1>
+                    <p className="text-gray-500 dark:text-gray-400">Defina os horários disponíveis para cada dia da semana</p>
                 </div>
                 <button type="button" onClick={handleSave} className="btn-primary flex items-center space-x-2">
                     <Save className="h-4 w-4" />
@@ -111,9 +90,9 @@ const Availability = () => {
                 </button>
             </div>
 
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 space-y-4">
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 space-y-4">
                 {DAYS.map((day) => (
-                    <div key={day.key} className={`flex items-center justify-between p-4 border rounded-lg transition-colors ${availability[day.key]?.active ? 'bg-white border-gray-200' : 'bg-gray-50 border-gray-100'}`}>
+                    <div key={day.key} className={`flex items-center justify-between p-4 border rounded-lg transition-colors ${availability[day.key]?.active ? 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600' : 'bg-gray-50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-700'}`}>
                         <div className="flex items-center space-x-3">
                             <input
                                 type="checkbox"
@@ -121,26 +100,26 @@ const Availability = () => {
                                 onChange={(e) => handleChange(day.key, 'active', e.target.checked)}
                                 className="h-5 w-5 text-primary rounded focus:ring-primary cursor-pointer"
                             />
-                            <span className={`font-medium ${availability[day.key]?.active ? 'text-gray-900' : 'text-gray-400'}`}>
+                            <span className={`font-medium ${availability[day.key]?.active ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-500'}`}>
                                 {day.label}
                             </span>
                         </div>
                         <div className="flex items-center space-x-2">
-                            <Clock className={`h-4 w-4 ${availability[day.key]?.active ? 'text-gray-400' : 'text-gray-300'}`} />
+                            <Clock className={`h-4 w-4 ${availability[day.key]?.active ? 'text-gray-400 dark:text-gray-300' : 'text-gray-300 dark:text-gray-600'}`} />
                             <input
                                 type="time"
                                 value={availability[day.key]?.start}
                                 onChange={(e) => handleChange(day.key, 'start', e.target.value)}
                                 disabled={!availability[day.key]?.active}
-                                className={`input-field w-32 ${!availability[day.key]?.active && 'bg-gray-100 text-gray-400'}`}
+                                className={`input-field w-32 dark:bg-gray-600 dark:border-gray-500 dark:text-white ${!availability[day.key]?.active && 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600'}`}
                             />
-                            <span className={availability[day.key]?.active ? 'text-gray-500' : 'text-gray-300'}>até</span>
+                            <span className={availability[day.key]?.active ? 'text-gray-500 dark:text-gray-400' : 'text-gray-300 dark:text-gray-600'}>até</span>
                             <input
                                 type="time"
                                 value={availability[day.key]?.end}
                                 onChange={(e) => handleChange(day.key, 'end', e.target.value)}
                                 disabled={!availability[day.key]?.active}
-                                className={`input-field w-32 ${!availability[day.key]?.active && 'bg-gray-100 text-gray-400'}`}
+                                className={`input-field w-32 dark:bg-gray-600 dark:border-gray-500 dark:text-white ${!availability[day.key]?.active && 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600'}`}
                             />
                         </div>
                     </div>

@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Search, Plus, ChevronRight, User, X } from 'lucide-react';
+import { Search, Plus, ChevronRight, User, X, Clock } from 'lucide-react';
 import { useCompany } from '../contexts/CompanyContext';
+import { api } from '../lib/api';
+import CollaboratorHistory from '../components/CollaboratorHistory';
+import { formatShift } from '../utils/formatters';
 
 const CollaboratorsList = () => {
     const { selectedCompanyId, companies: contextCompanies } = useCompany();
@@ -10,6 +13,7 @@ const CollaboratorsList = () => {
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
+    const [viewingHistoryId, setViewingHistoryId] = useState<string | null>(null);
 
     // New Collaborator State
     const [newCollab, setNewCollab] = useState({
@@ -18,7 +22,7 @@ const CollaboratorsList = () => {
         matricula: '',
         companyId: selectedCompanyId || '',
         areaId: '',
-        shift: 'MANHA',
+        shift: '1_TURNO',
         disabilityType: 'NENHUMA',
         needsDescription: '',
         password: ''
@@ -33,24 +37,21 @@ const CollaboratorsList = () => {
 
     const fetchData = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const headers = { 'Authorization': `Bearer ${token}` };
-
             // Use context companies if available, otherwise fetch
             if (contextCompanies.length > 0) {
                 setCompanies(contextCompanies);
             } else {
-                const resCompanies = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/companies`, { headers });
-                setCompanies(await resCompanies.json());
+                const resCompanies = await api.get('/companies');
+                setCompanies(resCompanies.data);
             }
 
             const [resCollabs, resAreas] = await Promise.all([
-                fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/collaborators`, { headers }),
-                fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/areas`, { headers })
+                api.get('/collaborators'),
+                api.get('/areas')
             ]);
 
-            setCollaborators(await resCollabs.json());
-            setAreas(await resAreas.json());
+            setCollaborators(resCollabs.data);
+            setAreas(resAreas.data);
         } catch (error) {
             console.error('Error fetching data', error);
         } finally {
@@ -65,36 +66,25 @@ const CollaboratorsList = () => {
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const token = localStorage.getItem('token');
             const url = editingId
-                ? `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/collaborators/${editingId}`
-                : `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/collaborators`;
+                ? `/collaborators/${editingId}`
+                : '/collaborators';
 
-            const method = editingId ? 'PUT' : 'POST';
+            const method = editingId ? 'put' : 'post';
 
-            const response = await fetch(url, {
-                method: method,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(newCollab)
+            await api[method](url, newCollab);
+
+            setIsModalOpen(false);
+            setNewCollab({
+                name: '', email: '', matricula: '', companyId: selectedCompanyId || '', areaId: '',
+                shift: '1_TURNO', disabilityType: 'NENHUMA', needsDescription: '', password: ''
             });
-
-            if (response.ok) {
-                setIsModalOpen(false);
-                setNewCollab({
-                    name: '', email: '', matricula: '', companyId: selectedCompanyId || '', areaId: '',
-                    shift: 'MANHA', disabilityType: 'NENHUMA', needsDescription: '', password: ''
-                });
-                setEditingId(null);
-                fetchData();
-                alert(editingId ? 'Colaborador atualizado com sucesso!' : 'Colaborador cadastrado com sucesso!');
-            } else {
-                alert('Erro ao salvar colaborador.');
-            }
-        } catch (error) {
+            setEditingId(null);
+            fetchData();
+            alert(editingId ? 'Colaborador atualizado com sucesso!' : 'Colaborador cadastrado com sucesso!');
+        } catch (error: any) {
             console.error('Error saving collaborator', error);
+            alert(error.message || 'Erro ao salvar colaborador.');
         }
     };
 
@@ -105,7 +95,7 @@ const CollaboratorsList = () => {
             matricula: collab.collaboratorProfile?.matricula || '',
             companyId: collab.companyId,
             areaId: collab.collaboratorProfile?.areaId || '',
-            shift: collab.collaboratorProfile?.shift || 'MANHA',
+            shift: collab.collaboratorProfile?.shift || '1_TURNO',
             disabilityType: collab.collaboratorProfile?.disabilityType || 'NENHUMA',
             needsDescription: collab.collaboratorProfile?.needsDescription || '',
             password: '' // Don't populate password
@@ -120,7 +110,7 @@ const CollaboratorsList = () => {
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold text-gray-900">Colaboradores</h1>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Colaboradores</h1>
                 <button
                     type="button"
                     onClick={() => setIsModalOpen(true)}
@@ -132,14 +122,14 @@ const CollaboratorsList = () => {
             </div>
 
             {/* Search and Filters */}
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-4">
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col md:flex-row gap-4">
                 <div className="relative flex-1">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <Search className="h-5 w-5 text-gray-400" />
                     </div>
                     <input
                         type="text"
-                        className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                        className="block w-full pl-10 pr-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary dark:bg-gray-700 dark:text-white"
                         placeholder="Buscar por nome, matrícula..."
                     />
                 </div>
@@ -147,31 +137,46 @@ const CollaboratorsList = () => {
 
             {/* List */}
             {loading ? (
-                <div className="text-center py-10">Carregando...</div>
+                <div className="text-center py-10 text-gray-500 dark:text-gray-400">Carregando...</div>
             ) : (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div className="divide-y divide-gray-100">
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                    <div className="divide-y divide-gray-100 dark:divide-gray-700">
                         {filteredCollaborators.map((collab) => (
-                            <div key={collab.id} onClick={() => handleEdit(collab)} className="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer group">
+                            <div key={collab.id} onClick={() => handleEdit(collab)} className="p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer group">
                                 <div className="flex items-center space-x-4">
-                                    <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden text-gray-400">
+                                    <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center overflow-hidden text-gray-400 dark:text-gray-500">
                                         <User className="h-6 w-6" />
                                     </div>
                                     <div>
-                                        <h3 className="text-sm font-bold text-gray-900">{collab.name}</h3>
-                                        <p className="text-xs text-gray-500">
-                                            {collab.collaboratorProfile?.area?.name || 'Sem Área'} • {collab.collaboratorProfile?.shift || 'Sem Turno'}
+                                        <h3 className="text-sm font-bold text-gray-900 dark:text-white">{collab.name}</h3>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                                            {collab.collaboratorProfile?.area?.name || 'Sem Área'} • {formatShift(collab.collaboratorProfile?.shift)}
                                         </p>
                                     </div>
                                 </div>
-                                <ChevronRight className="h-5 w-5 text-gray-300 group-hover:text-primary transition-colors" />
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); setViewingHistoryId(collab.id); }}
+                                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-full transition-colors mr-2"
+                                    title="Ver Histórico"
+                                >
+                                    <Clock className="h-5 w-5 text-blue-500" />
+                                </button>
+                                <ChevronRight className="h-5 w-5 text-gray-300 dark:text-gray-600 group-hover:text-primary transition-colors" />
                             </div>
                         ))}
                     </div>
                 </div>
             )}
 
-            {/* Modal */}
+            {/* History Modal */}
+            {viewingHistoryId && (
+                <CollaboratorHistory
+                    collaboratorId={viewingHistoryId}
+                    onClose={() => setViewingHistoryId(null)}
+                />
+            )}
+
+            {/* Edit/Create Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-2xl w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto">
@@ -247,7 +252,9 @@ const CollaboratorsList = () => {
                                         onChange={e => setNewCollab({ ...newCollab, areaId: e.target.value })}
                                     >
                                         <option value="">Selecione...</option>
-                                        {areas.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                                        {areas
+                                            .filter(a => !newCollab.companyId || (a.sector && a.sector.companyId === newCollab.companyId))
+                                            .map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
                                     </select>
                                 </div>
                                 <div>
@@ -258,9 +265,9 @@ const CollaboratorsList = () => {
                                         value={newCollab.shift}
                                         onChange={e => setNewCollab({ ...newCollab, shift: e.target.value })}
                                     >
-                                        <option value="MANHA">Manhã</option>
-                                        <option value="TARDE">Tarde</option>
-                                        <option value="NOITE">Noite</option>
+                                        <option value="1_TURNO">1º Turno</option>
+                                        <option value="2_TURNO">2º Turno</option>
+                                        <option value="3_TURNO">3º Turno</option>
                                         <option value="ESCALA_12X36">Escala 12x36</option>
                                     </select>
                                 </div>
@@ -305,9 +312,9 @@ const CollaboratorsList = () => {
                             </div>
                         </form>
                     </div>
-                </div >
+                </div>
             )}
-        </div >
+        </div>
     );
 };
 

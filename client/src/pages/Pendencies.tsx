@@ -3,6 +3,7 @@ import { AlertCircle, CheckCircle, Clock, Filter, Plus, X, User, MoreHorizontal,
 import { toast } from 'sonner';
 
 import { useCompany } from '../contexts/CompanyContext';
+import { api } from '../lib/api';
 
 const Pendencies = () => {
     const { selectedCompanyId, companies: contextCompanies } = useCompany();
@@ -36,19 +37,15 @@ const Pendencies = () => {
 
     const fetchData = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const headers = { 'Authorization': `Bearer ${token}` };
-            if (selectedCompanyId) (headers as any)['x-company-id'] = selectedCompanyId;
-
             const [resPendencies, resCompanies, resAreas] = await Promise.all([
-                fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/pendencies`, { headers }),
-                fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/companies`, { headers }),
-                fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/areas`, { headers }),
+                api.get('/pendencies'),
+                api.get('/companies'),
+                api.get('/areas'),
             ]);
 
-            setPendencies(await resPendencies.json());
-            setCompanies(await resCompanies.json());
-            setAreas(await resAreas.json());
+            setPendencies(resPendencies.data);
+            setCompanies(resCompanies.data);
+            setAreas(resAreas.data);
 
         } catch (error) {
             console.error('Error fetching data', error);
@@ -64,37 +61,19 @@ const Pendencies = () => {
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const token = localStorage.getItem('token');
-            const headers: any = {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            };
-            if (selectedCompanyId) headers['x-company-id'] = selectedCompanyId;
+            const url = editingId ? `/pendencies/${editingId}` : '/pendencies';
+            const method = editingId ? 'put' : 'post';
 
-            const url = editingId
-                ? `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/pendencies/${editingId}`
-                : `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/pendencies`;
+            await api[method](url, newPendency);
 
-            const method = editingId ? 'PUT' : 'POST';
-
-            const response = await fetch(url, {
-                method,
-                headers,
-                body: JSON.stringify(newPendency)
+            setIsModalOpen(false);
+            setNewPendency({
+                description: '', responsible: '', priority: 'MEDIA', deadline: '',
+                companyId: selectedCompanyId || '', areaId: '', collaboratorId: ''
             });
-
-            if (response.ok) {
-                setIsModalOpen(false);
-                setNewPendency({
-                    description: '', responsible: '', priority: 'MEDIA', deadline: '',
-                    companyId: selectedCompanyId || '', areaId: '', collaboratorId: ''
-                });
-                setEditingId(null);
-                fetchData();
-                toast.success(editingId ? 'Pendência atualizada com sucesso!' : 'Pendência registrada com sucesso!');
-            } else {
-                toast.error('Erro ao salvar pendência.');
-            }
+            setEditingId(null);
+            fetchData();
+            toast.success(editingId ? 'Pendência atualizada com sucesso!' : 'Pendência registrada com sucesso!');
         } catch (error) {
             console.error('Error saving pendency', error);
             toast.error('Erro ao salvar pendência.');
@@ -119,21 +98,9 @@ const Pendencies = () => {
     const handleDelete = async (id: string) => {
         if (!confirm('Tem certeza que deseja excluir esta pendência?')) return;
         try {
-            const token = localStorage.getItem('token');
-            const headers: any = { 'Authorization': `Bearer ${token}` };
-            if (selectedCompanyId) headers['x-company-id'] = selectedCompanyId;
-
-            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/pendencies/${id}`, {
-                method: 'DELETE',
-                headers
-            });
-
-            if (response.ok) {
-                fetchData();
-                toast.success('Pendência excluída com sucesso!');
-            } else {
-                toast.error('Erro ao excluir pendência.');
-            }
+            await api.delete(`/pendencies/${id}`);
+            fetchData();
+            toast.success('Pendência excluída com sucesso!');
         } catch (error) {
             console.error('Error deleting pendency', error);
             toast.error('Erro ao excluir pendência.');
@@ -144,18 +111,7 @@ const Pendencies = () => {
     const handleResolve = async (id: string) => {
         if (!confirm('Marcar pendência como resolvida?')) return;
         try {
-            const token = localStorage.getItem('token');
-            const headers: any = {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            };
-            if (selectedCompanyId) headers['x-company-id'] = selectedCompanyId;
-
-            await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/pendencies/${id}`, {
-                method: 'PUT',
-                headers,
-                body: JSON.stringify({ status: 'RESOLVIDA' })
-            });
+            await api.put(`/pendencies/${id}`, { status: 'RESOLVIDA' });
             fetchData();
             toast.success('Pendência resolvida!');
         } catch (error) {

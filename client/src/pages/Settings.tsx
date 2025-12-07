@@ -21,19 +21,19 @@ const Settings = () => {
 
     return (
         <div className="max-w-4xl mx-auto space-y-8">
-            <h1 className="text-3xl font-bold text-gray-900">Configurações</h1>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Configurações</h1>
 
             <div className="space-y-4">
                 {menuItems.map((item, index) => (
                     <button
                         key={index}
                         onClick={() => handleNavigate(item.path)}
-                        className="w-full bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-all group text-left"
+                        className="w-full bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center justify-between hover:shadow-md transition-all group text-left"
                     >
-                        <span className="text-lg text-gray-700 font-medium group-hover:text-primary transition-colors">
+                        <span className="text-lg text-gray-700 dark:text-gray-200 font-medium group-hover:text-primary transition-colors">
                             {item.label}
                         </span>
-                        <ChevronRight className="h-5 w-5 text-gray-300 group-hover:text-primary transition-colors" />
+                        <ChevronRight className="h-5 w-5 text-gray-300 dark:text-gray-600 group-hover:text-primary transition-colors" />
                     </button>
                 ))}
             </div>

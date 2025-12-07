@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Users, ClipboardList, AlertTriangle, CheckCircle } from 'lucide-react';
+import { api } from '../lib/api';
 
 const StatCard = ({ icon: Icon, label, value, color }: any) => (
     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center space-x-4">
@@ -26,11 +27,8 @@ const RHDashboard = () => {
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/dashboard/rh`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const data = await response.json();
+                const response = await api.get('/dashboard/rh');
+                const data = response.data;
                 if (data.stats) setStats(data.stats);
                 if (data.recentActivity) setRecentActivity(data.recentActivity);
             } catch (error) {

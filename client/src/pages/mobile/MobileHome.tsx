@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Play, Calendar, Clock, X, Video } from 'lucide-react';
+import { api } from '../../lib/api';
 
 const MobileHome = () => {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -13,16 +14,13 @@ const MobileHome = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const token = localStorage.getItem('token');
-                const headers = { 'Authorization': `Bearer ${token}` };
-
                 const [resFeed, resSchedule] = await Promise.all([
-                    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/feed`, { headers }),
-                    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/schedules`, { headers })
+                    api.get('/feed'),
+                    api.get('/schedules')
                 ]);
 
-                const feedData = await resFeed.json();
-                const scheduleData = await resSchedule.json();
+                const feedData = resFeed.data;
+                const scheduleData = resSchedule.data;
 
                 if (Array.isArray(feedData)) {
                     setFeedItems(feedData.map((item: any) => ({

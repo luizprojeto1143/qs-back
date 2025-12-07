@@ -68,6 +68,19 @@ export const createVisit = async (req: Request, res: Response) => {
                 ));
             }
 
+            // 4. Create Individual Notes
+            if (req.body.individualNotes && req.body.individualNotes.length > 0) {
+                await Promise.all(req.body.individualNotes.map((note: any) =>
+                    prisma.visitNote.create({
+                        data: {
+                            visitId: visit.id,
+                            collaboratorId: note.collaboratorId,
+                            content: note.content
+                        }
+                    })
+                ));
+            }
+
             return visit;
         });
 
@@ -119,7 +132,14 @@ export const getVisit = async (req: Request, res: Response) => {
                 master: { select: { name: true } },
                 collaborators: { include: { user: { select: { name: true } } } },
                 generatedPendencies: true,
-                attachments: true
+                attachments: true,
+                notes: {
+                    include: {
+                        collaborator: {
+                            include: { user: { select: { name: true } } }
+                        }
+                    }
+                }
             }
         });
 

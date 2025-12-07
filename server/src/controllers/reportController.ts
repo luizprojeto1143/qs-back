@@ -41,7 +41,14 @@ export const generateReport = async (req: Request, res: Response) => {
                         master: { select: { name: true } },
                         collaborators: { include: { user: true } },
                         generatedPendencies: true,
-                        attachments: true
+                        attachments: true,
+                        notes: {
+                            include: {
+                                collaborator: {
+                                    include: { user: { select: { name: true } } }
+                                }
+                            }
+                        }
                     }
                 });
                 break;

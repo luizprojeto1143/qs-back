@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Calendar, Clock, CheckCircle } from 'lucide-react';
+import { api } from '../../lib/api';
 
 const MobileSchedule = () => {
     const [selectedDate, setSelectedDate] = useState('');
@@ -11,28 +12,15 @@ const MobileSchedule = () => {
         e.preventDefault();
 
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/schedules`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    date: selectedDate,
-                    time: selectedTime,
-                    reason
-                })
+            await api.post('/schedules', {
+                date: selectedDate,
+                time: selectedTime,
+                reason
             });
-
-            if (response.ok) {
-                setSubmitted(true);
-            } else {
-                alert('Erro ao agendar. Tente novamente.');
-            }
+            setSubmitted(true);
         } catch (error) {
             console.error('Error scheduling:', error);
-            alert('Erro de conexão.');
+            alert('Erro de conexão ou ao agendar.');
         }
     };
 

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Video, Plus, MoreHorizontal, X, Image as ImageIcon, Edit, Trash2 } from 'lucide-react';
 import { useCompany } from '../contexts/CompanyContext';
 import { toast } from 'sonner';
+import { api } from '../lib/api';
 
 const Feed = () => {
     const { selectedCompanyId } = useCompany();
@@ -24,14 +25,8 @@ const Feed = () => {
 
     const fetchPosts = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const headers: any = { 'Authorization': `Bearer ${token}` };
-            if (selectedCompanyId) headers['x-company-id'] = selectedCompanyId;
-
-            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/feed`, {
-                headers
-            });
-            const data = await response.json();
+            const response = await api.get('/feed');
+            const data = response.data;
             if (Array.isArray(data)) {
                 setPosts(data);
             } else {
@@ -47,14 +42,8 @@ const Feed = () => {
 
     const fetchCategories = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const headers: any = { 'Authorization': `Bearer ${token}` };
-            if (selectedCompanyId) headers['x-company-id'] = selectedCompanyId;
-
-            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/settings/feed-categories`, {
-                headers
-            });
-            const data = await response.json();
+            const response = await api.get('/settings/feed-categories');
+            const data = response.data;
             if (Array.isArray(data)) {
                 setCategories(data);
                 if (data.length > 0 && !newPost.category) {
@@ -76,34 +65,16 @@ const Feed = () => {
     const handleCreatePost = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const token = localStorage.getItem('token');
-            const headers: any = {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            };
-            if (selectedCompanyId) headers['x-company-id'] = selectedCompanyId;
+            const url = editingId ? `/feed/${editingId}` : '/feed';
+            const method = editingId ? 'put' : 'post';
 
-            const url = editingId
-                ? `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/feed/${editingId}`
-                : `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/feed`;
+            await api[method](url, newPost);
 
-            const method = editingId ? 'PUT' : 'POST';
-
-            const response = await fetch(url, {
-                method,
-                headers,
-                body: JSON.stringify(newPost)
-            });
-
-            if (response.ok) {
-                setIsModalOpen(false);
-                setNewPost({ title: '', description: '', category: categories[0]?.name || '', imageUrl: '', videoLibrasUrl: '' });
-                setEditingId(null);
-                fetchPosts(); // Refresh list
-                toast.success(editingId ? 'Post atualizado com sucesso!' : 'Post criado com sucesso!');
-            } else {
-                toast.error('Erro ao salvar post');
-            }
+            setIsModalOpen(false);
+            setNewPost({ title: '', description: '', category: categories[0]?.name || '', imageUrl: '', videoLibrasUrl: '' });
+            setEditingId(null);
+            fetchPosts(); // Refresh list
+            toast.success(editingId ? 'Post atualizado com sucesso!' : 'Post criado com sucesso!');
         } catch (error) {
             console.error('Error saving post', error);
             toast.error('Erro ao salvar post');
@@ -127,21 +98,9 @@ const Feed = () => {
         if (!confirm('Tem certeza que deseja excluir este post?')) return;
 
         try {
-            const token = localStorage.getItem('token');
-            const headers: any = { 'Authorization': `Bearer ${token}` };
-            if (selectedCompanyId) headers['x-company-id'] = selectedCompanyId;
-
-            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/feed/${id}`, {
-                method: 'DELETE',
-                headers
-            });
-
-            if (response.ok) {
-                fetchPosts();
-                toast.success('Post excluído com sucesso!');
-            } else {
-                toast.error('Erro ao excluir post');
-            }
+            await api.delete(`/feed/${id}`);
+            fetchPosts();
+            toast.success('Post excluído com sucesso!');
         } catch (error) {
             console.error('Error deleting post', error);
             toast.error('Erro ao excluir post');

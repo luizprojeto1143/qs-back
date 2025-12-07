@@ -95,13 +95,14 @@ model CollaboratorProfile {
   areaId         String
   area           Area     @relation(fields: [areaId], references: [id])
   
-  shift          String   // MANHA, TARDE, NOITE, ESCALA_12X36, PERSONALIZADO
+  shift          String   // 1_TURNO, 2_TURNO, 3_TURNO, ESCALA_12X36, PERSONALIZADO
   disabilityType String
   needsDescription String?
   
   visits         Visit[] @relation("CollaboratorVisits")
   pendingItems   PendingItem[]
   schedules      Schedule[] @relation("CollaboratorSchedules")
+  visitNotes     VisitNote[]
 }
 
 model Visit {
@@ -131,9 +132,23 @@ model Visit {
 
   generatedPendencies  PendingItem[]
   attachments          VisitAttachment[]
+  notes                VisitNote[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model VisitNote {
+  id             String   @id @default(uuid())
+  content        String
+  
+  visitId        String
+  visit          Visit    @relation(fields: [visitId], references: [id])
+  
+  collaboratorId String
+  collaborator   CollaboratorProfile @relation(fields: [collaboratorId], references: [id])
+  
+  createdAt      DateTime @default(now())
 }
 
 model VisitAttachment {

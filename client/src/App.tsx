@@ -26,6 +26,8 @@ import TermsOfUse from './pages/settings/TermsOfUse';
 import ShiftsList from './pages/settings/ShiftsList';
 import Availability from './pages/settings/Availability';
 import { UsersList } from './pages/settings/UsersList';
+import QRCodeGenerator from './pages/settings/QRCodeGenerator';
+import CollaboratorRegistration from './pages/public/CollaboratorRegistration';
 import { CompanyProvider } from './contexts/CompanyContext';
 
 function App() {
@@ -58,7 +60,11 @@ function App() {
             <Route path="shifts" element={<ShiftsList />} />
             <Route path="availability" element={<Availability />} />
             <Route path="users" element={<UsersList />} />
+            <Route path="users" element={<UsersList />} />
+            <Route path="qrcode" element={<QRCodeGenerator />} />
           </Route>
+
+          <Route path="/register/collaborator" element={<CollaboratorRegistration />} />
 
           {/* RH Routes */}
           <Route path="/rh" element={<RHLayout />}>

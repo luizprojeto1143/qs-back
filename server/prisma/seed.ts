@@ -82,7 +82,7 @@ async function main() {
                     create: {
                         matricula: '12345',
                         areaId: area.id,
-                        shift: 'MANHA',
+                        shift: '1_TURNO',
                         disabilityType: 'FISICA'
                     }
                 }

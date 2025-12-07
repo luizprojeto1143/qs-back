@@ -98,8 +98,23 @@ export const getCollaborator = async (req: Request, res: Response) => {
                 collaboratorProfile: {
                     include: {
                         area: true,
-                        visits: true,
-                        pendingItems: true
+                        visits: {
+                            include: {
+                                master: { select: { name: true } }
+                            },
+                            orderBy: { date: 'desc' }
+                        },
+                        pendingItems: true,
+                        visitNotes: {
+                            include: {
+                                visit: {
+                                    include: {
+                                        master: { select: { name: true } }
+                                    }
+                                }
+                            },
+                            orderBy: { createdAt: 'desc' }
+                        }
                     }
                 }
             }

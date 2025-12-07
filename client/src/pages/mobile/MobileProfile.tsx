@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { User, Mail, Building, LogOut } from 'lucide-react';
+import { api } from '../../lib/api';
 import { useNavigate } from 'react-router-dom';
 
 const MobileProfile = () => {
@@ -10,11 +11,8 @@ const MobileProfile = () => {
     useEffect(() => {
         const fetchUser = async () => {
             try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/me`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const data = await response.json();
+                const response = await api.get('/me');
+                const data = response.data;
                 if (data.user) setUser(data.user);
             } catch (error) {
                 console.error('Error fetching profile', error);

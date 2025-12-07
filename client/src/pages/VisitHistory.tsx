@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Search, Calendar, MapPin, User, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { SkeletonRow } from '../components/Skeleton';
+import { api } from '../lib/api';
 
 const VisitHistory = () => {
     const [visits, setVisits] = useState<any[]>([]);
@@ -49,18 +50,11 @@ const VisitHistory = () => {
     useEffect(() => {
         const fetchVisits = async () => {
             try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/visits`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                if (response.ok) {
-                    const data = await response.json();
-                    setVisits(data);
-                }
+                const response = await api.get('/visits');
+                setVisits(response.data);
             } catch (error) {
                 console.error('Error fetching visits', error);
+                toast.error('Erro ao carregar histórico de visitas');
             } finally {
                 setLoading(false);
             }

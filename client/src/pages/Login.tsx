@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Lock } from 'lucide-react';
 import { toast } from 'sonner';
+import { api } from '../lib/api';
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -11,40 +12,31 @@ const Login = () => {
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/auth/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
-            });
+            const response = await api.post('/auth/login', { email, password });
+            const data = response.data;
 
-            const data = await response.json();
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user));
 
-            if (response.ok) {
-                localStorage.setItem('token', data.token);
-                localStorage.setItem('user', JSON.stringify(data.user));
-
-                // Redirect based on role
-                switch (data.user.role) {
-                    case 'MASTER':
-                        // Force reload to ensure CompanyContext initializes
-                        window.location.href = '/dashboard';
-                        break;
-                    case 'RH':
-                        navigate('/rh');
-                        break;
-                    case 'COLABORADOR':
-                    case 'LIDER':
-                        navigate('/app');
-                        break;
-                    default:
-                        navigate('/dashboard');
-                }
-            } else {
-                toast.error(data.error + (data.details ? `: ${data.details}` : '') || 'Erro ao fazer login');
+            // Redirect based on role
+            switch (data.user.role) {
+                case 'MASTER':
+                    // Force reload to ensure CompanyContext initializes
+                    window.location.href = '/dashboard';
+                    break;
+                case 'RH':
+                    navigate('/rh');
+                    break;
+                case 'COLABORADOR':
+                case 'LIDER':
+                    navigate('/app');
+                    break;
+                default:
+                    navigate('/dashboard');
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Login error', error);
-            toast.error('Erro de conexão ao fazer login');
+            toast.error(error.message || 'Erro ao fazer login');
         }
     };
 

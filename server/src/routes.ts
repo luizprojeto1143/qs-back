@@ -9,6 +9,8 @@ const router = Router();
 // Auth Routes
 router.post('/auth/register', authController.register);
 router.post('/auth/login', authController.login);
+router.post('/auth/register-collaborator', authController.registerCollaborator); // Public route
+router.get('/public/areas/:companyId', companyController.listPublicAreas); // Public route
 
 // Protected Routes
 router.use(authenticateToken);

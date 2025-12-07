@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { api } from '../lib/api';
 
 interface Company {
     id: string;
@@ -35,32 +36,14 @@ export const CompanyProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     const fetchCompanies = async () => {
         try {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                setLoading(false);
-                return;
-            }
-            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/companies`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (response.ok) {
-                const data = await response.json();
-                if (Array.isArray(data)) {
-                    setCompanies(data);
-                    // Removed auto-selection to allow for Global (null) context
-                    // if (data.length > 0) {
-                    //     if (!selectedCompanyId || !data.find((c: Company) => c.id === selectedCompanyId)) {
-                    //         const firstId = data[0].id;
-                    //         setSelectedCompanyId(firstId);
-                    //         localStorage.setItem('selectedCompanyId', firstId);
-                    //     }
-                    // }
-                } else {
-                    console.error('Invalid companies data format:', data);
-                    setCompanies([]);
-                }
+            const response = await api.get('/companies');
+            const data = response.data;
+
+            if (Array.isArray(data)) {
+                setCompanies(data);
             } else {
-                setError(`Failed to fetch: ${response.status} ${response.statusText}`);
+                console.error('Invalid companies data format:', data);
+                setCompanies([]);
             }
         } catch (error: any) {
             console.error('Error fetching companies for context', error);

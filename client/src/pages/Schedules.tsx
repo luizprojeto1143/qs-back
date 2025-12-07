@@ -11,6 +11,7 @@ import { getDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { useCompany } from '../contexts/CompanyContext';
+import { api } from '../lib/api';
 
 const locales = {
     'pt-BR': ptBR,
@@ -32,27 +33,19 @@ const Schedules = () => {
     const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
 
     const { data: schedules = [], isLoading: loadingSchedules } = useQuery({
-        queryKey: ['schedules'],
+        queryKey: ['schedules', selectedCompanyId],
         queryFn: async () => {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/schedules`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (!response.ok) throw new Error('Failed to fetch schedules');
-            return response.json();
+            const response = await api.get('/schedules');
+            return response.data;
         },
         initialData: []
     });
 
     const { data: collaborators = [] } = useQuery({
-        queryKey: ['collaborators'],
+        queryKey: ['collaborators', selectedCompanyId],
         queryFn: async () => {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/collaborators`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (!response.ok) throw new Error('Failed to fetch collaborators');
-            return response.json();
+            const response = await api.get('/collaborators');
+            return response.data;
         },
         initialData: []
     });
@@ -82,17 +75,8 @@ const Schedules = () => {
 
     const updateStatusMutation = useMutation({
         mutationFn: async ({ id, status }: { id: string; status: string }) => {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/schedules/${id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ status })
-            });
-            if (!response.ok) throw new Error('Failed to update status');
-            return response.json();
+            const response = await api.put(`/schedules/${id}`, { status });
+            return response.data;
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['schedules'] });
@@ -105,17 +89,8 @@ const Schedules = () => {
 
     const createScheduleMutation = useMutation({
         mutationFn: async (newSchedule: any) => {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/schedules`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(newSchedule)
-            });
-            if (!response.ok) throw new Error('Failed to create schedule');
-            return response.json();
+            const response = await api.post('/schedules', newSchedule);
+            return response.data;
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['schedules'] });

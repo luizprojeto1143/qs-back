@@ -76,7 +76,7 @@ const AreasList = () => {
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold text-gray-900">Cadastro de Áreas</h1>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Cadastro de Áreas</h1>
                 <button
                     type="button"
                     onClick={() => setIsModalOpen(true)}
@@ -88,35 +88,35 @@ const AreasList = () => {
             </div>
 
             {loading ? (
-                <div className="text-center py-10">Carregando...</div>
+                <div className="text-center py-10 text-gray-500 dark:text-gray-400">Carregando...</div>
             ) : (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
                     <table className="w-full text-left">
-                        <thead className="bg-gray-50 border-b border-gray-100">
+                        <thead className="bg-gray-50 dark:bg-gray-700 border-b border-gray-100 dark:border-gray-700">
                             <tr>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Nome da Área</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Setor</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Empresa</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Ações</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider">Nome da Área</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider">Setor</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider">Empresa</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider">Ações</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-100">
+                        <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                             {filteredAreas.map((area) => (
-                                <tr key={area.id} className="hover:bg-gray-50 transition-colors">
-                                    <td className="px-6 py-4 font-medium text-gray-900">
+                                <tr key={area.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                    <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">
                                         <div className="flex items-center space-x-3">
-                                            <div className="p-2 bg-green-50 text-green-600 rounded-lg">
+                                            <div className="p-2 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-lg">
                                                 <MapPin className="h-5 w-5" />
                                             </div>
                                             <span>{area.name}</span>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 text-gray-500">{area.sector?.name}</td>
-                                    <td className="px-6 py-4 text-gray-500">
+                                    <td className="px-6 py-4 text-gray-500 dark:text-gray-400">{area.sector?.name}</td>
+                                    <td className="px-6 py-4 text-gray-500 dark:text-gray-400">
                                         {area.sector?.company?.name || '-'}
                                     </td>
                                     <td className="px-6 py-4">
-                                        <button type="button" onClick={() => handleEdit(area)} className="text-primary hover:text-blue-700 text-sm font-medium">Editar</button>
+                                        <button type="button" onClick={() => handleEdit(area)} className="text-primary hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium">Editar</button>
                                     </td>
                                 </tr>
                             ))}
@@ -128,19 +128,19 @@ const AreasList = () => {
             {/* Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl w-full max-w-md p-6">
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md p-6">
                         <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-bold">{editingId ? 'Editar Área' : 'Nova Área'}</h2>
-                            <button type="button" onClick={() => { setIsModalOpen(false); setEditingId(null); }} className="text-gray-400 hover:text-gray-600">
+                            <h2 className="text-xl font-bold text-gray-900 dark:text-white">{editingId ? 'Editar Área' : 'Nova Área'}</h2>
+                            <button type="button" onClick={() => { setIsModalOpen(false); setEditingId(null); }} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                                 <X className="h-6 w-6" />
                             </button>
                         </div>
                         <form onSubmit={handleCreate} className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Setor</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Setor</label>
                                 <select
                                     required
-                                    className="input-field"
+                                    className="input-field dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                     value={newArea.sectorId}
                                     onChange={e => setNewArea({ ...newArea, sectorId: e.target.value })}
                                 >
@@ -149,11 +149,11 @@ const AreasList = () => {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Nome da Área</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome da Área</label>
                                 <input
                                     type="text"
                                     required
-                                    className="input-field"
+                                    className="input-field dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                     value={newArea.name}
                                     onChange={e => setNewArea({ ...newArea, name: e.target.value })}
                                 />
@@ -162,7 +162,7 @@ const AreasList = () => {
                                 <button
                                     type="button"
                                     onClick={() => { setIsModalOpen(false); setEditingId(null); }}
-                                    className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                                    className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                                 >
                                     Cancelar
                                 </button>

@@ -81,3 +81,52 @@ export const login = async (req: Request, res: Response) => {
         res.status(500).json({ error: 'Error logging in', details: (error as any).message });
     }
 };
+
+export const registerCollaborator = async (req: Request, res: Response) => {
+    try {
+        const { email, password, name, matricula, areaId, companyId } = req.body;
+
+        // 1. Validate Company
+        if (!companyId) return res.status(400).json({ error: 'Company ID is required' });
+        const company = await prisma.company.findUnique({ where: { id: companyId } });
+        if (!company) return res.status(400).json({ error: 'Invalid Company' });
+
+        // 2. Check if user exists
+        const existingUser = await prisma.user.findUnique({ where: { email } });
+        if (existingUser) return res.status(400).json({ error: 'Email already registered' });
+
+        // 3. Create User & Profile in Transaction
+        const result = await prisma.$transaction(async (prisma) => {
+            const hashedPassword = await bcrypt.hash(password, 10);
+
+            const user = await prisma.user.create({
+                data: {
+                    email,
+                    password: hashedPassword,
+                    name,
+                    role: 'COLABORADOR',
+                    companyId
+                }
+            });
+
+            const profile = await prisma.collaboratorProfile.create({
+                data: {
+                    userId: user.id,
+                    matricula,
+                    areaId,
+                    shift: req.body.shift || '1_TURNO',
+                    disabilityType: req.body.disabilityType || 'NENHUMA',
+                    needsDescription: req.body.needsDescription || ''
+                }
+            });
+
+            return { user, profile };
+        });
+
+        res.status(201).json({ message: 'Collaborator registered successfully', userId: result.user.id });
+
+    } catch (error) {
+        console.error('Error registering collaborator:', error);
+        res.status(500).json({ error: 'Error registering collaborator' });
+    }
+};

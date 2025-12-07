@@ -278,3 +278,32 @@ export const updateArea = async (req: Request, res: Response) => {
         res.status(500).json({ error: 'Error updating area' });
     }
 };
+
+export const listPublicAreas = async (req: Request, res: Response) => {
+    try {
+        const { companyId } = req.params;
+
+        if (!companyId) return res.status(400).json({ error: 'Company ID required' });
+
+        const areas = await prisma.area.findMany({
+            where: {
+                sector: {
+                    companyId: companyId
+                }
+            },
+            select: {
+                id: true,
+                name: true,
+                sector: {
+                    select: { name: true }
+                }
+            },
+            orderBy: { name: 'asc' }
+        });
+
+        res.json(areas);
+    } catch (error) {
+        console.error('Error fetching public areas:', error);
+        res.status(500).json({ error: 'Error fetching areas' });
+    }
+};

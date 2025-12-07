@@ -12,6 +12,11 @@ const VisitRecording = () => {
     const location = useLocation();
     const { selectedCompanyId, companies: contextCompanies } = useCompany();
     const [activeTab, setActiveTab] = useState(0);
+    const [companies, setCompanies] = useState<any[]>(contextCompanies);
+    const [areas, setAreas] = useState<any[]>([]);
+    const [collaborators, setCollaborators] = useState<any[]>([]);
+    const [linkedScheduleIds, setLinkedScheduleIds] = useState<string[]>([]);
+    const [individualNotes, setIndividualNotes] = useState<{ collaboratorId: string; content: string }[]>([]);
     const [loading, setLoading] = useState(false);
 
     // Recording State
@@ -54,109 +59,94 @@ const VisitRecording = () => {
     useEffect(() => {
         if (selectedCompanyId) {
             setFormData(prev => ({ ...prev, companyId: selectedCompanyId }));
-        }
-    }, [selectedCompanyId]);
 
-    // Data for Selects
-    const [companies, setCompanies] = useState<any[]>(contextCompanies);
-    const [areas, setAreas] = useState<any[]>([]);
-    const [collaborators, setCollaborators] = useState<any[]>([]);
 
-    // State for linked schedules
-    const [linkedScheduleIds, setLinkedScheduleIds] = useState<string[]>([]);
-
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const token = localStorage.getItem('token');
-                const headers = { 'Authorization': `Bearer ${token}` };
-
-                // Use context companies if available, otherwise fetch (fallback)
-                if (contextCompanies.length > 0) {
-                    setCompanies(contextCompanies);
-                } else {
-                    const resStructure = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/structure`, { headers });
-                    const structure = await resStructure.json();
-                    if (structure.company) setCompanies([structure.company]);
-                }
-
-                // Fetch Areas and Collaborators
-                const [resAreas, resCollaborators] = await Promise.all([
-                    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/areas`, { headers }),
-                    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/collaborators`, { headers })
-                ]);
-
-                const areasData = await resAreas.json();
-                const collaboratorsData = await resCollaborators.json();
-
-                setAreas(areasData);
-                setCollaborators(collaboratorsData);
-
-                // Handle Schedule Integration (Auto-Grouping)
-                if (location.state && location.state.scheduleId) {
-                    const { scheduleId, companyId, areaName, date } = location.state;
-
-                    // 1. Set Company
-                    if (companyId) {
-                        setFormData(prev => ({ ...prev, companyId }));
+            const fetchData = async () => {
+                try {
+                    // Use context companies if available, otherwise fetch (fallback)
+                    if (contextCompanies.length > 0) {
+                        setCompanies(contextCompanies);
+                    } else {
+                        const resStructure = await api.get('/structure');
+                        const structure = resStructure.data;
+                        if (structure.company) setCompanies([structure.company]);
                     }
 
-                    // 2. Find and Set Area
-                    if (areaName) {
-                        const area = areasData.find((a: any) => a.name === areaName);
-                        if (area) {
-                            setFormData(prev => ({ ...prev, areaId: area.id }));
+                    // Fetch Areas and Collaborators
+                    const [resAreas, resCollaborators] = await Promise.all([
+                        api.get('/areas'),
+                        api.get('/collaborators')
+                    ]);
 
-                            // 3. Auto-Group: Fetch other schedules for this Area + Date + Company
-                            const resSchedules = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/schedules`, { headers });
-                            const allSchedules = await resSchedules.json();
+                    setAreas(resAreas.data);
+                    setCollaborators(resCollaborators.data);
 
-                            const targetDate = new Date(date).toISOString().split('T')[0];
+                    // Handle Schedule Integration (Auto-Grouping)
+                    if (location.state && location.state.scheduleId) {
+                        const { scheduleId, companyId, areaName, date } = location.state;
 
-                            const relatedSchedules = allSchedules.filter((s: any) => {
-                                const sDate = new Date(s.date).toISOString().split('T')[0];
-                                return s.status === 'PENDENTE' &&
-                                    sDate === targetDate &&
-                                    s.area === areaName &&
-                                    (!companyId || s.companyId === companyId);
-                            });
+                        // 1. Set Company
+                        if (companyId) {
+                            setFormData(prev => ({ ...prev, companyId }));
+                        }
 
-                            // Collect IDs and Collaborators
-                            const ids = relatedSchedules.map((s: any) => s.id);
-                            if (!ids.includes(scheduleId)) ids.push(scheduleId);
+                        // 2. Find and Set Area
+                        if (areaName) {
+                            const area = resAreas.data.find((a: any) => a.name === areaName);
+                            if (area) {
+                                setFormData(prev => ({ ...prev, areaId: area.id }));
 
-                            setLinkedScheduleIds(ids);
+                                // 3. Auto-Group: Fetch other schedules for this Area + Date + Company
+                                const resSchedules = await api.get('/schedules');
+                                const allSchedules = resSchedules.data;
 
-                            // Add Collaborators
-                            const collaboratorsToAdd: string[] = [];
-                            relatedSchedules.forEach((s: any) => {
-                                const collab = collaboratorsData.find((c: any) => c.name === s.collaborator);
-                                if (collab && !collaboratorsToAdd.includes(collab.id)) {
-                                    collaboratorsToAdd.push(collab.id);
+                                const targetDate = new Date(date).toISOString().split('T')[0];
+
+                                const relatedSchedules = allSchedules.filter((s: any) => {
+                                    const sDate = new Date(s.date).toISOString().split('T')[0];
+                                    return s.status === 'PENDENTE' &&
+                                        sDate === targetDate &&
+                                        s.area === areaName &&
+                                        (!companyId || s.companyId === companyId);
+                                });
+
+                                // Collect IDs and Collaborators
+                                const ids = relatedSchedules.map((s: any) => s.id);
+                                if (!ids.includes(scheduleId)) ids.push(scheduleId);
+
+                                setLinkedScheduleIds(ids);
+
+                                // Add Collaborators
+                                const collaboratorsToAdd: string[] = [];
+                                relatedSchedules.forEach((s: any) => {
+                                    const collab = resCollaborators.data.find((c: any) => c.name === s.collaborator);
+                                    if (collab && !collaboratorsToAdd.includes(collab.id)) {
+                                        collaboratorsToAdd.push(collab.id);
+                                    }
+                                });
+
+                                if (location.state.collaboratorName) {
+                                    const initialCollab = resCollaborators.data.find((c: any) => c.name === location.state.collaboratorName);
+                                    if (initialCollab && !collaboratorsToAdd.includes(initialCollab.id)) {
+                                        collaboratorsToAdd.push(initialCollab.id);
+                                    }
                                 }
-                            });
 
-                            if (location.state.collaboratorName) {
-                                const initialCollab = collaboratorsData.find((c: any) => c.name === location.state.collaboratorName);
-                                if (initialCollab && !collaboratorsToAdd.includes(initialCollab.id)) {
-                                    collaboratorsToAdd.push(initialCollab.id);
+                                setFormData(prev => ({ ...prev, areaId: area.id, collaboratorIds: collaboratorsToAdd }));
+
+                                if (ids.length > 1) {
+                                    toast.info(`Encontrados ${ids.length} agendamentos para esta área hoje. Todos foram agrupados!`);
                                 }
-                            }
-
-                            setFormData(prev => ({ ...prev, areaId: area.id, collaboratorIds: collaboratorsToAdd }));
-
-                            if (ids.length > 1) {
-                                toast.info(`Encontrados ${ids.length} agendamentos para esta área hoje. Todos foram agrupados!`);
                             }
                         }
                     }
+                } catch (error) {
+                    console.error('Error fetching data', error);
                 }
-            } catch (error) {
-                console.error('Error fetching data', error);
-            }
-        };
-        fetchData();
-    }, [location.state]);
+            };
+            fetchData();
+        }
+    }, [selectedCompanyId, contextCompanies, location.state]);
 
     // NEW: Pull Logic - Watch for Area changes
     useEffect(() => {
@@ -164,17 +154,12 @@ const VisitRecording = () => {
             if (!formData.areaId || !formData.companyId) return;
 
             try {
-                const token = localStorage.getItem('token');
-                const headers = { 'Authorization': `Bearer ${token}` };
-
                 // Fetch schedules
-                const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/schedules`, { headers });
-                if (res.ok) {
-                    const allSchedules = await res.json();
+                const res = await api.get('/schedules');
+                if (res.data) {
+                    const allSchedules = res.data;
 
                     // Filter: Status APROVADO, Same Company, Same Area, Today (or recent?)
-                    // User said "todas as solicitações aceitas". Assuming for "today" or "pending execution".
-                    // Let's assume "today" for now to avoid pulling old stuff.
                     const today = new Date().toISOString().split('T')[0];
 
                     // Find the area name to match (since schedule stores area name currently)
@@ -204,8 +189,6 @@ const VisitRecording = () => {
                         });
 
                         setFormData(prev => {
-                            const newCollabs = [...new Set([...prev.collaboratorIds, ...collaboratorsToAdd])];
-
                             // 3. Pre-fill Report (Concatenate reasons)
                             // Only append if not already present to avoid duplication on re-renders
                             let newReport = prev.relatos.colaborador;
@@ -219,16 +202,13 @@ const VisitRecording = () => {
 
                             return {
                                 ...prev,
-                                collaboratorIds: newCollabs,
+                                collaboratorIds: [...new Set([...prev.collaboratorIds, ...collaboratorsToAdd])],
                                 relatos: {
                                     ...prev.relatos,
                                     colaborador: newReport
                                 }
                             };
                         });
-
-                        // Optional: Notify user
-                        // alert(`${approvedSchedules.length} agendamentos aprovados foram vinculados.`);
                     }
                 }
             } catch (error) {
@@ -361,28 +341,17 @@ const VisitRecording = () => {
     const handleSave = async () => {
         setLoading(true);
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/visits`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(formData)
-            });
+            const payload = {
+                ...formData,
+                individualNotes
+            };
+            const response = await api.post('/visits', payload);
 
-            if (response.ok) {
+            if (response.status === 200 || response.status === 201) {
                 // Update linked schedules status
                 if (linkedScheduleIds.length > 0) {
                     await Promise.all(linkedScheduleIds.map(id =>
-                        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/schedules/${id}`, {
-                            method: 'PUT',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${token}`
-                            },
-                            body: JSON.stringify({ status: 'REALIZADO' })
-                        })
+                        api.put(`/schedules/${id}`, { status: 'REALIZADO' })
                     ));
                 }
 
@@ -456,9 +425,12 @@ const VisitRecording = () => {
                                     <select
                                         className="input-field"
                                         onChange={e => setFormData({ ...formData, areaId: e.target.value })}
+                                        value={formData.areaId}
                                     >
                                         <option value="">Selecione a Área</option>
-                                        {areas.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                                        {areas
+                                            .filter(a => !formData.companyId || (a.sector && a.sector.companyId === formData.companyId))
+                                            .map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
                                     </select>
                                 </div>
                                 <div className="space-y-2">
@@ -589,22 +561,50 @@ const VisitRecording = () => {
                                 </div>
                             </div>
 
-                            <div className="space-y-2">
-                                <label className="block text-sm font-medium text-gray-900">Observações</label>
-                                <textarea
-                                    rows={3}
-                                    className="block w-full rounded-xl border-gray-200 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-4"
-                                    placeholder="Observações técnicas..."
-                                    value={formData.relatos.observacoes}
-                                    onChange={e => setFormData({ ...formData, relatos: { ...formData.relatos, observacoes: e.target.value } })}
-                                />
+                            {/* Individual Notes Section */}
+                            <div className="space-y-4 pt-4 border-t border-gray-100">
+                                <h3 className="text-lg font-medium text-gray-900">Observações Individuais</h3>
+                                {formData.collaboratorIds.length === 0 ? (
+                                    <p className="text-sm text-gray-500">Selecione colaboradores para adicionar observações individuais.</p>
+                                ) : (
+                                    <div className="grid gap-4">
+                                        {formData.collaboratorIds.map(collabId => {
+                                            const collab = collaborators.find(c => c.id === collabId);
+                                            const note = individualNotes.find(n => n.collaboratorId === collabId)?.content || '';
+
+                                            return (
+                                                <div key={collabId} className="space-y-2">
+                                                    <label className="block text-sm font-medium text-gray-700">
+                                                        {collab?.name || 'Colaborador'}
+                                                    </label>
+                                                    <textarea
+                                                        className="input-field"
+                                                        rows={2}
+                                                        placeholder={`Observação sobre ${collab?.name?.split(' ')[0]}...`}
+                                                        value={note}
+                                                        onChange={e => {
+                                                            const newContent = e.target.value;
+                                                            setIndividualNotes(prev => {
+                                                                const existing = prev.find(n => n.collaboratorId === collabId);
+                                                                if (existing) {
+                                                                    return prev.map(n => n.collaboratorId === collabId ? { ...n, content: newContent } : n);
+                                                                }
+                                                                return [...prev, { collaboratorId: collabId, content: newContent }];
+                                                            });
+                                                        }}
+                                                    />
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}
 
                     {/* Tab 2: Avaliações */}
                     {activeTab === 1 && (
-                        <div className="space-y-8">
+                        <div className="space-y-6">
                             {[
                                 { id: 'area', label: 'Avaliação da Área' },
                                 { id: 'lideranca', label: 'Avaliação da Liderança' },
@@ -634,11 +634,11 @@ const VisitRecording = () => {
                                                                 }));
                                                             }}
                                                             className={`w-8 h-8 rounded-full border flex items-center justify-center transition-all text-sm font-medium
-                                                                ${((formData.avaliacoes as any)[section.id]?.[item] === rating)
+                                                    ${((formData.avaliacoes as any)[section.id]?.[item] === rating)
                                                                     ? 'bg-primary text-white border-primary'
                                                                     : 'border-gray-200 text-gray-600 bg-white hover:bg-blue-50 hover:border-blue-200'
                                                                 }
-                                                            `}
+                                                `}
                                                         >
                                                             {rating}
                                                         </button>
@@ -764,78 +764,80 @@ const VisitRecording = () => {
             </div>
 
             {/* Pendency Modal */}
-            {isPendencyModalOpen && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl w-full max-w-lg p-6">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-xl font-bold">Nova Pendência</h2>
-                            <button type="button" onClick={() => setIsPendencyModalOpen(false)} className="text-gray-400 hover:text-gray-600">
-                                <X className="h-6 w-6" />
-                            </button>
-                        </div>
-
-                        <form onSubmit={handlePendencySubmit} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
-                                <textarea
-                                    required
-                                    className="input-field"
-                                    rows={3}
-                                    value={newPendency.description}
-                                    onChange={e => setNewPendency({ ...newPendency, description: e.target.value })}
-                                />
+            {
+                isPendencyModalOpen && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                        <div className="bg-white rounded-2xl w-full max-w-lg p-6">
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-xl font-bold">Nova Pendência</h2>
+                                <button type="button" onClick={() => setIsPendencyModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                                    <X className="h-6 w-6" />
+                                </button>
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
+
+                            <form onSubmit={handlePendencySubmit} className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Responsável</label>
-                                    <input
-                                        type="text"
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+                                    <textarea
                                         required
                                         className="input-field"
-                                        value={newPendency.responsible}
-                                        onChange={e => setNewPendency({ ...newPendency, responsible: e.target.value })}
+                                        rows={3}
+                                        value={newPendency.description}
+                                        onChange={e => setNewPendency({ ...newPendency, description: e.target.value })}
                                     />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Responsável</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            className="input-field"
+                                            value={newPendency.responsible}
+                                            onChange={e => setNewPendency({ ...newPendency, responsible: e.target.value })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Prazo</label>
+                                        <input
+                                            type="date"
+                                            className="input-field"
+                                            value={newPendency.deadline}
+                                            onChange={e => setNewPendency({ ...newPendency, deadline: e.target.value })}
+                                        />
+                                    </div>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Prazo</label>
-                                    <input
-                                        type="date"
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Prioridade</label>
+                                    <select
                                         className="input-field"
-                                        value={newPendency.deadline}
-                                        onChange={e => setNewPendency({ ...newPendency, deadline: e.target.value })}
-                                    />
+                                        value={newPendency.priority}
+                                        onChange={e => setNewPendency({ ...newPendency, priority: e.target.value })}
+                                    >
+                                        <option value="BAIXA">Baixa</option>
+                                        <option value="MEDIA">Média</option>
+                                        <option value="ALTA">Alta</option>
+                                    </select>
                                 </div>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Prioridade</label>
-                                <select
-                                    className="input-field"
-                                    value={newPendency.priority}
-                                    onChange={e => setNewPendency({ ...newPendency, priority: e.target.value })}
-                                >
-                                    <option value="BAIXA">Baixa</option>
-                                    <option value="MEDIA">Média</option>
-                                    <option value="ALTA">Alta</option>
-                                </select>
-                            </div>
 
-                            <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-100">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsPendencyModalOpen(false)}
-                                    className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                                >
-                                    Cancelar
-                                </button>
-                                <button type="submit" className="btn-primary">
-                                    Adicionar Pendência
-                                </button>
-                            </div>
-                        </form>
+                                <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-100">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsPendencyModalOpen(false)}
+                                        className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button type="submit" className="btn-primary">
+                                        Adicionar Pendência
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 };
 
