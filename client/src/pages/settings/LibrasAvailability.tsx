@@ -30,7 +30,7 @@ const DAYS = [
 
 const DEFAULT_SLOT = { start: '08:00', end: '18:00' };
 
-const Availability = () => {
+const LibrasAvailability = () => {
     const { selectedCompanyId } = useCompany();
     const [availability, setAvailability] = useState<AvailabilityState>({
         monday: { active: true, slots: [{ ...DEFAULT_SLOT }] },
@@ -44,17 +44,18 @@ const Availability = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchAvailability = async () => {
+        const fetchSettings = async () => {
             if (!selectedCompanyId) return;
             try {
-                const response = await api.get('/settings/availability');
+                const response = await api.get('/settings/libras');
                 const data = response.data;
 
                 if (Object.keys(data).length > 0) {
-                    // Normalize data to support multi-slots if coming from old structure
+                    // Ensure data structure compatibility (migration from single slot if needed)
                     const normalizedData = { ...data };
                     Object.keys(normalizedData).forEach(key => {
                         if (!normalizedData[key].slots) {
+                            // Fallback for old structure if any
                             normalizedData[key].slots = normalizedData[key].active
                                 ? [{ start: normalizedData[key].start || '08:00', end: normalizedData[key].end || '18:00' }]
                                 : [];
@@ -63,22 +64,22 @@ const Availability = () => {
                     setAvailability(normalizedData);
                 }
             } catch (error) {
-                console.error('Error fetching availability', error);
-                toast.error('Erro ao carregar disponibilidade');
+                console.error('Error fetching libras settings', error);
+                toast.error('Erro ao carregar configurações');
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchAvailability();
+        fetchSettings();
     }, [selectedCompanyId]);
 
     const handleSave = async () => {
         try {
-            await api.post('/settings/availability', availability);
-            toast.success('Disponibilidade salva com sucesso!');
+            await api.post('/settings/libras', availability);
+            toast.success('Configurações salvas com sucesso!');
         } catch (error) {
-            console.error('Error saving availability', error);
+            console.error('Error saving libras settings', error);
             toast.error('Erro ao salvar configurações');
         }
     };
@@ -112,7 +113,7 @@ const Availability = () => {
                 [day]: {
                     ...prev[day],
                     slots: newSlots,
-                    active: newSlots.length > 0
+                    active: newSlots.length > 0 // Deactivate if no slots left? Optional.
                 }
             };
         });
@@ -135,8 +136,8 @@ const Availability = () => {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Disponibilidade de Horários</h1>
-                    <p className="text-gray-500 dark:text-gray-400">Defina os horários disponíveis para cada dia da semana</p>
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Central de Libras</h1>
+                    <p className="text-gray-500 dark:text-gray-400">Configure os dias e horários que a central estará disponível.</p>
                 </div>
                 <button type="button" onClick={handleSave} className="btn-primary flex items-center space-x-2">
                     <Save className="h-4 w-4" />
@@ -209,4 +210,4 @@ const Availability = () => {
     );
 };
 
-export default Availability;
+export default LibrasAvailability;

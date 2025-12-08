@@ -29,6 +29,7 @@ model Company {
   schedules     Schedule[]
   shifts        Shift[]
   availability  String?  // JSON string for availability settings
+  librasAvailability String? // JSON string for Libras Central availability settings
 }
 
 model Sector {

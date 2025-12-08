@@ -110,6 +110,12 @@ router.delete('/settings/shifts/:id', settingsController.deleteShift);
 router.get('/settings/availability', settingsController.getAvailability);
 router.post('/settings/availability', settingsController.updateAvailability);
 
+// Libras Central Routes
+import * as librasController from './controllers/librasController';
+router.get('/libras/availability', librasController.checkAvailability);
+router.get('/settings/libras', librasController.getSettings);
+router.post('/settings/libras', librasController.updateSettings);
+
 // User Management (MASTER only)
 import * as userController from './controllers/userController';
 router.get('/users', userController.listUsers);

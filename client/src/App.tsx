@@ -29,9 +29,11 @@ import { UsersList } from './pages/settings/UsersList';
 import QRCodeGenerator from './pages/settings/QRCodeGenerator';
 import CollaboratorRegistration from './pages/public/CollaboratorRegistration';
 import { CompanyProvider } from './contexts/CompanyContext';
+import LibrasAvailability from './pages/settings/LibrasAvailability';
+import LibrasCentral from './pages/LibrasCentral';
 
 function App() {
-  console.log('QS System Version: Custom Logo (v6)');
+  console.log('QS System Version: Libras Central (v7)');
   return (
     <CompanyProvider>
       <Toaster position="top-right" richColors />
@@ -51,6 +53,7 @@ function App() {
             <Route path="reports" element={<Reports />} />
             <Route path="report-viewer" element={<ReportViewer />} />
             <Route path="settings" element={<Settings />} />
+            <Route path="libras" element={<LibrasCentral />} />
 
             {/* Settings Routes */}
             <Route path="companies" element={<CompaniesList />} />
@@ -60,7 +63,7 @@ function App() {
             <Route path="feed-categories" element={<FeedCategories />} />
             <Route path="shifts" element={<ShiftsList />} />
             <Route path="availability" element={<Availability />} />
-            <Route path="users" element={<UsersList />} />
+            <Route path="libras-availability" element={<LibrasAvailability />} />
             <Route path="users" element={<UsersList />} />
             <Route path="qrcode" element={<QRCodeGenerator />} />
           </Route>
@@ -74,7 +77,7 @@ function App() {
             <Route path="reports" element={<Reports />} />
             <Route path="history" element={<VisitHistory />} />
             <Route path="schedules" element={<Schedules />} />
-            {/* Reuse components where possible */}
+            <Route path="libras" element={<LibrasCentral />} />
           </Route>
           {/* Mobile App Routes */}
           <Route path="/app" element={<MobileLayout />}>
@@ -82,6 +85,7 @@ function App() {
             <Route path="schedule" element={<MobileSchedule />} />
             <Route path="request" element={<MobileSchedule />} />
             <Route path="profile" element={<MobileProfile />} />
+            <Route path="libras" element={<LibrasCentral />} />
           </Route>
         </Routes>
       </Router>

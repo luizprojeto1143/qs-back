@@ -19,6 +19,9 @@ import {
 import { useTheme } from '../contexts/ThemeContext';
 import { Bell } from 'lucide-react';
 import { api } from '../lib/api';
+import { useLibrasAvailability } from '../hooks/useLibrasAvailability';
+
+// ... (imports)
 
 interface SidebarItemProps {
     icon: any;
@@ -26,9 +29,10 @@ interface SidebarItemProps {
     path: string;
     active: boolean;
     onClick?: () => void;
+    className?: string;
 }
 
-const SidebarItem = ({ icon: Icon, label, path, active, onClick }: SidebarItemProps) => {
+const SidebarItem = ({ icon: Icon, label, path, active, onClick, className }: SidebarItemProps) => {
     const navigate = useNavigate();
     return (
         <button
@@ -41,7 +45,7 @@ const SidebarItem = ({ icon: Icon, label, path, active, onClick }: SidebarItemPr
         w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors ${active
                     ? 'bg-blue-600 text-white font-medium shadow-lg shadow-blue-900/50'
                     : 'text-gray-400 hover:bg-white/5 hover:text-white'
-                }`}
+                } ${className || ''}`}
         >
             <Icon className={`h-5 w-5 ${active ? 'text-white' : 'text-gray-400 group-hover:text-white'}`} />
             <span>{label}</span>
@@ -49,13 +53,12 @@ const SidebarItem = ({ icon: Icon, label, path, active, onClick }: SidebarItemPr
     );
 };
 
-// ... (SidebarItem remains the same)
-
 const DashboardLayout = () => {
     const location = useLocation();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
     const { theme, toggleTheme } = useTheme();
     const navigate = useNavigate();
+    const { isLibrasAvailable } = useLibrasAvailability();
 
     // Notification State
     const [notifications, setNotifications] = React.useState<any[]>([]);
@@ -129,6 +132,15 @@ const DashboardLayout = () => {
                         />
                     ))}
 
+                    {isLibrasAvailable && (
+                        <SidebarItem
+                            icon={Video}
+                            label="Central de Libras"
+                            path="/dashboard/libras"
+                            active={location.pathname === '/dashboard/libras'}
+                        />
+                    )}
+
                     <button
                         onClick={toggleTheme}
                         className="w-full flex items-center space-x-3 px-4 py-3 text-gray-400 hover:bg-white/10 hover:text-white rounded-xl transition-colors mt-4"
@@ -179,6 +191,9 @@ const DashboardLayout = () => {
                 </div>
             </div>
 
+            {/* Mobile Header */}
+            {/* ... (unchanged) ... */}
+
             {/* Mobile Menu Overlay */}
             {isMobileMenuOpen && (
                 <div className="md:hidden fixed inset-0 z-[150] bg-[#0A192F] pt-20 px-4 text-white">
@@ -193,6 +208,17 @@ const DashboardLayout = () => {
                                 onClick={() => setIsMobileMenuOpen(false)}
                             />
                         ))}
+
+                        {isLibrasAvailable && (
+                            <SidebarItem
+                                icon={Video}
+                                label="Central de Libras"
+                                path="/dashboard/libras"
+                                active={location.pathname === '/dashboard/libras'}
+                                onClick={() => setIsMobileMenuOpen(false)}
+                            />
+                        )}
+
                         <button
                             type="button"
                             onClick={handleLogout}

@@ -13,6 +13,7 @@ const Settings = () => {
         { label: 'Gestão de Disponibilidade de Horários', path: '/dashboard/availability' },
         { label: 'Termos de Uso', path: '/dashboard/terms' },
         { label: 'Configurar Categorias do Feed', path: '/dashboard/feed-categories' },
+        { label: 'Configurar Central de Libras', path: '/dashboard/libras-availability' },
         { label: 'Gerador de QR Code', path: '/dashboard/qrcode' },
     ];
 

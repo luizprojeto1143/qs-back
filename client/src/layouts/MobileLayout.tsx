@@ -1,9 +1,13 @@
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Home, Calendar, PlusCircle, User, Menu } from 'lucide-react';
 
+import { Video } from 'lucide-react';
+import { useLibrasAvailability } from '../hooks/useLibrasAvailability';
+
 const MobileLayout = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    const { isLibrasAvailable } = useLibrasAvailability();
 
     const navItems = [
         { icon: Home, label: 'Início', path: '/app' },
@@ -11,6 +15,12 @@ const MobileLayout = () => {
         { icon: PlusCircle, label: 'Solicitar', path: '/app/request', primary: true },
         { icon: User, label: 'Perfil', path: '/app/profile' },
     ];
+
+    if (isLibrasAvailable) {
+        // Insert Libras button in a prominent position, maybe replacing 'Agenda' or adding as 5th item
+        // Let's add it as the 5th item for now, flexbox space-between handles it well
+        navItems.splice(2, 0, { icon: Video, label: 'Libras', path: '/app/libras', primary: false });
+    }
 
     return (
         <div className="min-h-screen bg-gray-50 pb-24">

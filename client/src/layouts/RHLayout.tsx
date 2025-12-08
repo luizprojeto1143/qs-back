@@ -8,8 +8,10 @@ import {
     LogOut,
     Menu,
     X,
-    Calendar
+    Calendar,
+    Video
 } from 'lucide-react';
+import { useLibrasAvailability } from '../hooks/useLibrasAvailability';
 
 const SidebarItem = ({ icon: Icon, label, path, active, onClick }: any) => {
     const navigate = useNavigate();
@@ -34,6 +36,14 @@ const SidebarItem = ({ icon: Icon, label, path, active, onClick }: any) => {
 const RHLayout = () => {
     const location = useLocation();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+    const { isLibrasAvailable } = useLibrasAvailability();
+    const navigate = useNavigate();
+
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        navigate('/');
+    };
 
     const menuItems = [
         { icon: LayoutDashboard, label: 'Visão Geral', path: '/rh' },
@@ -62,10 +72,24 @@ const RHLayout = () => {
                             onClick={() => setIsMobileMenuOpen(false)}
                         />
                     ))}
+
+                    {isLibrasAvailable && (
+                        <SidebarItem
+                            icon={Video}
+                            label="Central de Libras"
+                            path="/rh/libras"
+                            active={location.pathname === '/rh/libras'}
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className="text-blue-400 animate-pulse"
+                        />
+                    )}
                 </nav>
 
                 <div className="p-4 border-t border-gray-800">
-                    <button className="w-full flex items-center space-x-3 px-4 py-3 text-gray-400 hover:bg-white/10 hover:text-white rounded-xl transition-colors">
+                    <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center space-x-3 px-4 py-3 text-gray-400 hover:bg-white/10 hover:text-white rounded-xl transition-colors"
+                    >
                         <LogOut className="h-5 w-5" />
                         <span>Sair</span>
                     </button>
@@ -97,7 +121,21 @@ const RHLayout = () => {
                                 onClick={() => setIsMobileMenuOpen(false)}
                             />
                         ))}
-                        <button className="w-full flex items-center space-x-3 px-4 py-3 text-gray-400 hover:bg-white/10 hover:text-white rounded-xl transition-colors">
+
+                        {isLibrasAvailable && (
+                            <SidebarItem
+                                icon={Video}
+                                label="Central de Libras"
+                                path="/rh/libras"
+                                active={location.pathname === '/rh/libras'}
+                                onClick={() => setIsMobileMenuOpen(false)}
+                            />
+                        )}
+
+                        <button
+                            onClick={handleLogout}
+                            className="w-full flex items-center space-x-3 px-4 py-3 text-gray-400 hover:bg-white/10 hover:text-white rounded-xl transition-colors"
+                        >
                             <LogOut className="h-5 w-5" />
                             <span>Sair</span>
                         </button>
