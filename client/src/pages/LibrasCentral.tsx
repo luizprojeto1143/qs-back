@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 const LibrasCentral = () => {
     const { selectedCompanyId } = useCompany();
     const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
+    const [reason, setReason] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [userName, setUserName] = useState('Colaborador QS');
     const callFrameRef = useRef<any>(null);
@@ -46,6 +47,7 @@ const LibrasCentral = () => {
                 // Add timestamp to prevent caching
                 const response = await api.get(`/libras/availability?t=${new Date().getTime()}`);
                 setIsAvailable(response.data.available);
+                if (response.data.reason) setReason(response.data.reason);
             } catch (error) {
                 console.error('Error checking availability', error);
                 setIsAvailable(false);
@@ -294,6 +296,11 @@ const LibrasCentral = () => {
                     <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Central Indisponível</h1>
                     <p className="text-gray-500 dark:text-gray-400 mb-6">
                         A Central de Libras não está disponível neste horário. Por favor, verifique os horários de atendimento configurados para sua empresa.
+                        {(isAvailable === false) && (
+                            <span className="block mt-2 text-xs text-red-400">
+                                Motivo: {reason || 'Fora do horário'}
+                            </span>
+                        )}
                     </p>
                     <div className="flex items-center justify-center space-x-2 text-sm text-primary bg-primary/5 py-2 px-4 rounded-lg">
                         <CalendarClock className="h-4 w-4" />

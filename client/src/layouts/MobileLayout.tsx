@@ -91,16 +91,14 @@ const MobileLayout = () => {
                                     <span className="font-medium">Meu Perfil</span>
                                 </button>
 
-                                {/* Always show Libras in menu as well */}
-                                {isLibrasAvailable && (
-                                    <button
-                                        onClick={() => { navigate('/app/libras'); setIsMenuOpen(false); }}
-                                        className="w-full flex items-center space-x-3 px-4 py-3 text-blue-600 bg-blue-50 rounded-xl transition-colors mt-2"
-                                    >
-                                        <Video className="h-5 w-5" />
-                                        <span className="font-medium">Central de Libras</span>
-                                    </button>
-                                )}
+                                {/* Always show Libras in menu */}
+                                <button
+                                    onClick={() => { navigate('/app/libras'); setIsMenuOpen(false); }}
+                                    className="w-full flex items-center space-x-3 px-4 py-3 text-blue-600 bg-blue-50 rounded-xl transition-colors mt-2"
+                                >
+                                    <Video className="h-5 w-5" />
+                                    <span className="font-medium">Central de Libras</span>
+                                </button>
                             </nav>
                         </div>
 
