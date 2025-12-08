@@ -30,6 +30,7 @@ model Company {
   shifts        Shift[]
   availability  String?  // JSON string for availability settings
   librasAvailability String? // JSON string for Libras Central availability settings
+  librasCalls   LibrasCall[]
 }
 
 model Sector {
@@ -70,10 +71,26 @@ model User {
 
   createdVisits     Visit[] @relation("MasterVisits")
   requestedSchedules Schedule[] @relation("RequestedSchedules")
+  requestedCalls    LibrasCall[] @relation("RequestedCalls")
   notifications     Notification[]
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model LibrasCall {
+  id        String   @id @default(uuid())
+  status    String   @default("WAITING") // WAITING, IN_PROGRESS, FINISHED, CANCELED
+  
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id])
+  
+  requesterId String
+  requester   User     @relation("RequestedCalls", fields: [requesterId], references: [id])
+  
+  createdAt DateTime @default(now())
+  acceptedAt DateTime?
+  finishedAt DateTime?
 }
 
 model Notification {

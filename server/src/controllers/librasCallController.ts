@@ -1,0 +1,150 @@
+import { Request, Response } from 'express';
+import { AuthRequest } from '../middleware/authMiddleware';
+import prisma from '../prisma';
+import { createRoom } from './dailyController';
+
+// Request a call (Collaborator)
+export const requestCall = async (req: Request, res: Response) => {
+    try {
+        const user = (req as AuthRequest).user;
+        if (!user || !user.companyId) {
+            return res.status(400).json({ error: 'User or Company not found' });
+        }
+
+        // Check if there is already a pending call for this user
+        const existingCall = await prisma.librasCall.findFirst({
+            where: {
+                userId: user.userId,
+                status: 'WAITING'
+            }
+        });
+
+        if (existingCall) {
+            return res.json({ call: existingCall, message: 'Already waiting' });
+        }
+
+        const call = await prisma.librasCall.create({
+            data: {
+                companyId: user.companyId,
+                requesterId: user.userId,
+                status: 'WAITING'
+            }
+        });
+
+        res.json({ call });
+    } catch (error) {
+        console.error('Error requesting call:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+// Check status of a call (Collaborator polling)
+export const checkCallStatus = async (req: Request, res: Response) => {
+    try {
+        const user = (req as AuthRequest).user;
+        const callId = req.params.id;
+
+        const call = await prisma.librasCall.findUnique({
+            where: { id: callId }
+        });
+
+        if (!call) {
+            return res.status(404).json({ error: 'Call not found' });
+        }
+
+        // If accepted, we need the room URL
+        let roomUrl = null;
+        if (call.status === 'IN_PROGRESS') {
+            // Generate room URL same way as before
+            const roomName = `qs-libras-${user.companyId?.substring(0, 8)}`;
+            // We can't easily call createRoom controller directly here without mocking req/res
+            // So we'll just return the status and let the frontend call /daily/room or we return the constructed URL
+            // Ideally, we should store the room URL in the call model, but for now let's just return the status
+            // and the frontend will call the daily endpoint or we can construct it here if we want to be fancy.
+            // Simpler: Frontend sees IN_PROGRESS -> calls /daily/room to join.
+        }
+
+        res.json({ status: call.status });
+    } catch (error) {
+        console.error('Error checking call status:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+// List pending calls (Master)
+export const listPendingCalls = async (req: Request, res: Response) => {
+    try {
+        const user = (req as AuthRequest).user;
+        if (!user || !user.companyId) {
+            return res.status(400).json({ error: 'User or Company not found' });
+        }
+
+        const calls = await prisma.librasCall.findMany({
+            where: {
+                companyId: user.companyId,
+                status: 'WAITING'
+            },
+            include: {
+                requester: {
+                    select: {
+                        name: true,
+                        email: true,
+                        collaboratorProfile: {
+                            select: {
+                                matricula: true,
+                                area: { select: { name: true } }
+                            }
+                        }
+                    }
+                }
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+
+        res.json({ calls });
+    } catch (error) {
+        console.error('Error listing calls:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+// Accept call (Master)
+export const acceptCall = async (req: Request, res: Response) => {
+    try {
+        const callId = req.params.id;
+
+        const call = await prisma.librasCall.update({
+            where: { id: callId },
+            data: {
+                status: 'IN_PROGRESS',
+                acceptedAt: new Date()
+            }
+        });
+
+        res.json({ call });
+    } catch (error) {
+        console.error('Error accepting call:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+// Cancel/Finish call
+export const updateCallStatus = async (req: Request, res: Response) => {
+    try {
+        const callId = req.params.id;
+        const { status } = req.body; // FINISHED, CANCELED
+
+        const call = await prisma.librasCall.update({
+            where: { id: callId },
+            data: {
+                status,
+                finishedAt: status === 'FINISHED' ? new Date() : undefined
+            }
+        });
+
+        res.json({ call });
+    } catch (error) {
+        console.error('Error updating call:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};

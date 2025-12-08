@@ -118,6 +118,14 @@ router.get('/settings/libras', librasController.getSettings);
 router.post('/settings/libras', librasController.updateSettings);
 router.post('/daily/room', createRoom);
 
+// Libras Call System
+import * as librasCallController from './controllers/librasCallController';
+router.post('/libras/calls', librasCallController.requestCall);
+router.get('/libras/calls/pending', librasCallController.listPendingCalls);
+router.get('/libras/calls/:id/status', librasCallController.checkCallStatus);
+router.put('/libras/calls/:id/accept', librasCallController.acceptCall);
+router.put('/libras/calls/:id/status', librasCallController.updateCallStatus);
+
 // User Management (MASTER only)
 import * as userController from './controllers/userController';
 router.get('/users', userController.listUsers);

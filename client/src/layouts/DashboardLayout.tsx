@@ -20,6 +20,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { Bell } from 'lucide-react';
 import { api } from '../lib/api';
 import { useLibrasAvailability } from '../hooks/useLibrasAvailability';
+import { toast } from 'sonner';
 
 // ... (imports)
 
@@ -80,6 +81,44 @@ const DashboardLayout = () => {
         const interval = setInterval(fetchNotifications, 30000); // Poll every 30s
         return () => clearInterval(interval);
     }, []);
+
+    // Libras Call Notification (Master/RH)
+    React.useEffect(() => {
+        const userStr = localStorage.getItem('user');
+        let isMaster = false;
+        if (userStr) {
+            try {
+                const user = JSON.parse(userStr);
+                if (user.role === 'MASTER' || user.role === 'RH') isMaster = true;
+            } catch (e) { }
+        }
+
+        if (!isMaster) return;
+
+        const checkCalls = async () => {
+            try {
+                const response = await api.get('/libras/calls/pending');
+                const calls = response.data.calls;
+                if (calls.length > 0 && location.pathname !== '/dashboard/libras') {
+                    toast.info(`Há ${calls.length} solicitação(ões) de intérprete pendente(s)!`, {
+                        action: {
+                            label: 'Atender',
+                            onClick: () => navigate('/dashboard/libras')
+                        },
+                        duration: 5000,
+                        id: 'libras-notification' // Prevent duplicate toasts
+                    });
+                }
+            } catch (error) {
+                console.error('Error checking pending calls', error);
+            }
+        };
+
+        const interval = setInterval(checkCalls, 10000); // Check every 10s
+        checkCalls(); // Initial check
+
+        return () => clearInterval(interval);
+    }, [location.pathname, navigate]);
 
     const handleMarkAsRead = async (id: string, link?: string) => {
         try {
