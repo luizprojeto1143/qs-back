@@ -3,6 +3,7 @@ import * as authController from './controllers/authController';
 import * as companyController from './controllers/companyController';
 import * as collaboratorController from './controllers/collaboratorController';
 import { authenticateToken } from './middleware/authMiddleware';
+import { createRoom } from './controllers/dailyController';
 
 const router = Router();
 
@@ -115,6 +116,7 @@ import * as librasController from './controllers/librasController';
 router.get('/libras/availability', librasController.checkAvailability);
 router.get('/settings/libras', librasController.getSettings);
 router.post('/settings/libras', librasController.updateSettings);
+router.post('/daily/room', createRoom);
 
 // User Management (MASTER only)
 import * as userController from './controllers/userController';

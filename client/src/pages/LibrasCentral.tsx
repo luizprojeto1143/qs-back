@@ -1,16 +1,17 @@
-import { useState, useEffect } from 'react';
-import { Video, VideoOff, CalendarClock, Copy, Check } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Video, VideoOff, CalendarClock } from 'lucide-react';
 import { api } from '../lib/api';
 import { useCompany } from '../contexts/CompanyContext';
-import { toast } from 'sonner';
+import DailyIframe from '@daily-co/daily-js';
 
 const LibrasCentral = () => {
     const { selectedCompanyId } = useCompany();
     const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
     const [loading, setLoading] = useState(true);
-    const [roomName, setRoomName] = useState('');
-    const [copied, setCopied] = useState(false);
     const [userName, setUserName] = useState('Colaborador QS');
+    const callFrameRef = useRef<any>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [roomUrl, setRoomUrl] = useState<string | null>(null);
 
     useEffect(() => {
         const userStr = localStorage.getItem('user');
@@ -29,14 +30,9 @@ const LibrasCentral = () => {
     useEffect(() => {
         const checkAvailability = async () => {
             try {
-                const response = await api.get('/libras/availability');
+                // Add timestamp to prevent caching
+                const response = await api.get(`/libras/availability?t=${new Date().getTime()}`);
                 setIsAvailable(response.data.available);
-
-                if (response.data.available && selectedCompanyId) {
-                    // Generate a unique room name per day per company
-                    const today = new Date().toISOString().split('T')[0];
-                    setRoomName(`QS-Libras-${selectedCompanyId}-${today}`);
-                }
             } catch (error) {
                 console.error('Error checking availability', error);
                 setIsAvailable(false);
@@ -48,13 +44,51 @@ const LibrasCentral = () => {
         checkAvailability();
     }, [selectedCompanyId]);
 
-    const handleCopyLink = () => {
-        const url = `https://meet.jit.si/${roomName}#config.lobbyModeEnabled=true`;
-        navigator.clipboard.writeText(url);
-        setCopied(true);
-        toast.success('Link da sala copiado!');
-        setTimeout(() => setCopied(false), 2000);
+    const startCall = async () => {
+        if (!containerRef.current) return;
+
+        try {
+            const response = await api.post('/daily/room', {});
+            const url = response.data.url;
+            setRoomUrl(url);
+
+            const callFrame = DailyIframe.createFrame(containerRef.current, {
+                iframeStyle: {
+                    width: '100%',
+                    height: '100%',
+                    border: '0',
+                    borderRadius: '12px',
+                },
+                showLeaveButton: true,
+                showFullscreenButton: true,
+            });
+
+            callFrameRef.current = callFrame;
+
+            await callFrame.join({
+                url,
+                userName: userName,
+                showLeaveButton: true
+            });
+
+            callFrame.on('left-meeting', () => {
+                callFrame.destroy();
+                setRoomUrl(null);
+                callFrameRef.current = null;
+            });
+
+        } catch (error) {
+            console.error('Error starting Daily call', error);
+        }
     };
+
+    useEffect(() => {
+        return () => {
+            if (callFrameRef.current) {
+                callFrameRef.current.destroy();
+            }
+        };
+    }, []);
 
     if (loading) {
         return (
@@ -99,22 +133,33 @@ const LibrasCentral = () => {
                         </p>
                     </div>
                 </div>
-                <button
-                    onClick={handleCopyLink}
-                    className="flex items-center space-x-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg transition-colors text-sm"
-                >
-                    {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                    <span>{copied ? 'Copiado!' : 'Copiar Link da Sala'}</span>
-                </button>
             </div>
 
-            <div className="flex-1 relative">
-                <iframe
-                    src={`https://meet.jit.si/${roomName}#config.prejoinPageEnabled=false&config.lobbyModeEnabled=true&userInfo.displayName="${encodeURIComponent(userName)}"`}
-                    allow="camera; microphone; fullscreen; display-capture; autoplay"
-                    className="w-full h-full border-0"
-                    title="Central de Libras"
-                ></iframe>
+            <div className="flex-1 relative bg-gray-900 p-4">
+                {!roomUrl ? (
+                    <div className="h-full flex flex-col items-center justify-center text-center">
+                        <div className="max-w-2xl w-full bg-[#0A192F] p-10 rounded-2xl shadow-2xl border border-blue-900/50">
+                            <div className="w-24 h-24 bg-blue-600/20 rounded-full flex items-center justify-center mx-auto mb-8 animate-pulse">
+                                <Video className="h-12 w-12 text-blue-400" />
+                            </div>
+
+                            <h2 className="text-3xl font-bold text-white mb-4">Central de Atendimento</h2>
+                            <p className="text-blue-200 mb-8 text-lg">
+                                Clique abaixo para iniciar o atendimento por vídeo com um intérprete.
+                            </p>
+
+                            <button
+                                onClick={startCall}
+                                className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xl font-bold py-4 px-8 rounded-xl transition-all transform hover:scale-105 shadow-lg hover:shadow-blue-600/50 flex items-center justify-center space-x-3"
+                            >
+                                <Video className="h-6 w-6" />
+                                <span>Iniciar Atendimento</span>
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    <div ref={containerRef} className="w-full h-full rounded-xl overflow-hidden shadow-2xl bg-black" />
+                )}
             </div>
         </div>
     );
