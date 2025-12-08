@@ -1,8 +1,12 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Play, Calendar, Clock, X, Video } from 'lucide-react';
 import { api } from '../../lib/api';
+import { useLibrasAvailability } from '../../hooks/useLibrasAvailability';
 
 const MobileHome = () => {
+    const navigate = useNavigate();
+    const { isLibrasAvailable } = useLibrasAvailability();
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     const firstName = user.name ? user.name.split(' ')[0] : 'Visitante';
     const [selectedPost, setSelectedPost] = useState<any>(null);
@@ -62,6 +66,22 @@ const MobileHome = () => {
                 <h1 className="text-2xl font-bold text-gray-900">Olá, {firstName} 👋</h1>
                 <p className="text-gray-500">Confira as novidades de hoje</p>
             </div>
+
+            {/* Libras Access Card */}
+            {isLibrasAvailable && (
+                <button
+                    onClick={() => navigate('/app/libras')}
+                    className="w-full bg-blue-600 rounded-2xl p-6 text-white shadow-lg shadow-blue-900/20 flex items-center justify-between active:scale-95 transition-transform"
+                >
+                    <div className="text-left">
+                        <h2 className="text-lg font-bold">Central de Libras</h2>
+                        <p className="text-blue-100 text-sm">Solicitar intérprete agora</p>
+                    </div>
+                    <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                        <Video className="h-6 w-6 text-white" />
+                    </div>
+                </button>
+            )}
 
             {/* Quick Actions Card */}
             <div className="bg-primary rounded-2xl p-6 text-white shadow-lg shadow-blue-900/20">
