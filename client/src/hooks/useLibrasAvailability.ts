@@ -14,7 +14,8 @@ export const useLibrasAvailability = () => {
             }
 
             try {
-                const response = await api.get('/libras/availability');
+                // Add timestamp to prevent caching
+                const response = await api.get(`/libras/availability?t=${new Date().getTime()}`);
                 setIsLibrasAvailable(response.data.available);
             } catch (error) {
                 console.error('Error checking libras availability', error);
