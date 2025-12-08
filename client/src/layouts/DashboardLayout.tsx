@@ -111,7 +111,6 @@ const DashboardLayout = () => {
     ];
 
     return (
-    return (
         <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row">
             {/* Sidebar Desktop */}
             <aside className="hidden md:flex flex-col w-64 bg-[#0A192F] border-r border-gray-800 fixed h-full z-10 text-white">
