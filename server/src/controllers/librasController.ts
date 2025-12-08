@@ -18,15 +18,7 @@ interface AvailabilitySettings {
     [key: string]: DaySchedule;
 }
 
-const DAYS_MAP: { [key: number]: string } = {
-    0: 'sunday',
-    1: 'monday',
-    2: 'tuesday',
-    3: 'wednesday',
-    4: 'thursday',
-    5: 'friday',
-    6: 'saturday'
-};
+
 
 export const checkAvailability = async (req: Request, res: Response) => {
     try {
@@ -46,19 +38,29 @@ export const checkAvailability = async (req: Request, res: Response) => {
 
         const settings: AvailabilitySettings = JSON.parse(company.librasAvailability);
 
-        // Get current time in Brazil/Sao_Paulo timezone
+        // Get current time in Brazil/Sao_Paulo timezone using Intl.DateTimeFormat for robustness
+        const timeZone = 'America/Sao_Paulo';
         const now = new Date();
-        const brazilTime = new Date(now.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
 
-        const currentDayKey = DAYS_MAP[brazilTime.getDay()];
+        const dayFormatter = new Intl.DateTimeFormat('en-US', { timeZone, weekday: 'long' });
+        const currentDayKey = dayFormatter.format(now).toLowerCase(); // 'monday', 'tuesday', etc.
+
         const daySettings = settings[currentDayKey];
 
         if (!daySettings || !daySettings.active) {
             return res.json({ available: false, reason: 'Day not active' });
         }
 
-        const currentHour = brazilTime.getHours();
-        const currentMinute = brazilTime.getMinutes();
+        const timeFormatter = new Intl.DateTimeFormat('en-US', {
+            timeZone,
+            hour: 'numeric',
+            minute: 'numeric',
+            hour12: false
+        });
+
+        // format returns "HH:MM"
+        const timeString = timeFormatter.format(now);
+        const [currentHour, currentMinute] = timeString.split(':').map(Number);
         const currentTimeValue = currentHour * 60 + currentMinute;
 
         const isAvailable = daySettings.slots.some(slot => {
