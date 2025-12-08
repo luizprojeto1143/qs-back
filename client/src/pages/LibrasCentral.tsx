@@ -200,25 +200,40 @@ const LibrasCentral = () => {
                 },
                 showLeaveButton: true,
                 showFullscreenButton: true,
+                url: roomUrl, // Pass URL here too for safety
             });
 
             callFrameRef.current = callFrame;
 
-            callFrame.join({
-                url: roomUrl,
-                userName: userName,
-                showLeaveButton: true
+            callFrame.on('error', (e) => {
+                console.error('Daily error:', e);
+                toast.error(`Erro na chamada: ${e?.errorMsg || 'Desconhecido'}`);
+                // Don't reset status to IDLE on error, allow retry
+                setRoomUrl(null);
+                callFrame.destroy();
+                callFrameRef.current = null;
             });
 
-            callFrame.on('left-meeting', () => {
+            callFrame.on('left-meeting', (e) => {
+                console.log('Left meeting:', e);
                 callFrame.destroy();
                 setRoomUrl(null);
                 callFrameRef.current = null;
+
+                // Only reset to IDLE if it wasn't an error (Daily sends 'error' event usually, but let's be safe)
+                // If user clicked leave, we reset.
                 setCallStatus('IDLE');
 
                 if (currentCallId) {
                     api.put(`/libras/calls/${currentCallId}/status`, { status: 'FINISHED' });
                 }
+            });
+
+            callFrame.join({
+                url: roomUrl,
+                userName: userName,
+                showLeaveButton: true,
+                cssFile: 'https://api.daily.co/v1/ui/css/daily.css' // Ensure default styles
             });
         } catch (error) {
             console.error('Error joining Daily call', error);
@@ -463,6 +478,27 @@ const LibrasCentral = () => {
                                     className="text-red-400 hover:text-red-300 font-medium transition-colors border border-red-900/30 hover:border-red-500/50 px-6 py-2 rounded-lg"
                                 >
                                     Cancelar Solicitação
+                                </button>
+                            </div>
+                        )}
+
+                        {callStatus === 'IN_PROGRESS' && (
+                            <div className="max-w-2xl w-full bg-[#0A192F] p-10 rounded-2xl shadow-2xl border border-green-900/50">
+                                <div className="w-24 h-24 bg-green-600/20 rounded-full flex items-center justify-center mx-auto mb-8">
+                                    <Video className="h-12 w-12 text-green-400" />
+                                </div>
+
+                                <h2 className="text-3xl font-bold text-white mb-4">Chamada em Andamento</h2>
+                                <p className="text-blue-200 mb-8 text-lg">
+                                    Você está em um atendimento, mas o vídeo foi desconectado.
+                                </p>
+
+                                <button
+                                    onClick={startCall}
+                                    className="w-full bg-green-600 hover:bg-green-700 text-white text-xl font-bold py-4 px-8 rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-green-600/50 flex items-center justify-center space-x-3"
+                                >
+                                    <Video className="h-6 w-6" />
+                                    <span>Reconectar Vídeo</span>
                                 </button>
                             </div>
                         )}
