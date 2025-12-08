@@ -336,10 +336,10 @@ const LibrasCentral = () => {
                         ) : (
                             <div className="grid gap-4">
                                 {pendingCalls.map((call) => (
-                                    <div key={call.id} className="bg-[#0A192F] p-6 rounded-xl border border-blue-900/30 flex items-center justify-between hover:border-blue-500/50 transition-all">
+                                    <div key={call.id} className={`p-6 rounded-xl border flex items-center justify-between transition-all ${call.status === 'IN_PROGRESS' ? 'bg-green-900/20 border-green-500/50' : 'bg-[#0A192F] border-blue-900/30 hover:border-blue-500/50'}`}>
                                         <div className="flex items-center space-x-4">
-                                            <div className="w-12 h-12 bg-blue-600/20 rounded-full flex items-center justify-center">
-                                                <Video className="h-6 w-6 text-blue-400" />
+                                            <div className={`w-12 h-12 rounded-full flex items-center justify-center ${call.status === 'IN_PROGRESS' ? 'bg-green-600/20' : 'bg-blue-600/20'}`}>
+                                                <Video className={`h-6 w-6 ${call.status === 'IN_PROGRESS' ? 'text-green-400' : 'text-blue-400'}`} />
                                             </div>
                                             <div>
                                                 <h3 className="text-lg font-bold text-white">{call.requester.name}</h3>
@@ -348,17 +348,28 @@ const LibrasCentral = () => {
                                                     Matrícula: {call.requester.collaboratorProfile?.matricula || 'N/A'}
                                                 </p>
                                                 <p className="text-xs text-gray-500 mt-1">
-                                                    Aguardando há {Math.floor((new Date().getTime() - new Date(call.createdAt).getTime()) / 60000)} minutos
+                                                    {call.status === 'IN_PROGRESS' ? 'Em andamento' : `Aguardando há ${Math.floor((new Date().getTime() - new Date(call.createdAt).getTime()) / 60000)} minutos`}
                                                 </p>
                                             </div>
                                         </div>
-                                        <button
-                                            onClick={() => acceptCall(call.id)}
-                                            className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-bold transition-colors flex items-center space-x-2 shadow-lg shadow-green-900/20"
-                                        >
-                                            <Video className="h-5 w-5" />
-                                            <span>Atender Agora</span>
-                                        </button>
+
+                                        {call.status === 'IN_PROGRESS' ? (
+                                            <button
+                                                onClick={() => { setCurrentCallId(call.id); startCall(); }}
+                                                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-bold transition-colors flex items-center space-x-2 shadow-lg shadow-blue-900/20"
+                                            >
+                                                <Video className="h-5 w-5" />
+                                                <span>Retomar Chamada</span>
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={() => acceptCall(call.id)}
+                                                className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-bold transition-colors flex items-center space-x-2 shadow-lg shadow-green-900/20"
+                                            >
+                                                <Video className="h-5 w-5" />
+                                                <span>Atender Agora</span>
+                                            </button>
+                                        )}
                                     </div>
                                 ))}
                             </div>

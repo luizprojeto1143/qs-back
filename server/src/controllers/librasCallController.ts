@@ -86,7 +86,7 @@ export const listPendingCalls = async (req: Request, res: Response) => {
         const calls = await prisma.librasCall.findMany({
             where: {
                 companyId: user.companyId,
-                status: 'WAITING'
+                status: { in: ['WAITING', 'IN_PROGRESS'] }
             },
             include: {
                 requester: {
