@@ -125,6 +125,7 @@ router.get('/libras/calls/pending', librasCallController.listPendingCalls);
 router.get('/libras/calls/:id/status', librasCallController.checkCallStatus);
 router.put('/libras/calls/:id/accept', librasCallController.acceptCall);
 router.put('/libras/calls/:id/status', librasCallController.updateCallStatus);
+router.post('/libras/calls/:id/invite', librasCallController.inviteToCall);
 
 // User Management (MASTER only)
 import * as userController from './controllers/userController';

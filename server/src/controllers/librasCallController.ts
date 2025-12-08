@@ -148,3 +148,48 @@ export const updateCallStatus = async (req: Request, res: Response) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 };
+
+// Invite specialist (Hub of Attention)
+import { sendInviteEmail } from '../services/mailService';
+
+export const inviteToCall = async (req: Request, res: Response) => {
+    try {
+        const callId = req.params.id;
+        const { email, name } = req.body;
+
+        const call = await prisma.librasCall.findUnique({
+            where: { id: callId },
+            include: {
+                requester: {
+                    include: {
+                        collaboratorProfile: {
+                            include: { area: true }
+                        }
+                    }
+                }
+            }
+        });
+
+        if (!call) {
+            return res.status(404).json({ error: 'Call not found' });
+        }
+
+        // Construct collaborator info
+        const collaboratorInfo = {
+            name: call.requester.name,
+            matricula: call.requester.collaboratorProfile?.matricula || 'N/A',
+            area: call.requester.collaboratorProfile?.area?.name || 'N/A',
+            shift: call.requester.collaboratorProfile?.shift || 'N/A'
+        };
+
+        // Generate room URL (assuming standard format)
+        const roomUrl = `https://qs-inclusao.daily.co/qs-libras-${call.companyId.substring(0, 8)}`;
+
+        await sendInviteEmail(email, roomUrl, collaboratorInfo);
+
+        res.json({ message: 'Invite sent successfully' });
+    } catch (error) {
+        console.error('Error sending invite:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};

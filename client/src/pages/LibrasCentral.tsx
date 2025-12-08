@@ -22,6 +22,11 @@ const LibrasCentral = () => {
     const [pendingCalls, setPendingCalls] = useState<any[]>([]);
     const [isMaster, setIsMaster] = useState(false);
 
+    // Invite System
+    const [showInviteModal, setShowInviteModal] = useState(false);
+    const [inviteEmail, setInviteEmail] = useState('');
+    const [inviteName, setInviteName] = useState('');
+
     useEffect(() => {
         const userStr = localStorage.getItem('user');
         if (userStr) {
@@ -142,6 +147,32 @@ const LibrasCentral = () => {
         }
     };
 
+    const handleInvite = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!currentCallId || !inviteEmail) return;
+
+        try {
+            await api.post(`/libras/calls/${currentCallId}/invite`, {
+                email: inviteEmail,
+                name: inviteName || 'Especialista'
+            });
+            toast.success(`Convite enviado para ${inviteEmail}`);
+            setShowInviteModal(false);
+            setInviteEmail('');
+            setInviteName('');
+        } catch (error) {
+            console.error('Error sending invite', error);
+            toast.error('Erro ao enviar convite.');
+        }
+    };
+
+    const quickInvites = [
+        { name: 'RH', email: 'rh@empresa.com' }, // Placeholder, ideally from settings
+        { name: 'Médico', email: 'medico@empresa.com' },
+        { name: 'Benefícios', email: 'beneficios@empresa.com' },
+        { name: 'Segurança', email: 'seguranca@empresa.com' }
+    ];
+
     const startCall = async () => {
         if (!containerRef.current) return;
 
@@ -193,6 +224,56 @@ const LibrasCentral = () => {
             }
         };
     }, []);
+
+    // Render Invite Modal
+    const renderInviteModal = () => (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-2xl max-w-md w-full mx-4">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Convidar Especialista</h3>
+
+                <div className="grid grid-cols-2 gap-2 mb-4">
+                    {quickInvites.map((item) => (
+                        <button
+                            key={item.name}
+                            onClick={() => setInviteEmail(item.email)}
+                            className="p-2 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors"
+                        >
+                            {item.name}
+                        </button>
+                    ))}
+                </div>
+
+                <form onSubmit={handleInvite} className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                        <input
+                            type="email"
+                            value={inviteEmail}
+                            onChange={(e) => setInviteEmail(e.target.value)}
+                            className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                            placeholder="email@exemplo.com"
+                            required
+                        />
+                    </div>
+                    <div className="flex justify-end space-x-3">
+                        <button
+                            type="button"
+                            onClick={() => setShowInviteModal(false)}
+                            className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            type="submit"
+                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium"
+                        >
+                            Enviar Convite
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
 
     if (loading) {
         return (
@@ -304,6 +385,15 @@ const LibrasCentral = () => {
                         </p>
                     </div>
                 </div>
+                {/* Invite Button for Master */}
+                {isMaster && roomUrl && (
+                    <button
+                        onClick={() => setShowInviteModal(true)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium flex items-center space-x-2"
+                    >
+                        <span>Convidar Especialista</span>
+                    </button>
+                )}
             </div>
 
             <div className="flex-1 relative flex flex-col items-center justify-center bg-gray-900 p-4">
@@ -358,6 +448,7 @@ const LibrasCentral = () => {
                     <div ref={containerRef} className="w-full h-full rounded-xl overflow-hidden shadow-2xl bg-black" />
                 )}
             </div>
+            {showInviteModal && renderInviteModal()}
         </div>
     );
 };
