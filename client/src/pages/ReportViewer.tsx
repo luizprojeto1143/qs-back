@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Printer } from 'lucide-react';
+import { ArrowLeft, Printer, TrendingUp, AlertCircle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const ReportViewer = () => {
@@ -141,6 +141,157 @@ const ReportViewer = () => {
                     </div>
                 );
 
+            case 'EXECUTIVE_SUMMARY':
+                return (
+                    <div className="space-y-8">
+                        <div className="bg-blue-50 p-6 rounded-xl border border-blue-100">
+                            <h2 className="text-2xl font-bold text-blue-900 mb-2">Relatório Executivo Anual</h2>
+                            <p className="text-blue-700">Visão estratégica e consolidada dos indicadores de inclusão.</p>
+                        </div>
+
+                        {/* Metrics Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="p-6 bg-white rounded-xl border border-gray-200 shadow-sm">
+                                <h3 className="text-sm font-bold text-gray-500 uppercase">Total de Atendimentos</h3>
+                                <p className="text-4xl font-bold text-primary mt-2">{reportData.metrics?.totalVisits || 0}</p>
+                            </div>
+                            <div className="p-6 bg-white rounded-xl border border-gray-200 shadow-sm">
+                                <h3 className="text-sm font-bold text-gray-500 uppercase">Eficiência de Resolução</h3>
+                                <p className="text-4xl font-bold text-green-600 mt-2">{reportData.metrics?.resolutionRate || '0'}%</p>
+                            </div>
+                            <div className="p-6 bg-white rounded-xl border border-gray-200 shadow-sm">
+                                <h3 className="text-sm font-bold text-gray-500 uppercase">Satisfação Média</h3>
+                                <p className="text-4xl font-bold text-purple-600 mt-2">{reportData.metrics?.satisfaction || 'N/A'}</p>
+                            </div>
+                        </div>
+
+                        {/* Manual Input Fields */}
+                        <div className="space-y-6 print:space-y-4">
+                            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                    <TrendingUp className="h-5 w-5 text-primary" />
+                                    Oportunidades de Melhoria
+                                </h3>
+                                <textarea
+                                    className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent min-h-[100px] print:border-none print:p-0 print:resize-none"
+                                    placeholder="Descreva as oportunidades identificadas..."
+                                    defaultValue={reportData.opportunities}
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                                    <h3 className="text-lg font-bold text-gray-900 mb-4">Tratativa</h3>
+                                    <textarea
+                                        className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent min-h-[100px] print:border-none print:p-0 print:resize-none"
+                                        placeholder="Ações propostas..."
+                                    />
+                                </div>
+                                <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                                    <h3 className="text-lg font-bold text-gray-900 mb-4">Justificativa</h3>
+                                    <textarea
+                                        className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent min-h-[100px] print:border-none print:p-0 print:resize-none"
+                                        placeholder="Por que essa tratativa foi escolhida?"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                                    <h3 className="text-lg font-bold text-gray-900 mb-4">Situação Atual</h3>
+                                    <textarea
+                                        className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent min-h-[100px] print:border-none print:p-0 print:resize-none"
+                                        placeholder="Status atual..."
+                                    />
+                                </div>
+                                <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                                    <h3 className="text-lg font-bold text-gray-900 mb-4">Prazo de Execução</h3>
+                                    <input
+                                        type="text"
+                                        className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent print:border-none print:p-0"
+                                        placeholder="Ex: 30 dias, Até Dezembro/2024..."
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+
+            case 'INCLUSION_DIAGNOSIS':
+                return (
+                    <div className="space-y-6">
+                        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+                            <div className="flex items-center">
+                                <div className="flex-shrink-0">
+                                    <AlertCircle className="h-5 w-5 text-yellow-400" />
+                                </div>
+                                <div className="ml-3">
+                                    <p className="text-sm text-yellow-700 font-bold">
+                                        Relatório em Andamento
+                                    </p>
+                                    <p className="text-xs text-yellow-600 mt-1">
+                                        Este diagnóstico ainda não foi finalizado. Algumas informações podem estar incompletas.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h2 className="text-2xl font-bold mb-4">Diagnóstico de Inclusão</h2>
+                        {/* Render dynamic content based on reportData */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {Object.entries(reportData.categories || {}).map(([key, value]: [string, any]) => (
+                                <div key={key} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                                    <h3 className="text-lg font-bold capitalize mb-2">{key.replace(/_/g, ' ')}</h3>
+                                    <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4">
+                                        <div className="bg-primary h-2.5 rounded-full" style={{ width: `${value.score || 0}%` }}></div>
+                                    </div>
+                                    <p className="text-sm text-gray-600">{value.notes || 'Sem observações.'}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                );
+
+            case 'AREA_EVOLUTION':
+                return (
+                    <div className="space-y-8">
+                        <div className="flex justify-between items-center">
+                            <h2 className="text-2xl font-bold">Evolução da Área: {reportData.areaName}</h2>
+                            <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                                {reportData.month}/{reportData.year}
+                            </span>
+                        </div>
+
+                        <div className="h-96 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                            <h3 className="text-lg font-bold mb-4">Média das Avaliações</h3>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={reportData.chartData}>
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    <XAxis dataKey="name" />
+                                    <YAxis domain={[0, 5]} />
+                                    <Tooltip />
+                                    <Bar dataKey="score" fill="#4F46E5" name="Nota Média" />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                                <h3 className="text-lg font-bold mb-4">Pontos Fortes</h3>
+                                <ul className="list-disc list-inside space-y-2 text-gray-700">
+                                    {reportData.strengths?.map((s: string, i: number) => <li key={i}>{s}</li>) || <p>Nenhum ponto forte destacado.</p>}
+                                </ul>
+                            </div>
+                            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                                <h3 className="text-lg font-bold mb-4">Pontos de Atenção</h3>
+                                <ul className="list-disc list-inside space-y-2 text-gray-700">
+                                    {reportData.weaknesses?.map((w: string, i: number) => <li key={i}>{w}</li>) || <p>Nenhum ponto de atenção destacado.</p>}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                );
+
             default:
                 if (reportData.metrics) {
                     return (
@@ -156,9 +307,6 @@ const ReportViewer = () => {
                             <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
                                 <h3 className="text-lg font-bold mb-2">Resumo Executivo</h3>
                                 <p className="text-gray-700 leading-relaxed">{reportData.details}</p>
-                            </div>
-                            <div className="h-64 bg-gray-100 rounded-xl flex items-center justify-center border-2 border-dashed border-gray-300">
-                                <p className="text-gray-400">Gráficos detalhados seriam exibidos aqui.</p>
                             </div>
                         </div>
                     );

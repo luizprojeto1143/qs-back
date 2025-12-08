@@ -134,6 +134,13 @@ router.post('/specialists', specialistController.createSpecialist);
 router.put('/specialists/:id', specialistController.updateSpecialist);
 router.delete('/specialists/:id', specialistController.deleteSpecialist);
 
+// PDI Routes
+import * as pdiController from './controllers/pdiController';
+router.post('/pdis', pdiController.createPDI);
+router.get('/pdis', pdiController.listPDIs);
+router.put('/pdis/:id', pdiController.updatePDI);
+router.delete('/pdis/:id', pdiController.deletePDI);
+
 // User Management (MASTER only)
 import * as userController from './controllers/userController';
 router.get('/users', userController.listUsers);

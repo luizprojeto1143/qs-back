@@ -32,6 +32,7 @@ model Company {
   librasAvailability String? // JSON string for Libras Central availability settings
   librasCalls   LibrasCall[]
   specialists   Specialist[]
+  pdis          PDI[]
 }
 
 model Sector {
@@ -74,6 +75,7 @@ model User {
   requestedSchedules Schedule[] @relation("RequestedSchedules")
   requestedCalls    LibrasCall[] @relation("RequestedCalls")
   notifications     Notification[]
+  pdis              PDI[]
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -279,4 +281,24 @@ model Specialist {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model PDI {
+  id          String   @id @default(uuid())
+  
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
+
+  // Questions
+  objective   String   // "Qual é o meu principal objetivo..."
+  skills      String   // "Quais habilidades..."
+  actions     String   // "Quais ações práticas..."
+  
+  status      String   @default("DRAFT") // DRAFT, ACTIVE, COMPLETED
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

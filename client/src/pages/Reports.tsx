@@ -74,10 +74,14 @@ const Reports = () => {
         }
     };
 
-    const generateReport = async (type: string, paramValue?: string) => {
+    const generateReport = async (type: string, paramValue?: string, extraFilters?: any) => {
         setGenerating(type);
         try {
-            let filters: any = { month: new Date().getMonth(), year: new Date().getFullYear() };
+            let filters: any = {
+                month: new Date().getMonth(),
+                year: new Date().getFullYear(),
+                ...extraFilters
+            };
 
             if (paramValue) {
                 const paramName = reportTypes.find(r => r.id === type)?.param;
@@ -106,7 +110,17 @@ const Reports = () => {
             toast.error('Por favor, selecione uma opção.');
             return;
         }
-        generateReport(selectedReport.id, selectedValue);
+
+        // Capture extra filters from form
+        const formData = new FormData(e.target as HTMLFormElement);
+        const month = formData.get('month');
+        const year = formData.get('year');
+
+        const extraFilters: any = {};
+        if (month) extraFilters.month = parseInt(month.toString());
+        if (year) extraFilters.year = parseInt(year.toString());
+
+        generateReport(selectedReport.id, selectedValue, extraFilters);
     };
 
     return (
@@ -180,6 +194,27 @@ const Reports = () => {
                                     </select>
                                 )}
                             </div>
+
+                            {/* Month/Year Filter for Evolution Reports */}
+                            {(selectedReport.id === 'AREA_EVOLUTION' || selectedReport.id === 'COLLABORATOR_EVOLUTION') && (
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Mês</label>
+                                        <select className="input-field" name="month">
+                                            {Array.from({ length: 12 }, (_, i) => (
+                                                <option key={i} value={i}>{new Date(0, i).toLocaleString('pt-BR', { month: 'long' })}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Ano</label>
+                                        <select className="input-field" name="year">
+                                            <option value="2024">2024</option>
+                                            <option value="2025">2025</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            )}
 
                             <button
                                 type="submit"

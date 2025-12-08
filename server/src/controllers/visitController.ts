@@ -6,7 +6,7 @@ export const createVisit = async (req: Request, res: Response) => {
         const {
             companyId,
             areaId,
-            collaboratorIds, // Array of strings
+            collaboratorIds, // Array of User IDs
             relatos, // { lideranca, colaborador, observacoes }
             avaliacoes, // { area, lideranca, colaborador } (JSON strings or objects)
             pendencias, // Array of objects
@@ -14,6 +14,24 @@ export const createVisit = async (req: Request, res: Response) => {
         } = req.body;
 
         const masterId = (req as any).user.userId;
+
+        // Resolve User IDs to CollaboratorProfile IDs
+        const profiles = await prisma.collaboratorProfile.findMany({
+            where: { userId: { in: collaboratorIds } },
+            select: { id: true, userId: true }
+        });
+
+        const profileIds = profiles.map(p => p.id);
+
+        // Map User ID to Profile ID for notes
+        const userToProfileMap = profiles.reduce((acc, curr) => {
+            acc[curr.userId] = curr.id;
+            return acc;
+        }, {} as Record<string, string>);
+
+        if (profileIds.length === 0 && collaboratorIds.length > 0) {
+            console.warn('No profiles found for provided user IDs:', collaboratorIds);
+        }
 
         // Transaction to ensure data consistency
         const result = await prisma.$transaction(async (prisma) => {
@@ -26,19 +44,25 @@ export const createVisit = async (req: Request, res: Response) => {
                     relatoLideranca: relatos.lideranca,
                     relatoColaborador: relatos.colaborador,
                     observacoesMaster: relatos.observacoes,
-                    avaliacaoArea: JSON.stringify(avaliacoes.area),
-                    avaliacaoLideranca: JSON.stringify(avaliacoes.lideranca),
-                    avaliacaoColaborador: JSON.stringify(avaliacoes.colaborador),
+                    avaliacaoArea: JSON.stringify(avaliacoes?.area || {}),
+                    avaliacaoLideranca: JSON.stringify(avaliacoes?.lideranca || {}),
+                    avaliacaoColaborador: JSON.stringify(avaliacoes?.colaborador || {}),
                     collaborators: {
-                        connect: collaboratorIds.map((id: string) => ({ id }))
+                        connect: profileIds.map((id: string) => ({ id }))
                     }
                 }
             });
 
             // 2. Create Pendencies linked to the visit
             if (pendencias && pendencias.length > 0) {
-                await Promise.all(pendencias.map((p: any) =>
-                    prisma.pendingItem.create({
+                await Promise.all(pendencias.map(async (p: any) => {
+                    // Resolve responsible/collaborator if needed
+                    let collabProfileId = null;
+                    if (p.collaboratorId) {
+                        collabProfileId = userToProfileMap[p.collaboratorId] || null;
+                    }
+
+                    return prisma.pendingItem.create({
                         data: {
                             description: p.description,
                             responsible: p.responsible,
@@ -48,10 +72,10 @@ export const createVisit = async (req: Request, res: Response) => {
                             companyId,
                             areaId,
                             visitId: visit.id,
-                            collaboratorId: p.collaboratorId || null
+                            collaboratorId: collabProfileId
                         }
-                    })
-                ));
+                    });
+                }));
             }
 
             // 3. Create Attachments
@@ -70,15 +94,21 @@ export const createVisit = async (req: Request, res: Response) => {
 
             // 4. Create Individual Notes
             if (req.body.individualNotes && req.body.individualNotes.length > 0) {
-                await Promise.all(req.body.individualNotes.map((note: any) =>
-                    prisma.visitNote.create({
+                await Promise.all(req.body.individualNotes.map((note: any) => {
+                    const profileId = userToProfileMap[note.collaboratorId];
+                    if (!profileId) {
+                        console.warn(`Skipping note for user ${note.collaboratorId} - Profile not found`);
+                        return Promise.resolve();
+                    }
+
+                    return prisma.visitNote.create({
                         data: {
                             visitId: visit.id,
-                            collaboratorId: note.collaboratorId,
+                            collaboratorId: profileId,
                             content: note.content
                         }
-                    })
-                ));
+                    });
+                }));
             }
 
             return visit;
@@ -87,7 +117,11 @@ export const createVisit = async (req: Request, res: Response) => {
         res.status(201).json(result);
     } catch (error) {
         console.error('Error creating visit:', error);
-        res.status(500).json({ error: 'Error creating visit record' });
+        // Enhanced error logging
+        if (error instanceof Error) {
+            console.error('Stack:', error.stack);
+        }
+        res.status(500).json({ error: 'Error creating visit record', details: String(error) });
     }
 };
 
