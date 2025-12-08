@@ -19,7 +19,6 @@ import {
 import { useTheme } from '../contexts/ThemeContext';
 import { Bell } from 'lucide-react';
 import { api } from '../lib/api';
-import { useLibrasAvailability } from '../hooks/useLibrasAvailability';
 import { toast } from 'sonner';
 
 // ... (imports)
@@ -59,7 +58,6 @@ const DashboardLayout = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
     const { theme, toggleTheme } = useTheme();
     const navigate = useNavigate();
-    const { isLibrasAvailable } = useLibrasAvailability();
 
     // Notification State
     const [notifications, setNotifications] = React.useState<any[]>([]);
@@ -171,14 +169,12 @@ const DashboardLayout = () => {
                         />
                     ))}
 
-                    {isLibrasAvailable && (
-                        <SidebarItem
-                            icon={Video}
-                            label="Central de Libras"
-                            path="/dashboard/libras"
-                            active={location.pathname === '/dashboard/libras'}
-                        />
-                    )}
+                    <SidebarItem
+                        icon={Video}
+                        label="Central de Libras"
+                        path="/dashboard/libras"
+                        active={location.pathname === '/dashboard/libras'}
+                    />
 
                     <button
                         onClick={toggleTheme}
@@ -248,15 +244,13 @@ const DashboardLayout = () => {
                             />
                         ))}
 
-                        {isLibrasAvailable && (
-                            <SidebarItem
-                                icon={Video}
-                                label="Central de Libras"
-                                path="/dashboard/libras"
-                                active={location.pathname === '/dashboard/libras'}
-                                onClick={() => setIsMobileMenuOpen(false)}
-                            />
-                        )}
+                        <SidebarItem
+                            icon={Video}
+                            label="Central de Libras"
+                            path="/dashboard/libras"
+                            active={location.pathname === '/dashboard/libras'}
+                            onClick={() => setIsMobileMenuOpen(false)}
+                        />
 
                         <button
                             type="button"
