@@ -44,8 +44,8 @@ const Login = () => {
         <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
             <div className="bg-white p-8 rounded-2xl shadow-sm w-full max-w-md border border-gray-100">
                 <div className="flex flex-col items-center mb-8">
-                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
-                        <div className="text-primary font-bold text-2xl">QS</div>
+                    <div className="flex items-center justify-center mb-4">
+                        <img src="/logo.png" alt="QS Inclusão" className="h-16 w-auto object-contain" />
                     </div>
                     <h1 className="text-2xl font-bold text-gray-900">QS Inclusão</h1>
                     <p className="text-gray-500 text-sm mt-1">Entre para acessar o sistema</p>

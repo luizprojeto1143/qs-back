@@ -17,9 +17,7 @@ const MobileLayout = () => {
             {/* Mobile Header */}
             <header className="bg-white px-4 py-3 shadow-sm flex items-center justify-between sticky top-0 z-50">
                 <div className="flex items-center space-x-2">
-                    <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                        <span className="text-white font-bold text-xs">QS</span>
-                    </div>
+                    <img src="/logo.png" alt="QS Inclusão" className="h-8 w-auto object-contain" />
                     <span className="font-bold text-gray-900">QS Inclusão</span>
                 </div>
                 <button className="p-2 text-gray-600">

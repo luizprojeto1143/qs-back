@@ -31,7 +31,7 @@ import CollaboratorRegistration from './pages/public/CollaboratorRegistration';
 import { CompanyProvider } from './contexts/CompanyContext';
 
 function App() {
-  console.log('QS System Version: All Panels Fixed (v5)');
+  console.log('QS System Version: Custom Logo (v6)');
   return (
     <CompanyProvider>
       <Toaster position="top-right" richColors />

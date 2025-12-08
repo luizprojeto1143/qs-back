@@ -35,85 +35,26 @@ const RHLayout = () => {
     const location = useLocation();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
-    const menuItems = [
-        { icon: LayoutDashboard, label: 'Visão Geral', path: '/rh' },
-        { icon: Users, label: 'Colaboradores', path: '/rh/collaborators' },
-        { icon: ClipboardList, label: 'Histórico de Visitas', path: '/rh/history' },
-        { icon: FileText, label: 'Relatórios', path: '/rh/reports' },
-        { icon: Calendar, label: 'Agendamentos', path: '/rh/schedules' },
-    ];
-
-    return (
-        <div className="min-h-screen bg-gray-50 flex">
-            {/* Sidebar Desktop */}
-            <aside className="hidden md:flex flex-col w-64 bg-[#0A192F] border-r border-gray-800 fixed h-full z-10 text-white">
-                <div className="p-6 flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
-                        <span className="text-white font-bold">RH</span>
-                    </div>
-                    <span className="text-xl font-bold text-white">Portal RH</span>
-                </div>
-
-                <nav className="flex-1 px-4 space-y-2 overflow-y-auto py-4">
-                    {menuItems.map((item) => (
-                        <SidebarItem
-                            key={item.path}
-                            icon={item.icon}
-                            label={item.label}
-                            path={item.path}
-                            active={location.pathname === item.path || (item.path !== '/rh' && location.pathname.startsWith(item.path))}
+    icon = { item.icon }
+    label = { item.label }
+    path = { item.path }
+    active = { location.pathname === item.path }
+    onClick = {() => setIsMobileMenuOpen(false)}
                         />
                     ))}
-                </nav>
+<button className="w-full flex items-center space-x-3 px-4 py-3 text-gray-400 hover:bg-white/10 hover:text-white rounded-xl transition-colors">
+    <LogOut className="h-5 w-5" />
+    <span>Sair</span>
+</button>
+                </nav >
+            </div >
+        )}
 
-                <div className="p-4 border-t border-gray-800">
-                    <button className="w-full flex items-center space-x-3 px-4 py-3 text-gray-400 hover:bg-white/10 hover:text-white rounded-xl transition-colors">
-                        <LogOut className="h-5 w-5" />
-                        <span>Sair</span>
-                    </button>
-                </div>
-            </aside>
-
-            {/* Mobile Header */}
-            <div className="md:hidden fixed w-full bg-[#0A192F] border-b border-gray-800 z-[200] px-4 py-3 flex items-center justify-between text-white">
-                <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
-                        <span className="text-white font-bold">RH</span>
-                    </div>
-                    <span className="text-lg font-bold text-white">Portal RH</span>
-                </div>
-                <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
-                    {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-                </button>
-            </div>
-
-            {/* Mobile Menu Overlay */}
-            {isMobileMenuOpen && (
-                <div className="md:hidden fixed inset-0 z-[150] bg-[#0A192F] pt-20 px-4 text-white">
-                    <nav className="space-y-2">
-                        {menuItems.map((item) => (
-                            <SidebarItem
-                                key={item.path}
-                                icon={item.icon}
-                                label={item.label}
-                                path={item.path}
-                                active={location.pathname === item.path}
-                                onClick={() => setIsMobileMenuOpen(false)}
-                            />
-                        ))}
-                        <button className="w-full flex items-center space-x-3 px-4 py-3 text-gray-400 hover:bg-white/10 hover:text-white rounded-xl transition-colors">
-                            <LogOut className="h-5 w-5" />
-                            <span>Sair</span>
-                        </button>
-                    </nav>
-                </div>
-            )}
-
-            {/* Main Content */}
-            <main className="flex-1 md:ml-64 p-4 md:p-8 pt-20 md:pt-8">
-                <Outlet />
-            </main>
-        </div>
+{/* Main Content */ }
+<main className="flex-1 md:ml-64 p-4 md:p-8 pt-20 md:pt-8">
+    <Outlet />
+</main>
+        </div >
     );
 };
 

@@ -114,11 +114,8 @@ const DashboardLayout = () => {
         <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row">
             {/* Sidebar Desktop */}
             <aside className="hidden md:flex flex-col w-64 bg-[#0A192F] border-r border-gray-800 fixed h-full z-10 text-white">
-                <div className="p-6 flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                        <span className="text-white font-bold">QS</span>
-                    </div>
-                    <span className="text-xl font-bold text-white">QS Inclusão</span>
+                <div className="p-6 flex items-center justify-center">
+                    <img src="/logo.png" alt="QS Inclusão" className="h-12 w-auto object-contain" />
                 </div>
 
                 <nav className="flex-1 px-4 space-y-2 overflow-y-auto py-4">
@@ -156,9 +153,7 @@ const DashboardLayout = () => {
             {/* Mobile Header */}
             <div className="md:hidden fixed w-full bg-[#0A192F] border-b border-gray-800 z-[200] px-4 py-3 flex items-center justify-between text-white h-16">
                 <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                        <span className="text-white font-bold">QS</span>
-                    </div>
+                    <img src="/logo.png" alt="QS Inclusão" className="h-8 w-auto object-contain bg-white/10 rounded p-1" />
                     <span className="text-lg font-bold text-white">QS Inclusão</span>
                 </div>
                 <div className="flex items-center space-x-4">
