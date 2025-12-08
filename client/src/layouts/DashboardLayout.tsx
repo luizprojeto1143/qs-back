@@ -111,14 +111,51 @@ const DashboardLayout = () => {
     ];
 
     return (
+    return (
         <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row">
             {/* Sidebar Desktop */}
             <aside className="hidden md:flex flex-col w-64 bg-[#0A192F] border-r border-gray-800 fixed h-full z-10 text-white">
-                {/* ... */}
+                <div className="p-6 flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                        <span className="text-white font-bold">QS</span>
+                    </div>
+                    <span className="text-xl font-bold text-white">QS Inclusão</span>
+                </div>
+
+                <nav className="flex-1 px-4 space-y-2 overflow-y-auto py-4">
+                    {menuItems.map((item) => (
+                        <SidebarItem
+                            key={item.path}
+                            icon={item.icon}
+                            label={item.label}
+                            path={item.path}
+                            active={location.pathname === item.path}
+                        />
+                    ))}
+
+                    <button
+                        onClick={toggleTheme}
+                        className="w-full flex items-center space-x-3 px-4 py-3 text-gray-400 hover:bg-white/10 hover:text-white rounded-xl transition-colors mt-4"
+                    >
+                        {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+                        <span>{theme === 'light' ? 'Modo Escuro' : 'Modo Claro'}</span>
+                    </button>
+                </nav>
+
+                <div className="p-4 border-t border-gray-800">
+                    <button
+                        type="button"
+                        onClick={handleLogout}
+                        className="w-full flex items-center space-x-3 px-4 py-3 text-gray-400 hover:bg-white/10 hover:text-white rounded-xl transition-colors"
+                    >
+                        <LogOut className="h-5 w-5" />
+                        <span>Sair</span>
+                    </button>
+                </div>
             </aside>
 
             {/* Mobile Header */}
-            <div className="md:hidden fixed w-full bg-[#0A192F] border-b border-gray-800 z-50 px-4 py-3 flex items-center justify-between text-white h-16">
+            <div className="md:hidden fixed w-full bg-[#0A192F] border-b border-gray-800 z-[200] px-4 py-3 flex items-center justify-between text-white h-16">
                 <div className="flex items-center space-x-3">
                     <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
                         <span className="text-white font-bold">QS</span>
@@ -150,7 +187,7 @@ const DashboardLayout = () => {
 
             {/* Mobile Menu Overlay */}
             {isMobileMenuOpen && (
-                <div className="md:hidden fixed inset-0 z-40 bg-[#0A192F] pt-20 px-4 text-white">
+                <div className="md:hidden fixed inset-0 z-[150] bg-[#0A192F] pt-20 px-4 text-white">
                     <nav className="space-y-2">
                         {menuItems.map((item) => (
                             <SidebarItem
