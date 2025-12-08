@@ -31,7 +31,7 @@ import CollaboratorRegistration from './pages/public/CollaboratorRegistration';
 import { CompanyProvider } from './contexts/CompanyContext';
 
 function App() {
-  console.log('QS System Version: Shift Update + QR Code (v2)');
+  console.log('QS System Version: Mobile Fixes (v3)');
   return (
     <CompanyProvider>
       <Toaster position="top-right" richColors />
