@@ -41,6 +41,13 @@ export const CompanyProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
             if (Array.isArray(data)) {
                 setCompanies(data);
+
+                // Auto-select if only one company (Collaborators/RH) or if none selected yet
+                if (data.length === 1 && !selectedCompanyId) {
+                    const companyId = data[0].id;
+                    setSelectedCompanyId(companyId);
+                    localStorage.setItem('selectedCompanyId', companyId);
+                }
             } else {
                 console.error('Invalid companies data format:', data);
                 setCompanies([]);
