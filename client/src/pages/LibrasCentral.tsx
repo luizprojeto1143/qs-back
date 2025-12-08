@@ -176,13 +176,21 @@ const LibrasCentral = () => {
     ];
 
     const startCall = async () => {
-        if (!containerRef.current) return;
-
         try {
             const response = await api.post('/daily/room', {});
             const url = response.data.url;
             setRoomUrl(url);
+            setCallStatus('IN_PROGRESS');
+        } catch (error) {
+            console.error('Error starting Daily call', error);
+            toast.error('Erro ao iniciar vídeo. Verifique a chave da API Daily.');
+        }
+    };
 
+    useEffect(() => {
+        if (!roomUrl || !containerRef.current || callFrameRef.current) return;
+
+        try {
             const callFrame = DailyIframe.createFrame(containerRef.current, {
                 iframeStyle: {
                     width: '100%',
@@ -196,8 +204,8 @@ const LibrasCentral = () => {
 
             callFrameRef.current = callFrame;
 
-            await callFrame.join({
-                url,
+            callFrame.join({
+                url: roomUrl,
                 userName: userName,
                 showLeaveButton: true
             });
@@ -206,27 +214,24 @@ const LibrasCentral = () => {
                 callFrame.destroy();
                 setRoomUrl(null);
                 callFrameRef.current = null;
-                setCallStatus('IDLE'); // Reset status when leaving
+                setCallStatus('IDLE');
 
-                // Ideally notify backend that call finished
                 if (currentCallId) {
                     api.put(`/libras/calls/${currentCallId}/status`, { status: 'FINISHED' });
                 }
             });
-
         } catch (error) {
-            console.error('Error starting Daily call', error);
-            toast.error('Erro ao iniciar vídeo. Verifique a chave da API Daily.');
+            console.error('Error joining Daily call', error);
+            toast.error('Erro ao entrar na sala.');
         }
-    };
 
-    useEffect(() => {
         return () => {
             if (callFrameRef.current) {
                 callFrameRef.current.destroy();
+                callFrameRef.current = null;
             }
         };
-    }, []);
+    }, [roomUrl, userName, currentCallId]);
 
     // Render Invite Modal
     const renderInviteModal = () => (

@@ -114,6 +114,7 @@ export const updateSettings = async (req: Request, res: Response) => {
         }
 
         const settings = req.body;
+        console.log('Updating Libras settings for company:', user.companyId, JSON.stringify(settings));
 
         await prisma.company.update({
             where: { id: user.companyId },
