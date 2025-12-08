@@ -31,6 +31,7 @@ import CollaboratorRegistration from './pages/public/CollaboratorRegistration';
 import { CompanyProvider } from './contexts/CompanyContext';
 import LibrasAvailability from './pages/settings/LibrasAvailability';
 import LibrasCentral from './pages/LibrasCentral';
+import SpecialistSettings from './pages/settings/SpecialistSettings';
 
 function App() {
   console.log('QS System Version: Libras Central (v7)');
@@ -66,6 +67,7 @@ function App() {
             <Route path="libras-availability" element={<LibrasAvailability />} />
             <Route path="users" element={<UsersList />} />
             <Route path="qrcode" element={<QRCodeGenerator />} />
+            <Route path="specialists" element={<SpecialistSettings />} />
           </Route>
 
           <Route path="/register/collaborator" element={<CollaboratorRegistration />} />

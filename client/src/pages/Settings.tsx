@@ -14,6 +14,7 @@ const Settings = () => {
         { label: 'Termos de Uso', path: '/dashboard/terms' },
         { label: 'Configurar Categorias do Feed', path: '/dashboard/feed-categories' },
         { label: 'Configurar Central de Libras', path: '/dashboard/libras-availability' },
+        { label: 'Cadastro de Especialistas', path: '/dashboard/specialists' },
         { label: 'Gerador de QR Code', path: '/dashboard/qrcode' },
     ];
 

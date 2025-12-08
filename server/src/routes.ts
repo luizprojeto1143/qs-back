@@ -127,6 +127,13 @@ router.put('/libras/calls/:id/accept', librasCallController.acceptCall);
 router.put('/libras/calls/:id/status', librasCallController.updateCallStatus);
 router.post('/libras/calls/:id/invite', librasCallController.inviteToCall);
 
+// Specialist Routes
+import * as specialistController from './controllers/specialistController';
+router.get('/specialists', specialistController.listSpecialists);
+router.post('/specialists', specialistController.createSpecialist);
+router.put('/specialists/:id', specialistController.updateSpecialist);
+router.delete('/specialists/:id', specialistController.deleteSpecialist);
+
 // User Management (MASTER only)
 import * as userController from './controllers/userController';
 router.get('/users', userController.listUsers);

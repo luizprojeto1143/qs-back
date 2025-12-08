@@ -31,6 +31,7 @@ model Company {
   availability  String?  // JSON string for availability settings
   librasAvailability String? // JSON string for Libras Central availability settings
   librasCalls   LibrasCall[]
+  specialists   Specialist[]
 }
 
 model Sector {
@@ -259,6 +260,19 @@ model Shift {
   id        String   @id @default(uuid())
   name      String
   active    Boolean  @default(true)
+  
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Specialist {
+  id        String   @id @default(uuid())
+  name      String
+  email     String
+  type      String   // PSICOLOGO, ASSISTENTE_SOCIAL, ADVOGADO, OUTRO
   
   companyId String
   company   Company  @relation(fields: [companyId], references: [id])

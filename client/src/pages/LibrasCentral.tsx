@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Video, VideoOff, CalendarClock, Check } from 'lucide-react';
+import { Video, VideoOff, CalendarClock, Check, X } from 'lucide-react';
 import { api } from '../lib/api';
 import { useCompany } from '../contexts/CompanyContext';
 import DailyIframe from '@daily-co/daily-js';
@@ -168,12 +168,33 @@ const LibrasCentral = () => {
         }
     };
 
-    const quickInvites = [
-        { name: 'RH', email: 'rh@empresa.com' }, // Placeholder, ideally from settings
-        { name: 'Médico', email: 'medico@empresa.com' },
-        { name: 'Benefícios', email: 'beneficios@empresa.com' },
-        { name: 'Segurança', email: 'seguranca@empresa.com' }
-    ];
+    const [specialists, setSpecialists] = useState<any[]>([]);
+
+    useEffect(() => {
+        if (isMaster) {
+            const fetchSpecialists = async () => {
+                try {
+                    const response = await api.get('/specialists');
+                    setSpecialists(response.data);
+                } catch (error) {
+                    console.error('Error fetching specialists', error);
+                }
+            };
+            fetchSpecialists();
+        }
+    }, [isMaster]);
+
+    const handleFinishCall = async (callId: string) => {
+        if (!confirm('Tem certeza que deseja encerrar esta chamada?')) return;
+        try {
+            await api.put(`/libras/calls/${callId}/status`, { status: 'FINISHED' });
+            setPendingCalls(prev => prev.filter(c => c.id !== callId));
+            toast.success('Chamada encerrada.');
+        } catch (error) {
+            console.error('Error finishing call', error);
+            toast.error('Erro ao encerrar chamada.');
+        }
+    };
 
     const startCall = async () => {
         try {
@@ -254,16 +275,24 @@ const LibrasCentral = () => {
             <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-2xl max-w-md w-full mx-4">
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Convidar Especialista</h3>
 
-                <div className="grid grid-cols-2 gap-2 mb-4">
-                    {quickInvites.map((item) => (
+                <div className="grid grid-cols-2 gap-2 mb-4 max-h-40 overflow-y-auto">
+                    {specialists.map((specialist) => (
                         <button
-                            key={item.name}
-                            onClick={() => setInviteEmail(item.email)}
-                            className="p-2 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors"
+                            key={specialist.id}
+                            onClick={() => {
+                                setInviteEmail(specialist.email);
+                                setInviteName(specialist.name);
+                            }}
+                            className="p-2 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors text-left truncate"
+                            title={`${specialist.name} (${specialist.type})`}
                         >
-                            {item.name}
+                            <span className="block font-bold text-xs text-primary mb-0.5">{specialist.type}</span>
+                            {specialist.name}
                         </button>
                     ))}
+                    {specialists.length === 0 && (
+                        <p className="col-span-2 text-center text-sm text-gray-500">Nenhum especialista cadastrado.</p>
+                    )}
                 </div>
 
                 <form onSubmit={handleInvite} className="space-y-4">
@@ -381,23 +410,33 @@ const LibrasCentral = () => {
                                             </div>
                                         </div>
 
-                                        {call.status === 'IN_PROGRESS' ? (
+                                        <div className="flex items-center space-x-2">
+                                            {call.status === 'IN_PROGRESS' ? (
+                                                <button
+                                                    onClick={() => { setCurrentCallId(call.id); startCall(); }}
+                                                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold transition-colors flex items-center space-x-2 shadow-lg shadow-blue-900/20"
+                                                >
+                                                    <Video className="h-4 w-4" />
+                                                    <span>Retomar</span>
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    onClick={() => acceptCall(call.id)}
+                                                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-bold transition-colors flex items-center space-x-2 shadow-lg shadow-green-900/20"
+                                                >
+                                                    <Video className="h-4 w-4" />
+                                                    <span>Atender</span>
+                                                </button>
+                                            )}
+
                                             <button
-                                                onClick={() => { setCurrentCallId(call.id); startCall(); }}
-                                                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-bold transition-colors flex items-center space-x-2 shadow-lg shadow-blue-900/20"
+                                                onClick={() => handleFinishCall(call.id)}
+                                                className="bg-red-500/10 hover:bg-red-500/20 text-red-500 px-3 py-2 rounded-lg font-medium transition-colors"
+                                                title="Encerrar/Remover da lista"
                                             >
-                                                <Video className="h-5 w-5" />
-                                                <span>Retomar Chamada</span>
+                                                <X className="h-5 w-5" />
                                             </button>
-                                        ) : (
-                                            <button
-                                                onClick={() => acceptCall(call.id)}
-                                                className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-bold transition-colors flex items-center space-x-2 shadow-lg shadow-green-900/20"
-                                            >
-                                                <Video className="h-5 w-5" />
-                                                <span>Atender Agora</span>
-                                            </button>
-                                        )}
+                                        </div>
                                     </div>
                                 ))}
                             </div>
