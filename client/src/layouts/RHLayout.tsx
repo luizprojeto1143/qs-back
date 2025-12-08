@@ -11,11 +11,14 @@ import {
     Calendar
 } from 'lucide-react';
 
-const SidebarItem = ({ icon: Icon, label, path, active }: any) => {
+const SidebarItem = ({ icon: Icon, label, path, active, onClick }: any) => {
     const navigate = useNavigate();
     return (
         <button
-            onClick={() => navigate(path)}
+            onClick={() => {
+                navigate(path);
+                if (onClick) onClick();
+            }}
             className={`
         w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors ${active
                     ? 'bg-blue-600 text-white font-medium shadow-lg shadow-blue-900/50'
@@ -72,7 +75,7 @@ const RHLayout = () => {
             </aside>
 
             {/* Mobile Header */}
-            <div className="md:hidden fixed w-full bg-[#0A192F] border-b border-gray-800 z-20 px-4 py-3 flex items-center justify-between text-white">
+            <div className="md:hidden fixed w-full bg-[#0A192F] border-b border-gray-800 z-[200] px-4 py-3 flex items-center justify-between text-white">
                 <div className="flex items-center space-x-3">
                     <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
                         <span className="text-white font-bold">RH</span>
@@ -86,7 +89,7 @@ const RHLayout = () => {
 
             {/* Mobile Menu Overlay */}
             {isMobileMenuOpen && (
-                <div className="md:hidden fixed inset-0 z-10 bg-[#0A192F] pt-20 px-4 text-white">
+                <div className="md:hidden fixed inset-0 z-[150] bg-[#0A192F] pt-20 px-4 text-white">
                     <nav className="space-y-2">
                         {menuItems.map((item) => (
                             <SidebarItem
@@ -95,6 +98,7 @@ const RHLayout = () => {
                                 label={item.label}
                                 path={item.path}
                                 active={location.pathname === item.path}
+                                onClick={() => setIsMobileMenuOpen(false)}
                             />
                         ))}
                         <button className="w-full flex items-center space-x-3 px-4 py-3 text-gray-400 hover:bg-white/10 hover:text-white rounded-xl transition-colors">

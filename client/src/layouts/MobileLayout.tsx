@@ -15,7 +15,7 @@ const MobileLayout = () => {
     return (
         <div className="min-h-screen bg-gray-50 pb-24">
             {/* Mobile Header */}
-            <header className="bg-white px-4 py-3 shadow-sm flex items-center justify-between sticky top-0 z-20">
+            <header className="bg-white px-4 py-3 shadow-sm flex items-center justify-between sticky top-0 z-50">
                 <div className="flex items-center space-x-2">
                     <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                         <span className="text-white font-bold text-xs">QS</span>
@@ -38,8 +38,8 @@ const MobileLayout = () => {
                         key={item.path}
                         onClick={() => navigate(item.path)}
                         className={`flex flex-col items-center justify-center space-y-1 w-16 ${item.primary
-                                ? 'mb-4'
-                                : ''
+                            ? 'mb-4'
+                            : ''
                             }`}
                     >
                         <div className={`
