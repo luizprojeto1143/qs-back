@@ -14,7 +14,7 @@ export const requestCall = async (req: Request, res: Response) => {
         // Check if there is already a pending call for this user
         const existingCall = await prisma.librasCall.findFirst({
             where: {
-                userId: user.userId,
+                requesterId: user.userId,
                 status: 'WAITING'
             }
         });
@@ -42,6 +42,10 @@ export const requestCall = async (req: Request, res: Response) => {
 export const checkCallStatus = async (req: Request, res: Response) => {
     try {
         const user = (req as AuthRequest).user;
+        if (!user || !user.companyId) {
+            return res.status(400).json({ error: 'User or Company not found' });
+        }
+
         const callId = req.params.id;
 
         const call = await prisma.librasCall.findUnique({
@@ -56,7 +60,7 @@ export const checkCallStatus = async (req: Request, res: Response) => {
         let roomUrl = null;
         if (call.status === 'IN_PROGRESS') {
             // Generate room URL same way as before
-            const roomName = `qs-libras-${user.companyId?.substring(0, 8)}`;
+            const roomName = `qs-libras-${user.companyId.substring(0, 8)}`;
             // We can't easily call createRoom controller directly here without mocking req/res
             // So we'll just return the status and let the frontend call /daily/room or we return the constructed URL
             // Ideally, we should store the room URL in the call model, but for now let's just return the status
