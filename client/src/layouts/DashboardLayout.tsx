@@ -57,9 +57,58 @@ const DashboardLayout = () => {
     const { theme, toggleTheme } = useTheme();
     const navigate = useNavigate();
 
-    // ... (Notification logic remains the same)
+    // Notification State
+    const [notifications, setNotifications] = React.useState<any[]>([]);
+    const [unreadCount, setUnreadCount] = React.useState(0);
+    const [showNotifications, setShowNotifications] = React.useState(false);
 
-    // ...
+    const fetchNotifications = async () => {
+        try {
+            const res = await api.get('/notifications');
+            setNotifications(res.data);
+            setUnreadCount(res.data.filter((n: any) => !n.read).length);
+        } catch (error) {
+            console.error('Error fetching notifications', error);
+        }
+    };
+
+    React.useEffect(() => {
+        fetchNotifications();
+        const interval = setInterval(fetchNotifications, 30000); // Poll every 30s
+        return () => clearInterval(interval);
+    }, []);
+
+    const handleMarkAsRead = async (id: string, link?: string) => {
+        try {
+            await api.put(`/notifications/${id}/read`, {});
+            setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+            setUnreadCount(prev => Math.max(0, prev - 1));
+            if (link) {
+                navigate(link);
+                setShowNotifications(false);
+            }
+        } catch (error) {
+            console.error('Error marking as read', error);
+        }
+    };
+
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        navigate('/');
+    };
+
+    const menuItems = [
+        { icon: LayoutDashboard, label: 'Início', path: '/dashboard' },
+        { icon: Users, label: 'Colaboradores', path: '/dashboard/collaborators' },
+        { icon: ClipboardList, label: 'Acompanhamentos', path: '/dashboard/visits' },
+        { icon: AlertTriangle, label: 'Pendências', path: '/dashboard/pendencies' },
+        { icon: Calendar, label: 'Agendamentos', path: '/dashboard/schedules' },
+        { icon: Video, label: 'Feed Acessível', path: '/dashboard/feed' },
+        { icon: FileText, label: 'Relatórios', path: '/dashboard/reports' },
+        { icon: Settings, label: 'Configurações', path: '/dashboard/settings' },
+        { icon: Shield, label: 'Acessos', path: '/dashboard/users' },
+    ];
 
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row">
