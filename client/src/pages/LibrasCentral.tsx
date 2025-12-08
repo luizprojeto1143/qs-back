@@ -214,6 +214,7 @@ const LibrasCentral = () => {
 
         } catch (error) {
             console.error('Error starting Daily call', error);
+            toast.error('Erro ao iniciar vídeo. Verifique a chave da API Daily.');
         }
     };
 
