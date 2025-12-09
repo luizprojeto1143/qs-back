@@ -91,22 +91,40 @@ export const generateReport = async (req: Request, res: Response) => {
 
             case 'COLLABORATOR_HISTORY':
                 if (!filters?.collaboratorId) return res.status(400).json({ error: 'Collaborator ID required' });
-                const collaborator = await prisma.collaboratorProfile.findUnique({
+
+                // Try to find profile by ID first, then by User ID
+                let collaborator = await prisma.collaboratorProfile.findUnique({
                     where: { id: filters.collaboratorId },
                     include: { user: true, area: true }
                 });
 
+                if (!collaborator) {
+                    collaborator = await prisma.collaboratorProfile.findUnique({
+                        where: { userId: filters.collaboratorId },
+                        include: { user: true, area: true }
+                    });
+                }
+
+                if (!collaborator) {
+                    return res.status(404).json({ error: 'Collaborator profile not found' });
+                }
+
                 const historyVisits = await prisma.visit.findMany({
                     where: {
                         companyId,
-                        collaborators: { some: { id: filters.collaboratorId } }
+                        collaborators: { some: { id: collaborator.id } }
                     },
                     orderBy: { date: 'desc' },
-                    include: { master: { select: { name: true } } }
+                    include: {
+                        master: { select: { name: true } },
+                        notes: {
+                            where: { collaboratorId: collaborator.id }
+                        }
+                    }
                 });
 
                 const historyPendencies = await prisma.pendingItem.findMany({
-                    where: { collaboratorId: filters.collaboratorId },
+                    where: { collaboratorId: collaborator.id },
                     orderBy: { createdAt: 'desc' }
                 });
 

@@ -333,9 +333,15 @@ const ReportViewer = () => {
 
                                             {/* Visit Content */}
                                             <div className="space-y-4">
+                                                {visit.notes && visit.notes.length > 0 && (
+                                                    <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-100">
+                                                        <p className="text-xs font-bold text-yellow-700 uppercase mb-1">Nota Individual</p>
+                                                        <p className="text-yellow-900 text-sm">{visit.notes[0].content}</p>
+                                                    </div>
+                                                )}
                                                 {visit.relatoColaborador && (
                                                     <div className="bg-green-50 p-4 rounded-lg border border-green-100">
-                                                        <p className="text-xs font-bold text-green-700 uppercase mb-1">Relato do Colaborador</p>
+                                                        <p className="text-xs font-bold text-green-700 uppercase mb-1">Relato do Colaborador (Geral)</p>
                                                         <p className="text-green-900 text-sm">{visit.relatoColaborador}</p>
                                                     </div>
                                                 )}
