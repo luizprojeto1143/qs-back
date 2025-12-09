@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Search, Printer, Target, CheckCircle, X } from 'lucide-react';
+import { Plus, Search, Printer, Target, CheckCircle, X, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 import { useReactToPrint } from 'react-to-print';
 import { api } from '../lib/api';
@@ -138,7 +138,7 @@ const PDIManagement = () => {
                                 </div>
                             </div>
                             <span className={`px-2 py-1 rounded-full text-xs font-bold ${pdi.status === 'ACTIVE' ? 'bg-green-100 text-green-800' :
-                                    pdi.status === 'COMPLETED' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
+                                pdi.status === 'COMPLETED' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
                                 }`}>
                                 {pdi.status === 'ACTIVE' ? 'Ativo' : pdi.status === 'COMPLETED' ? 'Concluído' : 'Rascunho'}
                             </span>
@@ -146,7 +146,15 @@ const PDIManagement = () => {
 
                         <div className="space-y-3 mb-6">
                             <div>
-                                <p className="text-xs font-medium text-gray-500 uppercase flex items-center gap-1">
+                                <p className="text-xs font-medium text-gray-500 uppercase flex items-center gap-1 mb-1">
+                                    <Calendar className="h-3 w-3" /> Criado em
+                                </p>
+                                <p className="text-sm text-gray-700">
+                                    {new Date(pdi.createdAt).toLocaleDateString('pt-BR')}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-xs font-medium text-gray-500 uppercase flex items-center gap-1 mb-1">
                                     <Target className="h-3 w-3" /> Objetivo
                                 </p>
                                 <p className="text-sm text-gray-700 line-clamp-2">{pdi.objective}</p>
@@ -247,8 +255,8 @@ const PDIManagement = () => {
             )}
 
             {/* Hidden Print Template */}
-            <div style={{ display: 'none' }}>
-                <div ref={printRef} className="p-10 bg-white text-gray-900 print:block">
+            <div className="hidden print:block">
+                <div ref={printRef} className="p-10 bg-white text-gray-900">
                     {selectedPDI && (
                         <div className="max-w-3xl mx-auto space-y-8">
                             <div className="text-center border-b pb-6">
