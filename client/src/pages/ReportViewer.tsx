@@ -292,7 +292,99 @@ const ReportViewer = () => {
                     </div>
                 );
 
-            default:
+            case 'VISIT_INDIVIDUAL':
+                return (
+                    <div className="space-y-8">
+                        {/* Visit Details Header */}
+                        <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p className="text-sm text-gray-500 uppercase font-bold">Data da Visita</p>
+                                    <p className="text-lg font-medium">{new Date(reportData.date).toLocaleDateString()} às {new Date(reportData.date).toLocaleTimeString()}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-500 uppercase font-bold">Área / Setor</p>
+                                    <p className="text-lg font-medium">{reportData.area?.name} / {reportData.area?.sectorId ? 'Setor ' + reportData.area.sectorId.substring(0, 8) : '-'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-500 uppercase font-bold">Master Responsável</p>
+                                    <p className="text-lg font-medium">{reportData.master?.name || 'Master QS'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-500 uppercase font-bold">Empresa</p>
+                                    <p className="text-lg font-medium">{reportData.company?.name}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Collaborators Involved */}
+                        <div>
+                            <h3 className="text-xl font-bold mb-4 border-b pb-2 flex items-center gap-2">
+                                <TrendingUp className="h-5 w-5 text-primary" />
+                                Colaboradores Acompanhados
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {reportData.collaborators?.map((c: any) => (
+                                    <div key={c.id} className="p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
+                                        <p className="font-bold text-lg">{c.user?.name}</p>
+                                        <p className="text-sm text-gray-500">Matrícula: {c.matricula || '-'}</p>
+                                        <p className="text-sm text-gray-500">Turno: {c.shift}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* General Reports */}
+                        <div className="space-y-6">
+                            <div className="bg-blue-50 p-6 rounded-xl border border-blue-100">
+                                <h3 className="text-lg font-bold text-blue-900 mb-2">Relato da Liderança</h3>
+                                <p className="text-blue-800 whitespace-pre-wrap">{reportData.relatoLideranca || 'Nenhum relato registrado.'}</p>
+                            </div>
+
+                            <div className="bg-green-50 p-6 rounded-xl border border-green-100">
+                                <h3 className="text-lg font-bold text-green-900 mb-2">Relato do Colaborador (Geral)</h3>
+                                <p className="text-green-800 whitespace-pre-wrap">{reportData.relatoColaborador || 'Nenhum relato registrado.'}</p>
+                            </div>
+
+                            <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
+                                <h3 className="text-lg font-bold text-gray-900 mb-2">Observações do Master</h3>
+                                <p className="text-gray-700 whitespace-pre-wrap">{reportData.observacoesMaster || 'Nenhuma observação registrada.'}</p>
+                            </div>
+                        </div>
+
+                        {/* Individual Notes (History) */}
+                        {reportData.notes && reportData.notes.length > 0 && (
+                            <div>
+                                <h3 className="text-xl font-bold mb-4 border-b pb-2 mt-8">Notas Individuais (Histórico)</h3>
+                                <div className="space-y-4">
+                                    {reportData.notes.map((note: any) => (
+                                        <div key={note.id} className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <p className="font-bold text-yellow-900">{note.collaborator?.user?.name}</p>
+                                                <span className="text-xs text-yellow-600">{new Date(note.createdAt).toLocaleDateString()}</span>
+                                            </div>
+                                            <p className="text-yellow-800">{note.content}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Attachments */}
+                        {reportData.attachments && reportData.attachments.length > 0 && (
+                            <div>
+                                <h3 className="text-xl font-bold mb-4 border-b pb-2 mt-8">Anexos</h3>
+                                <ul className="list-disc list-inside">
+                                    {reportData.attachments.map((att: any, index: number) => (
+                                        <li key={index} className="text-blue-600 underline cursor-pointer">
+                                            <a href={att.url} target="_blank" rel="noopener noreferrer">Anexo {index + 1}</a>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+                    </div>
+                );
                 if (reportData.metrics) {
                     return (
                         <div className="space-y-8">
