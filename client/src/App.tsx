@@ -21,6 +21,7 @@ import CompaniesList from './pages/settings/CompaniesList';
 import SectorsList from './pages/settings/SectorsList';
 import AreasList from './pages/settings/AreasList';
 import ReportViewer from './pages/ReportViewer';
+import InclusionDiagnosisEditor from './pages/InclusionDiagnosisEditor';
 import FeedCategories from './pages/settings/FeedCategories';
 import TermsOfUse from './pages/settings/TermsOfUse';
 import ShiftsList from './pages/settings/ShiftsList';
@@ -54,6 +55,7 @@ function App() {
             <Route path="schedules" element={<Schedules />} />
             <Route path="reports" element={<Reports />} />
             <Route path="report-viewer" element={<ReportViewer />} />
+            <Route path="inclusion-diagnosis" element={<InclusionDiagnosisEditor />} />
             <Route path="settings" element={<Settings />} />
             <Route path="libras" element={<LibrasCentral />} />
 

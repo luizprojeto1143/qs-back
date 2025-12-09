@@ -191,7 +191,11 @@ export const updateCompany = async (req: Request, res: Response) => {
         const result = await prisma.$transaction(async (prisma) => {
             const company = await prisma.company.update({
                 where: { id },
-                data: { name, cnpj }
+                data: {
+                    name,
+                    cnpj,
+                    inclusionDiagnosis: req.body.inclusionDiagnosis ? JSON.stringify(req.body.inclusionDiagnosis) : undefined
+                }
             });
 
             if (email || password) {

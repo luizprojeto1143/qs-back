@@ -131,7 +131,14 @@ const Reports = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {reportTypes.map((report) => (
+                {reportTypes.filter(report => {
+                    // Restrict Operational Report to MASTER only
+                    if (report.id === 'OPERATIONAL_REPORT') {
+                        const user = JSON.parse(localStorage.getItem('user') || '{}');
+                        return user.role === 'MASTER';
+                    }
+                    return true;
+                }).map((report) => (
                     <button
                         key={report.id}
                         onClick={() => handleReportClick(report)}

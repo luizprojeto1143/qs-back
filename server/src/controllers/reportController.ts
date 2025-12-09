@@ -132,12 +132,56 @@ export const generateReport = async (req: Request, res: Response) => {
                 break;
 
             case 'AREA_REPORT':
-                if (!filters?.areaId) return res.status(400).json({ error: 'Area ID required' });
-                const area = await prisma.area.findUnique({ where: { id: filters.areaId }, include: { sector: true } });
-                const areaVisits = await prisma.visit.findMany({ where: { areaId: filters.areaId }, orderBy: { date: 'desc' } });
-                const areaPendencies = await prisma.pendingItem.findMany({ where: { areaId: filters.areaId } });
+                if (filters?.areaId) {
+                    const area = await prisma.area.findUnique({ where: { id: filters.areaId }, include: { sector: true } });
+                    const areaVisits = await prisma.visit.findMany({ where: { areaId: filters.areaId }, orderBy: { date: 'desc' } });
+                    const areaPendencies = await prisma.pendingItem.findMany({ where: { areaId: filters.areaId } });
+                    data = { area, visits: areaVisits, pendencies: areaPendencies };
+                } else {
+                    // General Area Report (All Areas)
+                    const allAreas = await prisma.area.findMany({ include: { sector: true } });
+                    const allVisits = await prisma.visit.findMany({ where: { companyId }, include: { area: true }, orderBy: { date: 'desc' } });
+                    data = { areas: allAreas, visits: allVisits };
+                }
+                break;
 
-                data = { area, visits: areaVisits, pendencies: areaPendencies };
+            case 'INCLUSION_DIAGNOSIS':
+                const company = await prisma.company.findUnique({
+                    where: { id: companyId },
+                    select: { inclusionDiagnosis: true }
+                });
+                data = company?.inclusionDiagnosis ? JSON.parse(company.inclusionDiagnosis) : { categories: {} };
+                break;
+
+            case 'LEADERSHIP_REPORT':
+                // Group by Area/Sector
+                const visitsWithRatings = await prisma.visit.findMany({
+                    where: { companyId },
+                    include: { area: { include: { sector: true } } },
+                    orderBy: { date: 'desc' }
+                });
+
+                const groupedData: any = {};
+
+                visitsWithRatings.forEach(v => {
+                    if (!v.area) return;
+                    const sectorName = v.area.sector.name;
+                    const areaName = v.area.name;
+
+                    if (!groupedData[sectorName]) groupedData[sectorName] = {};
+                    if (!groupedData[sectorName][areaName]) groupedData[sectorName][areaName] = [];
+
+                    try {
+                        const ratings = v.avaliacaoLideranca ? JSON.parse(v.avaliacaoLideranca) : {};
+                        const values = Object.values(ratings).map((val: any) => Number(val)).filter(val => !isNaN(val));
+                        if (values.length > 0) {
+                            const avg = values.reduce((a, b) => a + b, 0) / values.length;
+                            groupedData[sectorName][areaName].push({ date: v.date, score: avg });
+                        }
+                    } catch (e) { }
+                });
+
+                data = { groupedData };
                 break;
 
             case 'PENDENCIES_REPORT':

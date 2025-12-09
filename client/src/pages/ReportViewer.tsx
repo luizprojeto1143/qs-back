@@ -218,25 +218,39 @@ const ReportViewer = () => {
                 );
 
             case 'INCLUSION_DIAGNOSIS':
+                const user = JSON.parse(localStorage.getItem('user') || '{}');
+                const isRH = user.role === 'RH';
+                const isMaster = user.role === 'MASTER';
+
                 return (
                     <div className="space-y-6">
-                        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
-                            <div className="flex items-center">
-                                <div className="flex-shrink-0">
-                                    <AlertCircle className="h-5 w-5 text-yellow-400" />
-                                </div>
-                                <div className="ml-3">
-                                    <p className="text-sm text-yellow-700 font-bold">
-                                        Relatório em Andamento
-                                    </p>
-                                    <p className="text-xs text-yellow-600 mt-1">
-                                        Este diagnóstico ainda não foi finalizado. Algumas informações podem estar incompletas.
-                                    </p>
+                        {isRH && (
+                            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+                                <div className="flex items-center">
+                                    <div className="flex-shrink-0">
+                                        <AlertCircle className="h-5 w-5 text-yellow-400" />
+                                    </div>
+                                    <div className="ml-3">
+                                        <p className="text-sm text-yellow-700 font-bold">
+                                            Relatório em Andamento
+                                        </p>
+                                        <p className="text-xs text-yellow-600 mt-1">
+                                            Este diagnóstico ainda não foi finalizado. Algumas informações podem estar incompletas.
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
+                        )}
+
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-2xl font-bold">Diagnóstico de Inclusão</h2>
+                            {isMaster && (
+                                <button className="btn-primary text-sm" onClick={() => navigate('/dashboard/inclusion-diagnosis')}>
+                                    Editar Diagnóstico
+                                </button>
+                            )}
                         </div>
 
-                        <h2 className="text-2xl font-bold mb-4">Diagnóstico de Inclusão</h2>
                         {/* Render dynamic content based on reportData */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {Object.entries(reportData.categories || {}).map(([key, value]: [string, any]) => (
@@ -248,7 +262,98 @@ const ReportViewer = () => {
                                     <p className="text-sm text-gray-600">{value.notes || 'Sem observações.'}</p>
                                 </div>
                             ))}
+                            {Object.keys(reportData.categories || {}).length === 0 && (
+                                <p className="text-gray-500 col-span-2 text-center py-8">Nenhum dado de diagnóstico registrado.</p>
+                            )}
                         </div>
+                    </div>
+                );
+
+            case 'AREA_REPORT':
+                return (
+                    <div className="space-y-6">
+                        {reportData.area ? (
+                            <>
+                                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6">
+                                    <h2 className="text-xl font-bold text-gray-800">{reportData.area.name}</h2>
+                                    <p className="text-gray-500">Setor: {reportData.area.sector?.name}</p>
+                                </div>
+                                <h3 className="text-lg font-bold mb-4">Visitas Realizadas</h3>
+                                <table className="w-full text-sm text-left">
+                                    <thead className="bg-gray-100">
+                                        <tr>
+                                            <th className="p-2">Data</th>
+                                            <th className="p-2">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {reportData.visits.map((v: any) => (
+                                            <tr key={v.id} className="border-b">
+                                                <td className="p-2">{new Date(v.date).toLocaleDateString()}</td>
+                                                <td className="p-2">Realizada</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </>
+                        ) : (
+                            <div className="space-y-8">
+                                <h2 className="text-xl font-bold">Relatório Geral de Áreas</h2>
+                                <table className="w-full text-sm text-left">
+                                    <thead className="bg-gray-100">
+                                        <tr>
+                                            <th className="p-2">Área</th>
+                                            <th className="p-2">Setor</th>
+                                            <th className="p-2">Total de Visitas</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {reportData.areas?.map((area: any) => {
+                                            const visitCount = reportData.visits?.filter((v: any) => v.areaId === area.id).length || 0;
+                                            return (
+                                                <tr key={area.id} className="border-b">
+                                                    <td className="p-2">{area.name}</td>
+                                                    <td className="p-2">{area.sector?.name}</td>
+                                                    <td className="p-2">{visitCount}</td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </div>
+                );
+
+            case 'LEADERSHIP_REPORT':
+                return (
+                    <div className="space-y-8">
+                        <h2 className="text-2xl font-bold mb-6">Relatório de Liderança (Por Setor e Área)</h2>
+                        {Object.entries(reportData.groupedData || {}).map(([sectorName, areas]: [string, any]) => (
+                            <div key={sectorName} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                                <h3 className="text-xl font-bold text-primary mb-4 border-b pb-2">{sectorName}</h3>
+                                <div className="space-y-6">
+                                    {Object.entries(areas).map(([areaName, scores]: [string, any]) => {
+                                        const avgScore = scores.reduce((a: any, b: any) => a + b.score, 0) / scores.length;
+                                        return (
+                                            <div key={areaName} className="flex items-center justify-between bg-gray-50 p-4 rounded-lg">
+                                                <div>
+                                                    <p className="font-bold text-gray-900">{areaName}</p>
+                                                    <p className="text-sm text-gray-500">{scores.length} avaliações</p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-2xl font-bold text-blue-600">{avgScore.toFixed(1)}</p>
+                                                    <p className="text-xs text-gray-400">Média</p>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        ))}
+                        {Object.keys(reportData.groupedData || {}).length === 0 && (
+                            <p className="text-gray-500 text-center">Nenhuma avaliação de liderança registrada.</p>
+                        )}
                     </div>
                 );
 

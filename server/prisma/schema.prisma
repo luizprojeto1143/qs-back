@@ -30,6 +30,7 @@ model Company {
   shifts        Shift[]
   availability  String?  // JSON string for availability settings
   librasAvailability String? // JSON string for Libras Central availability settings
+  inclusionDiagnosis String? // JSON string for Inclusion Diagnosis data
   librasCalls   LibrasCall[]
   specialists   Specialist[]
   pdis          PDI[]
