@@ -94,13 +94,17 @@ export const createVisit = async (req: Request, res: Response) => {
 
             // 4. Create Individual Notes
             if (req.body.individualNotes && req.body.individualNotes.length > 0) {
+                console.log('Processing individual notes:', req.body.individualNotes);
+                console.log('User to Profile Map:', userToProfileMap);
+
                 await Promise.all(req.body.individualNotes.map((note: any) => {
                     const profileId = userToProfileMap[note.collaboratorId];
                     if (!profileId) {
-                        console.warn(`Skipping note for user ${note.collaboratorId} - Profile not found`);
+                        console.warn(`Skipping note for user ${note.collaboratorId} - Profile not found in map keys: ${Object.keys(userToProfileMap).join(', ')}`);
                         return Promise.resolve();
                     }
 
+                    console.log(`Creating note for visit ${visit.id}, profile ${profileId}`);
                     return prisma.visitNote.create({
                         data: {
                             visitId: visit.id,
@@ -109,6 +113,8 @@ export const createVisit = async (req: Request, res: Response) => {
                         }
                     });
                 }));
+            } else {
+                console.log('No individual notes found in request body');
             }
 
             return visit;
