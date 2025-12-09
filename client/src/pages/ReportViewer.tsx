@@ -292,6 +292,105 @@ const ReportViewer = () => {
                     </div>
                 );
 
+            case 'COLLABORATOR_HISTORY':
+                return (
+                    <div className="space-y-8">
+                        {/* Collaborator Profile Header */}
+                        <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 flex items-center space-x-6">
+                            <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center text-2xl font-bold text-gray-500">
+                                {reportData.collaborator?.user?.name?.charAt(0) || 'C'}
+                            </div>
+                            <div>
+                                <h2 className="text-2xl font-bold text-gray-900">{reportData.collaborator?.user?.name}</h2>
+                                <p className="text-gray-500">{reportData.collaborator?.user?.email}</p>
+                                <div className="flex space-x-4 mt-2 text-sm text-gray-600">
+                                    <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">Matrícula: {reportData.collaborator?.matricula || '-'}</span>
+                                    <span className="bg-green-100 text-green-800 px-2 py-1 rounded">Área: {reportData.collaborator?.area?.name || '-'}</span>
+                                    <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded">Turno: {reportData.collaborator?.shift || '-'}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Visit History Timeline */}
+                        <div>
+                            <h3 className="text-xl font-bold mb-6 border-b pb-2">Histórico de Visitas e Acompanhamentos</h3>
+                            <div className="relative border-l-2 border-gray-200 ml-4 space-y-8">
+                                {reportData.visits?.map((visit: any) => (
+                                    <div key={visit.id} className="mb-8 ml-6 relative">
+                                        <div className="absolute -left-10 mt-1.5 w-8 h-8 bg-primary rounded-full border-4 border-white flex items-center justify-center shadow-sm">
+                                            <div className="w-2 h-2 bg-white rounded-full"></div>
+                                        </div>
+                                        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                                            <div className="flex justify-between items-start mb-4">
+                                                <div>
+                                                    <p className="font-bold text-lg text-gray-900">Visita de Acompanhamento</p>
+                                                    <p className="text-sm text-gray-500">Realizada por: {visit.master?.name || 'Master QS'}</p>
+                                                </div>
+                                                <span className="text-sm font-medium text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                                                    {new Date(visit.date).toLocaleDateString()} às {new Date(visit.date).toLocaleTimeString()}
+                                                </span>
+                                            </div>
+
+                                            {/* Visit Content */}
+                                            <div className="space-y-4">
+                                                {visit.relatoColaborador && (
+                                                    <div className="bg-green-50 p-4 rounded-lg border border-green-100">
+                                                        <p className="text-xs font-bold text-green-700 uppercase mb-1">Relato do Colaborador</p>
+                                                        <p className="text-green-900 text-sm">{visit.relatoColaborador}</p>
+                                                    </div>
+                                                )}
+                                                {visit.observacoesMaster && (
+                                                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                                        <p className="text-xs font-bold text-gray-500 uppercase mb-1">Observações do Master</p>
+                                                        <p className="text-gray-700 text-sm">{visit.observacoesMaster}</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                                {(!reportData.visits || reportData.visits.length === 0) && (
+                                    <p className="ml-6 text-gray-500 italic">Nenhuma visita registrada.</p>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Pendencies */}
+                        <div>
+                            <h3 className="text-xl font-bold mb-4 border-b pb-2">Pendências Relacionadas</h3>
+                            <table className="w-full text-sm text-left border-collapse">
+                                <thead className="bg-gray-100">
+                                    <tr>
+                                        <th className="p-3 border">Data</th>
+                                        <th className="p-3 border">Descrição</th>
+                                        <th className="p-3 border">Prioridade</th>
+                                        <th className="p-3 border">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {reportData.pendencies?.map((p: any) => (
+                                        <tr key={p.id} className="border-b">
+                                            <td className="p-3 border">{new Date(p.createdAt).toLocaleDateString()}</td>
+                                            <td className="p-3 border">{p.description}</td>
+                                            <td className={`p-3 border font-bold ${p.priority === 'ALTA' ? 'text-red-600' : 'text-yellow-600'}`}>{p.priority}</td>
+                                            <td className="p-3 border">
+                                                <span className={`px-2 py-1 rounded text-xs font-bold ${p.status === 'RESOLVIDA' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                                    {p.status}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {(!reportData.pendencies || reportData.pendencies.length === 0) && (
+                                        <tr>
+                                            <td colSpan={4} className="p-4 text-center text-gray-500 italic">Nenhuma pendência registrada.</td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                );
+
             case 'VISIT_INDIVIDUAL':
                 return (
                     <div className="space-y-8">
