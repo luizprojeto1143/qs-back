@@ -1,8 +1,6 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../prisma';
 import { AuthRequest } from '../middleware/authMiddleware';
-
-const prisma = new PrismaClient();
 
 // Terms of Use
 export const getTerms = async (req: Request, res: Response) => {
