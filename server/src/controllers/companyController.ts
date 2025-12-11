@@ -266,7 +266,7 @@ export const updateCompany = async (req: Request, res: Response) => {
         res.json(result);
     } catch (error: any) {
         console.error('Error updating company:', error);
-        res.status(500).json({ error: 'Error updating company', details: error.message });
+        res.status(500).json({ error: `Error updating company: ${error.message || error}` });
     }
 };
 
