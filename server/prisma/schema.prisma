@@ -37,6 +37,9 @@ model Company {
   specialties   Specialty[]
   courses       Course[]
   
+  // Courses this company is allowed to see (if restricted)
+  allowedCourses    Course[] @relation("CourseVisibility")
+  
   active        Boolean  @default(true)
   deletedAt     DateTime?
   
@@ -364,6 +367,10 @@ model Course {
   trail       LearningTrail? @relation(fields: [trailId], references: [id])
 
   quizzes     Quiz[]
+
+  // Visibility Settings
+  visibleToAll     Boolean   @default(false)
+  allowedCompanies Company[] @relation("CourseVisibility")
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

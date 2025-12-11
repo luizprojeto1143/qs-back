@@ -9,16 +9,27 @@ export const listCourses = async (req: Request, res: Response) => {
         const user = (req as AuthRequest).user;
         if (!user) return res.status(401).json({ error: 'Unauthorized' });
 
-        // Try to fetch courses normally
+        // Filter courses:
+        // 1. Created by my company
+        // 2. OR visibleToAll is true
+        // 3. OR my company is in allowedCompanies
         const courses = await prisma.course.findMany({
-            where: { active: true },
+            where: {
+                active: true,
+                OR: [
+                    { companyId: user.companyId },
+                    { visibleToAll: true },
+                    { allowedCompanies: { some: { id: user.companyId } } }
+                ]
+            },
             include: {
                 modules: {
                     include: { lessons: true }
                 },
                 enrollments: {
                     where: { userId: user.userId }
-                }
+                },
+                allowedCompanies: { select: { id: true, name: true } } // Include for Master to see
             },
             orderBy: { createdAt: 'desc' }
         });
@@ -79,7 +90,7 @@ export const createCourse = async (req: Request, res: Response) => {
             return res.status(403).json({ error: 'Unauthorized' });
         }
 
-        const { title, description, coverUrl, duration, category, difficulty, isMandatory, publishedAt } = req.body;
+        const { title, description, coverUrl, duration, category, difficulty, isMandatory, publishedAt, visibleToAll, allowedCompanyIds } = req.body;
 
         const course = await prisma.course.create({
             data: {
@@ -91,7 +102,11 @@ export const createCourse = async (req: Request, res: Response) => {
                 difficulty: difficulty || 'Iniciante',
                 isMandatory: isMandatory || false,
                 publishedAt: publishedAt ? new Date(publishedAt) : null,
-                companyId: user.companyId
+                companyId: user.companyId,
+                visibleToAll: visibleToAll || false,
+                allowedCompanies: allowedCompanyIds && allowedCompanyIds.length > 0 ? {
+                    connect: allowedCompanyIds.map((id: string) => ({ id }))
+                } : undefined
             }
         });
 
@@ -123,7 +138,11 @@ export const updateCourse = async (req: Request, res: Response) => {
                 difficulty,
                 active,
                 isMandatory,
-                publishedAt: publishedAt ? new Date(publishedAt) : null
+                publishedAt: publishedAt ? new Date(publishedAt) : null,
+                visibleToAll: visibleToAll !== undefined ? visibleToAll : undefined,
+                allowedCompanies: allowedCompanyIds ? {
+                    set: allowedCompanyIds.map((id: string) => ({ id }))
+                } : undefined
             }
         });
 

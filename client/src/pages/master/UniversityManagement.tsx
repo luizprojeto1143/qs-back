@@ -54,6 +54,7 @@ const UniversityManagement = () => {
     const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
     const [selectedQuizId, setSelectedQuizId] = useState<string | null>(null);
 
+    const [companies, setCompanies] = useState<{ id: string, name: string }[]>([]);
     const [courseForm, setCourseForm] = useState({
         title: '',
         description: '',
@@ -61,7 +62,9 @@ const UniversityManagement = () => {
         category: '',
         duration: 0,
         isMandatory: false,
-        publishedAt: ''
+        publishedAt: '',
+        visibleToAll: false,
+        allowedCompanyIds: [] as string[]
     });
     const [moduleForm, setModuleForm] = useState({ title: '', order: 1 });
     const [lessonForm, setLessonForm] = useState({ title: '', description: '', videoUrl: '', transcription: '', duration: 0, order: 1 });
@@ -103,8 +106,18 @@ const UniversityManagement = () => {
         }
     };
 
+    const fetchCompanies = async () => {
+        try {
+            const response = await api.get('/companies');
+            setCompanies(response.data);
+        } catch (error) {
+            console.error('Error fetching companies', error);
+        }
+    };
+
     useEffect(() => {
         fetchCourses();
+        fetchCompanies();
     }, []);
 
     const handleCreateCourse = async (e: React.FormEvent) => {
@@ -113,7 +126,10 @@ const UniversityManagement = () => {
             await api.post('/courses', courseForm);
             toast.success('Curso criado com sucesso!');
             setShowCourseModal(false);
-            setCourseForm({ title: '', description: '', coverUrl: '', category: '', duration: 0, isMandatory: false, publishedAt: '' });
+            setCourseForm({
+                title: '', description: '', coverUrl: '', category: '', duration: 0, isMandatory: false, publishedAt: '',
+                visibleToAll: false, allowedCompanyIds: []
+            });
             fetchCourses();
         } catch (error) {
             toast.error('Erro ao criar curso');
@@ -178,6 +194,17 @@ const UniversityManagement = () => {
         }
     };
 
+    const toggleCompanySelection = (companyId: string) => {
+        setCourseForm(prev => {
+            const current = prev.allowedCompanyIds || [];
+            if (current.includes(companyId)) {
+                return { ...prev, allowedCompanyIds: current.filter(id => id !== companyId) };
+            } else {
+                return { ...prev, allowedCompanyIds: [...current, companyId] };
+            }
+        });
+    };
+
     if (loading) return <div>Carregando...</div>;
 
     if (showQuizEditor && selectedQuizId) {
@@ -214,6 +241,15 @@ const UniversityManagement = () => {
                                         <span className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-full text-gray-600 dark:text-gray-300">
                                             {course.duration} min
                                         </span>
+                                        {(course as any).visibleToAll ? (
+                                            <span className="text-xs px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full">
+                                                Todas as Empresas
+                                            </span>
+                                        ) : (
+                                            <span className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-full">
+                                                Empresas Específicas
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -309,7 +345,7 @@ const UniversityManagement = () => {
             {/* Course Modal */}
             {showCourseModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-md">
+                    <div className="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
                         <h2 className="text-xl font-bold mb-4 dark:text-white">Novo Curso</h2>
                         <form onSubmit={handleCreateCourse} className="space-y-4">
                             <input
@@ -349,7 +385,40 @@ const UniversityManagement = () => {
                                     required
                                 />
                             </div>
-                            <div className="flex items-center gap-4">
+
+                            {/* Visibility Settings */}
+                            <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+                                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Visibilidade</h3>
+                                <label className="flex items-center gap-2 cursor-pointer mb-3">
+                                    <input
+                                        type="checkbox"
+                                        checked={courseForm.visibleToAll}
+                                        onChange={e => setCourseForm({ ...courseForm, visibleToAll: e.target.checked })}
+                                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                    />
+                                    <span className="text-sm text-gray-700 dark:text-gray-300">Disponível para todas as empresas</span>
+                                </label>
+
+                                {!courseForm.visibleToAll && (
+                                    <div className="space-y-2 bg-gray-50 dark:bg-gray-900/50 p-3 rounded-lg border border-gray-200 dark:border-gray-700 max-h-40 overflow-y-auto">
+                                        <p className="text-xs text-gray-500 mb-2">Selecione as empresas permitidas:</p>
+                                        {companies.map(company => (
+                                            <label key={company.id} className="flex items-center gap-2 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={courseForm.allowedCompanyIds.includes(company.id)}
+                                                    onChange={() => toggleCompanySelection(company.id)}
+                                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                                />
+                                                <span className="text-sm text-gray-700 dark:text-gray-300">{company.name}</span>
+                                            </label>
+                                        ))}
+                                        {companies.length === 0 && <p className="text-xs text-gray-400">Nenhuma empresa encontrada.</p>}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="flex items-center gap-4 pt-2">
                                 <label className="flex items-center gap-2 cursor-pointer">
                                     <input
                                         type="checkbox"
