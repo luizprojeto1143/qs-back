@@ -1,11 +1,11 @@
 -- AlterTable
-ALTER TABLE "Company" ADD COLUMN "availability" TEXT;
-ALTER TABLE "Company" ADD COLUMN "librasAvailability" TEXT;
-ALTER TABLE "Company" ADD COLUMN "inclusionDiagnosis" TEXT;
-ALTER TABLE "Company" ADD COLUMN "universityEnabled" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "Company" ADD COLUMN IF NOT EXISTS "availability" TEXT;
+ALTER TABLE "Company" ADD COLUMN IF NOT EXISTS "librasAvailability" TEXT;
+ALTER TABLE "Company" ADD COLUMN IF NOT EXISTS "inclusionDiagnosis" TEXT;
+ALTER TABLE "Company" ADD COLUMN IF NOT EXISTS "universityEnabled" BOOLEAN NOT NULL DEFAULT false;
 
 -- CreateTable
-CREATE TABLE "LibrasCall" (
+CREATE TABLE IF NOT EXISTS "LibrasCall" (
     "id" TEXT NOT NULL,
     "status" TEXT NOT NULL DEFAULT 'WAITING',
     "companyId" TEXT NOT NULL,
@@ -18,7 +18,7 @@ CREATE TABLE "LibrasCall" (
 );
 
 -- CreateTable
-CREATE TABLE "Notification" (
+CREATE TABLE IF NOT EXISTS "Notification" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "title" TEXT NOT NULL,
@@ -31,7 +31,7 @@ CREATE TABLE "Notification" (
 );
 
 -- CreateTable
-CREATE TABLE "VisitNote" (
+CREATE TABLE IF NOT EXISTS "VisitNote" (
     "id" TEXT NOT NULL,
     "content" TEXT NOT NULL,
     "visitId" TEXT NOT NULL,
@@ -42,7 +42,7 @@ CREATE TABLE "VisitNote" (
 );
 
 -- CreateTable
-CREATE TABLE "FeedCategory" (
+CREATE TABLE IF NOT EXISTS "FeedCategory" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "active" BOOLEAN NOT NULL DEFAULT true,
@@ -54,7 +54,7 @@ CREATE TABLE "FeedCategory" (
 );
 
 -- CreateTable
-CREATE TABLE "Shift" (
+CREATE TABLE IF NOT EXISTS "Shift" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "active" BOOLEAN NOT NULL DEFAULT true,
@@ -66,7 +66,7 @@ CREATE TABLE "Shift" (
 );
 
 -- CreateTable
-CREATE TABLE "Specialist" (
+CREATE TABLE IF NOT EXISTS "Specialist" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "email" TEXT NOT NULL,
@@ -79,7 +79,7 @@ CREATE TABLE "Specialist" (
 );
 
 -- CreateTable
-CREATE TABLE "PDI" (
+CREATE TABLE IF NOT EXISTS "PDI" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "companyId" TEXT NOT NULL,
@@ -96,7 +96,7 @@ CREATE TABLE "PDI" (
 );
 
 -- CreateTable
-CREATE TABLE "Specialty" (
+CREATE TABLE IF NOT EXISTS "Specialty" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "companyId" TEXT NOT NULL,
@@ -107,7 +107,7 @@ CREATE TABLE "Specialty" (
 );
 
 -- CreateTable
-CREATE TABLE "Course" (
+CREATE TABLE IF NOT EXISTS "Course" (
     "id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "description" TEXT NOT NULL,
@@ -127,7 +127,7 @@ CREATE TABLE "Course" (
 );
 
 -- CreateTable
-CREATE TABLE "LearningTrail" (
+CREATE TABLE IF NOT EXISTS "LearningTrail" (
     "id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "description" TEXT NOT NULL,
@@ -140,7 +140,7 @@ CREATE TABLE "LearningTrail" (
 );
 
 -- CreateTable
-CREATE TABLE "Module" (
+CREATE TABLE IF NOT EXISTS "Module" (
     "id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "order" INTEGER NOT NULL,
@@ -152,7 +152,7 @@ CREATE TABLE "Module" (
 );
 
 -- CreateTable
-CREATE TABLE "Lesson" (
+CREATE TABLE IF NOT EXISTS "Lesson" (
     "id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "description" TEXT,
@@ -167,7 +167,7 @@ CREATE TABLE "Lesson" (
 );
 
 -- CreateTable
-CREATE TABLE "LessonAttachment" (
+CREATE TABLE IF NOT EXISTS "LessonAttachment" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "url" TEXT NOT NULL,
@@ -179,7 +179,7 @@ CREATE TABLE "LessonAttachment" (
 );
 
 -- CreateTable
-CREATE TABLE "Enrollment" (
+CREATE TABLE IF NOT EXISTS "Enrollment" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "courseId" TEXT NOT NULL,
@@ -193,7 +193,7 @@ CREATE TABLE "Enrollment" (
 );
 
 -- CreateTable
-CREATE TABLE "LessonProgress" (
+CREATE TABLE IF NOT EXISTS "LessonProgress" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "lessonId" TEXT NOT NULL,
@@ -205,7 +205,7 @@ CREATE TABLE "LessonProgress" (
 );
 
 -- CreateTable
-CREATE TABLE "Certificate" (
+CREATE TABLE IF NOT EXISTS "Certificate" (
     "id" TEXT NOT NULL,
     "code" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
@@ -216,7 +216,7 @@ CREATE TABLE "Certificate" (
 );
 
 -- CreateTable
-CREATE TABLE "AuditLog" (
+CREATE TABLE IF NOT EXISTS "AuditLog" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "action" TEXT NOT NULL,
@@ -229,7 +229,7 @@ CREATE TABLE "AuditLog" (
 );
 
 -- CreateTable
-CREATE TABLE "Quiz" (
+CREATE TABLE IF NOT EXISTS "Quiz" (
     "id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "description" TEXT,
@@ -243,7 +243,7 @@ CREATE TABLE "Quiz" (
 );
 
 -- CreateTable
-CREATE TABLE "Question" (
+CREATE TABLE IF NOT EXISTS "Question" (
     "id" TEXT NOT NULL,
     "text" TEXT NOT NULL,
     "type" TEXT NOT NULL,
@@ -255,7 +255,7 @@ CREATE TABLE "Question" (
 );
 
 -- CreateTable
-CREATE TABLE "Option" (
+CREATE TABLE IF NOT EXISTS "Option" (
     "id" TEXT NOT NULL,
     "text" TEXT NOT NULL,
     "isCorrect" BOOLEAN NOT NULL DEFAULT false,
@@ -265,7 +265,7 @@ CREATE TABLE "Option" (
 );
 
 -- CreateTable
-CREATE TABLE "UserQuizAttempt" (
+CREATE TABLE IF NOT EXISTS "UserQuizAttempt" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "quizId" TEXT NOT NULL,
@@ -277,7 +277,7 @@ CREATE TABLE "UserQuizAttempt" (
 );
 
 -- CreateTable
-CREATE TABLE "UserAnswer" (
+CREATE TABLE IF NOT EXISTS "UserAnswer" (
     "id" TEXT NOT NULL,
     "attemptId" TEXT NOT NULL,
     "questionId" TEXT NOT NULL,
@@ -287,112 +287,215 @@ CREATE TABLE "UserAnswer" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Enrollment_userId_courseId_key" ON "Enrollment"("userId", "courseId");
+CREATE UNIQUE INDEX IF NOT EXISTS "Enrollment_userId_courseId_key" ON "Enrollment"("userId", "courseId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "LessonProgress_userId_lessonId_key" ON "LessonProgress"("userId", "lessonId");
+CREATE UNIQUE INDEX IF NOT EXISTS "LessonProgress_userId_lessonId_key" ON "LessonProgress"("userId", "lessonId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Certificate_code_key" ON "Certificate"("code");
+CREATE UNIQUE INDEX IF NOT EXISTS "Certificate_code_key" ON "Certificate"("code");
 
 -- AddForeignKey
-ALTER TABLE "LibrasCall" ADD CONSTRAINT "LibrasCall_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "LibrasCall" ADD CONSTRAINT "LibrasCall_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "LibrasCall" ADD CONSTRAINT "LibrasCall_requesterId_fkey" FOREIGN KEY ("requesterId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "LibrasCall" ADD CONSTRAINT "LibrasCall_requesterId_fkey" FOREIGN KEY ("requesterId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Notification" ADD CONSTRAINT "Notification_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "Notification" ADD CONSTRAINT "Notification_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "VisitNote" ADD CONSTRAINT "VisitNote_visitId_fkey" FOREIGN KEY ("visitId") REFERENCES "Visit"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "VisitNote" ADD CONSTRAINT "VisitNote_visitId_fkey" FOREIGN KEY ("visitId") REFERENCES "Visit"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "VisitNote" ADD CONSTRAINT "VisitNote_collaboratorId_fkey" FOREIGN KEY ("collaboratorId") REFERENCES "CollaboratorProfile"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "VisitNote" ADD CONSTRAINT "VisitNote_collaboratorId_fkey" FOREIGN KEY ("collaboratorId") REFERENCES "CollaboratorProfile"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "FeedCategory" ADD CONSTRAINT "FeedCategory_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "FeedCategory" ADD CONSTRAINT "FeedCategory_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Shift" ADD CONSTRAINT "Shift_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "Shift" ADD CONSTRAINT "Shift_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Specialist" ADD CONSTRAINT "Specialist_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "Specialist" ADD CONSTRAINT "Specialist_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "PDI" ADD CONSTRAINT "PDI_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "PDI" ADD CONSTRAINT "PDI_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "PDI" ADD CONSTRAINT "PDI_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "PDI" ADD CONSTRAINT "PDI_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Specialty" ADD CONSTRAINT "Specialty_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "Specialty" ADD CONSTRAINT "Specialty_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Course" ADD CONSTRAINT "Course_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "Course" ADD CONSTRAINT "Course_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Course" ADD CONSTRAINT "Course_trailId_fkey" FOREIGN KEY ("trailId") REFERENCES "LearningTrail"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "Course" ADD CONSTRAINT "Course_trailId_fkey" FOREIGN KEY ("trailId") REFERENCES "LearningTrail"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "LearningTrail" ADD CONSTRAINT "LearningTrail_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "LearningTrail" ADD CONSTRAINT "LearningTrail_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Module" ADD CONSTRAINT "Module_courseId_fkey" FOREIGN KEY ("courseId") REFERENCES "Course"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "Module" ADD CONSTRAINT "Module_courseId_fkey" FOREIGN KEY ("courseId") REFERENCES "Course"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Lesson" ADD CONSTRAINT "Lesson_moduleId_fkey" FOREIGN KEY ("moduleId") REFERENCES "Module"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "Lesson" ADD CONSTRAINT "Lesson_moduleId_fkey" FOREIGN KEY ("moduleId") REFERENCES "Module"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "LessonAttachment" ADD CONSTRAINT "LessonAttachment_lessonId_fkey" FOREIGN KEY ("lessonId") REFERENCES "Lesson"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "LessonAttachment" ADD CONSTRAINT "LessonAttachment_lessonId_fkey" FOREIGN KEY ("lessonId") REFERENCES "Lesson"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Enrollment" ADD CONSTRAINT "Enrollment_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "Enrollment" ADD CONSTRAINT "Enrollment_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Enrollment" ADD CONSTRAINT "Enrollment_courseId_fkey" FOREIGN KEY ("courseId") REFERENCES "Course"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "Enrollment" ADD CONSTRAINT "Enrollment_courseId_fkey" FOREIGN KEY ("courseId") REFERENCES "Course"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "LessonProgress" ADD CONSTRAINT "LessonProgress_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "LessonProgress" ADD CONSTRAINT "LessonProgress_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "LessonProgress" ADD CONSTRAINT "LessonProgress_lessonId_fkey" FOREIGN KEY ("lessonId") REFERENCES "Lesson"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "LessonProgress" ADD CONSTRAINT "LessonProgress_lessonId_fkey" FOREIGN KEY ("lessonId") REFERENCES "Lesson"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Certificate" ADD CONSTRAINT "Certificate_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "Certificate" ADD CONSTRAINT "Certificate_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Certificate" ADD CONSTRAINT "Certificate_courseId_fkey" FOREIGN KEY ("courseId") REFERENCES "Course"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "Certificate" ADD CONSTRAINT "Certificate_courseId_fkey" FOREIGN KEY ("courseId") REFERENCES "Course"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "AuditLog" ADD CONSTRAINT "AuditLog_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "AuditLog" ADD CONSTRAINT "AuditLog_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "AuditLog" ADD CONSTRAINT "AuditLog_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "AuditLog" ADD CONSTRAINT "AuditLog_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Quiz" ADD CONSTRAINT "Quiz_courseId_fkey" FOREIGN KEY ("courseId") REFERENCES "Course"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "Quiz" ADD CONSTRAINT "Quiz_courseId_fkey" FOREIGN KEY ("courseId") REFERENCES "Course"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Quiz" ADD CONSTRAINT "Quiz_moduleId_fkey" FOREIGN KEY ("moduleId") REFERENCES "Module"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "Quiz" ADD CONSTRAINT "Quiz_moduleId_fkey" FOREIGN KEY ("moduleId") REFERENCES "Module"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Question" ADD CONSTRAINT "Question_quizId_fkey" FOREIGN KEY ("quizId") REFERENCES "Quiz"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "Question" ADD CONSTRAINT "Question_quizId_fkey" FOREIGN KEY ("quizId") REFERENCES "Quiz"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Option" ADD CONSTRAINT "Option_questionId_fkey" FOREIGN KEY ("questionId") REFERENCES "Question"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "Option" ADD CONSTRAINT "Option_questionId_fkey" FOREIGN KEY ("questionId") REFERENCES "Question"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "UserQuizAttempt" ADD CONSTRAINT "UserQuizAttempt_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "UserQuizAttempt" ADD CONSTRAINT "UserQuizAttempt_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "UserQuizAttempt" ADD CONSTRAINT "UserQuizAttempt_quizId_fkey" FOREIGN KEY ("quizId") REFERENCES "Quiz"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "UserQuizAttempt" ADD CONSTRAINT "UserQuizAttempt_quizId_fkey" FOREIGN KEY ("quizId") REFERENCES "Quiz"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "UserAnswer" ADD CONSTRAINT "UserAnswer_attemptId_fkey" FOREIGN KEY ("attemptId") REFERENCES "UserQuizAttempt"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "UserAnswer" ADD CONSTRAINT "UserAnswer_attemptId_fkey" FOREIGN KEY ("attemptId") REFERENCES "UserQuizAttempt"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "UserAnswer" ADD CONSTRAINT "UserAnswer_questionId_fkey" FOREIGN KEY ("questionId") REFERENCES "Question"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "UserAnswer" ADD CONSTRAINT "UserAnswer_questionId_fkey" FOREIGN KEY ("questionId") REFERENCES "Question"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "UserAnswer" ADD CONSTRAINT "UserAnswer_optionId_fkey" FOREIGN KEY ("optionId") REFERENCES "Option"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "UserAnswer" ADD CONSTRAINT "UserAnswer_optionId_fkey" FOREIGN KEY ("optionId") REFERENCES "Option"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
