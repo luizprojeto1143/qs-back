@@ -43,7 +43,7 @@ import UniversityReports from './pages/university/UniversityReports';
 import Certificates from './pages/university/Certificates';
 
 function App() {
-  console.log('QS System Version: Libras Central (v10.11 - Auth & Seed Fix)');
+  console.log('QS System Version: Libras Central (v10.12 - Seed Deps Fix)');
   return (
     <CompanyProvider>
       <Toaster position="top-right" richColors />
