@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../lib/api';
 import { useNavigate } from 'react-router-dom';
-import { Play, Clock, BookOpen, Search, Star, CheckCircle, TrendingUp, Zap, Award } from 'lucide-react';
+import { Play, Clock, BookOpen, Search, CheckCircle, TrendingUp, Zap } from 'lucide-react';
 
 interface Course {
     id: string;
@@ -47,7 +47,6 @@ const CourseCatalog = () => {
     });
 
     const inProgressCourses = courses.filter(c => c.enrollments && c.enrollments.length > 0 && !c.enrollments[0].completed);
-    const completedCourses = courses.filter(c => c.enrollments && c.enrollments[0]?.completed);
     const featuredCourse = courses.find(c => c.coverUrl) || courses[0];
 
     if (loading) return (
@@ -171,8 +170,8 @@ const CourseCatalog = () => {
                             key={category}
                             onClick={() => setSelectedCategory(category)}
                             className={`whitespace-nowrap px-5 py-2.5 rounded-full text-sm font-bold transition-all ${selectedCategory === category
-                                    ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900 shadow-lg scale-105'
-                                    : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900 shadow-lg scale-105'
+                                : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
                                 }`}
                         >
                             {category}

@@ -43,7 +43,7 @@ import UniversityReports from './pages/university/UniversityReports';
 import Certificates from './pages/university/Certificates';
 
 function App() {
-  console.log('QS System Version: Libras Central (v10.1 - Force Deploy)');
+  console.log('QS System Version: Libras Central (v10.2 - Build Fix)');
   return (
     <CompanyProvider>
       <Toaster position="top-right" richColors />
