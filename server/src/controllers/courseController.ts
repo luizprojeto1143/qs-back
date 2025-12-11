@@ -37,7 +37,7 @@ export const listCourses = async (req: Request, res: Response) => {
         res.json(courses);
     } catch (error) {
         console.error('Error listing courses:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: 'Internal server error', details: error instanceof Error ? error.message : String(error) });
     }
 };
 
