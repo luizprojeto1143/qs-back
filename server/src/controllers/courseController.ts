@@ -407,7 +407,15 @@ export const getAnalytics = async (req: Request, res: Response) => {
             },
             include: {
                 _count: {
-                    select: { enrollments: true }
+                    select: {
+                        enrollments: {
+                            where: {
+                                user: {
+                                    companyId: user.companyId
+                                }
+                            }
+                        }
+                    }
                 },
                 modules: {
                     include: {
