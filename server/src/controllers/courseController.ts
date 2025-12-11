@@ -9,17 +9,58 @@ export const listCourses = async (req: Request, res: Response) => {
         const user = (req as AuthRequest).user;
         if (!user) return res.status(401).json({ error: 'Unauthorized' });
 
-        // Simplified query for debugging
+        // Try to fetch courses normally
         const courses = await prisma.course.findMany({
             where: { active: true },
-            // Removed includes to isolate the issue
             orderBy: { createdAt: 'desc' }
         });
 
         res.json(courses);
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error listing courses:', error);
-        res.status(500).json({ error: 'Internal server error', details: error instanceof Error ? error.message : String(error) });
+
+        // DIAGNOSTIC MODE: Gather DB info
+        let dbInfo = 'Could not fetch DB info';
+        try {
+            const tables: any[] = await prisma.$queryRaw`
+                SELECT table_name 
+                FROM information_schema.tables 
+                WHERE table_schema = 'public' AND table_name = 'Course'
+            `;
+
+            if (tables.length === 0) {
+                dbInfo = 'Table Course DOES NOT EXIST in DB';
+            } else {
+                const columns: any[] = await prisma.$queryRaw`
+                    SELECT column_name, data_type 
+                    FROM information_schema.columns 
+                    WHERE table_name = 'Course'
+                `;
+                dbInfo = 'Columns: ' + columns.map(c => c.column_name).join(', ');
+            }
+        } catch (dbError: any) {
+            dbInfo = 'DB Inspection Failed: ' + dbError.message;
+        }
+
+        // Return a FAKE course with the error details so it shows up in the UI
+        const debugCourse = {
+            id: 'debug-error',
+            title: `ERRO: ${error.message.substring(0, 50)}...`,
+            description: `DB INFO: ${dbInfo}. FULL ERROR: ${error.message}`,
+            coverUrl: null,
+            duration: 0,
+            category: 'ERRO',
+            difficulty: 'Iniciante',
+            active: true,
+            isMandatory: false,
+            publishedAt: new Date(),
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            modules: [],
+            enrollments: []
+        };
+
+        res.json([debugCourse]);
     }
 };
 
