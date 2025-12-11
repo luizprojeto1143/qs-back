@@ -3,6 +3,7 @@ import { api } from '../../lib/api';
 import { useReactToPrint } from 'react-to-print';
 import { Award, Download, Share2, Calendar, Clock } from 'lucide-react';
 import { toast } from 'sonner';
+import { useCompany } from '../../contexts/CompanyContext';
 
 interface Certificate {
     id: string;
@@ -17,49 +18,103 @@ interface Certificate {
     };
 }
 
-const CertificateTemplate = ({ certificate, ref }: { certificate: Certificate | null, ref: any }) => {
+const CertificateTemplate = ({ certificate, logoUrl, companyName, ref }: { certificate: Certificate | null, logoUrl?: string, companyName?: string, ref: any }) => {
     if (!certificate) return null;
 
     return (
-        <div ref={ref} className="w-[1123px] h-[794px] bg-white p-20 relative text-center flex flex-col items-center justify-center border-8 border-double border-blue-900 mx-auto hidden print:flex">
-            <div className="absolute top-10 left-10 right-10 bottom-10 border-2 border-blue-200 rounded-lg pointer-events-none" />
+        <div ref={ref} className="w-[1123px] h-[794px] bg-white relative text-center flex flex-col items-center justify-center mx-auto hidden print:flex overflow-hidden">
+            {/* Background Pattern/Gradient */}
+            <div className="absolute inset-0 bg-gradient-to-br from-white via-blue-50/30 to-white z-0" />
 
-            {/* Logo Placeholder */}
-            <div className="mb-12">
-                <Award className="h-24 w-24 text-blue-600 mx-auto" />
-                <h1 className="text-4xl font-serif font-bold text-blue-900 mt-4">Universidade Corporativa</h1>
+            {/* Watermark */}
+            <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none z-0">
+                {logoUrl ? (
+                    <img src={logoUrl} alt="Watermark" className="w-[600px] h-[600px] object-contain grayscale" />
+                ) : (
+                    <Award className="w-[500px] h-[500px]" />
+                )}
             </div>
 
-            <h2 className="text-6xl font-serif text-gray-900 mb-8">Certificado de Conclusão</h2>
+            {/* Decorative Borders */}
+            <div className="absolute inset-0 border-[20px] border-blue-900 z-10" />
+            <div className="absolute inset-4 border-[2px] border-blue-300/50 z-10" />
+            <div className="absolute inset-6 border border-blue-100/30 z-10" />
 
-            <p className="text-xl text-gray-600 mb-4">Certificamos que</p>
-            <h3 className="text-4xl font-bold text-blue-800 mb-8 border-b-2 border-blue-100 pb-2 px-10 inline-block">
-                {certificate.user.name}
-            </h3>
+            {/* Corner Ornaments (CSS) */}
+            <div className="absolute top-6 left-6 w-16 h-16 border-t-4 border-l-4 border-blue-800 z-20" />
+            <div className="absolute top-6 right-6 w-16 h-16 border-t-4 border-r-4 border-blue-800 z-20" />
+            <div className="absolute bottom-6 left-6 w-16 h-16 border-b-4 border-l-4 border-blue-800 z-20" />
+            <div className="absolute bottom-6 right-6 w-16 h-16 border-b-4 border-r-4 border-blue-800 z-20" />
 
-            <p className="text-xl text-gray-600 mb-2">concluiu com êxito o curso</p>
-            <h4 className="text-3xl font-bold text-gray-800 mb-8">{certificate.courseTitle}</h4>
-
-            <div className="flex items-center justify-center gap-12 text-gray-600 mb-12">
-                <div className="flex items-center gap-2">
-                    <Clock className="h-5 w-5" />
-                    <span>Carga Horária: {certificate.course.duration} minutos</span>
+            {/* Content */}
+            <div className="relative z-30 flex flex-col items-center w-full max-w-4xl px-12">
+                {/* Header Logo */}
+                <div className="mb-8 h-24 flex items-center justify-center">
+                    {logoUrl ? (
+                        <img src={logoUrl} alt="Logo" className="h-full object-contain" />
+                    ) : (
+                        <div className="flex flex-col items-center">
+                            <Award className="h-16 w-16 text-blue-600" />
+                            <span className="text-blue-900 font-bold mt-2 tracking-widest uppercase text-sm">Universidade Corporativa</span>
+                        </div>
+                    )}
                 </div>
-                <div className="flex items-center gap-2">
-                    <Calendar className="h-5 w-5" />
-                    <span>Concluído em: {new Date(certificate.issuedAt).toLocaleDateString('pt-BR')}</span>
-                </div>
-            </div>
 
-            <div className="mt-auto text-sm text-gray-400">
-                <p>Código de Validação: {certificate.code}</p>
-                <p>Este certificado é reconhecido pela Universidade Corporativa.</p>
+                <h1 className="text-5xl font-serif font-bold text-blue-900 mb-2 tracking-wide">CERTIFICADO</h1>
+                <p className="text-blue-400 font-serif italic text-xl mb-12">DE CONCLUSÃO</p>
+
+                <p className="text-xl text-gray-500 font-light mb-6">Certificamos que</p>
+
+                <h2 className="text-5xl font-serif font-bold text-gray-800 mb-8 border-b-2 border-blue-100 pb-4 px-12 min-w-[500px]">
+                    {certificate.user.name}
+                </h2>
+
+                <p className="text-xl text-gray-500 font-light mb-4">concluiu com êxito o curso</p>
+
+                <h3 className="text-3xl font-bold text-blue-800 mb-10 max-w-3xl leading-tight">
+                    {certificate.courseTitle}
+                </h3>
+
+                <div className="flex items-center justify-center gap-16 text-gray-600 mb-16 w-full">
+                    <div className="flex flex-col items-center">
+                        <span className="text-sm text-gray-400 uppercase tracking-wider mb-1">Carga Horária</span>
+                        <div className="flex items-center gap-2 text-xl font-semibold text-blue-900">
+                            <Clock className="h-5 w-5" />
+                            <span>{certificate.course.duration} minutos</span>
+                        </div>
+                    </div>
+                    <div className="w-px h-12 bg-gray-200" />
+                    <div className="flex flex-col items-center">
+                        <span className="text-sm text-gray-400 uppercase tracking-wider mb-1">Data de Conclusão</span>
+                        <div className="flex items-center gap-2 text-xl font-semibold text-blue-900">
+                            <Calendar className="h-5 w-5" />
+                            <span>{new Date(certificate.issuedAt).toLocaleDateString('pt-BR')}</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Signatures & Footer */}
+                <div className="w-full flex justify-between items-end mt-8">
+                    <div className="text-left">
+                        <p className="text-xs text-gray-400 font-mono">Código de Validação:</p>
+                        <p className="text-sm font-mono text-gray-600">{certificate.code}</p>
+                    </div>
+
+                    <div className="text-center">
+                        <div className="w-64 border-b border-gray-400 mb-2" />
+                        <p className="text-sm font-bold text-gray-800">{companyName || 'Diretoria de Ensino'}</p>
+                        <p className="text-xs text-gray-500">Universidade Corporativa</p>
+                    </div>
+                </div>
             </div>
         </div>
     );
 };
 
 const Certificates = () => {
+    const { companies, selectedCompanyId } = useCompany();
+    const currentCompany = companies.find(c => c.id === selectedCompanyId);
+
     const [certificates, setCertificates] = useState<Certificate[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedCertificate, setSelectedCertificate] = useState<Certificate | null>(null);
@@ -194,7 +249,12 @@ const Certificates = () => {
 
             {/* Hidden Print Template */}
             <div style={{ display: 'none' }}>
-                <CertificateTemplate certificate={selectedCertificate} ref={printRef} />
+                <CertificateTemplate
+                    certificate={selectedCertificate}
+                    ref={printRef}
+                    logoUrl={currentCompany?.logo || undefined}
+                    companyName={currentCompany?.name}
+                />
             </div>
         </div>
     );
