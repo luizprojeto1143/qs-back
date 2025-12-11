@@ -484,7 +484,7 @@ export const getUserUniversityDetails = async (req: Request, res: Response) => {
         if (!loggedUser || !loggedUser.companyId) return res.status(401).json({ error: 'Unauthorized' });
 
         // Allow if user is viewing their own profile OR is RH/MASTER
-        if (loggedUser.id !== userId && loggedUser.role !== 'RH' && loggedUser.role !== 'MASTER') {
+        if (loggedUser.userId !== userId && loggedUser.role !== 'RH' && loggedUser.role !== 'MASTER') {
             return res.status(403).json({ error: 'Insufficient permissions' });
         }
 
