@@ -33,6 +33,7 @@ import { CompanyProvider } from './contexts/CompanyContext';
 import LibrasAvailability from './pages/settings/LibrasAvailability';
 import LibrasCentral from './pages/LibrasCentral';
 import SpecialistSettings from './pages/settings/SpecialistSettings';
+import CompanyHistory from './pages/CompanyHistory';
 import PDIManagement from './pages/PDIManagement';
 
 function App() {
@@ -71,6 +72,7 @@ function App() {
             <Route path="users" element={<UsersList />} />
             <Route path="qrcode" element={<QRCodeGenerator />} />
             <Route path="specialists" element={<SpecialistSettings />} />
+            <Route path="history" element={<CompanyHistory />} />
             <Route path="pdi" element={<PDIManagement />} />
           </Route>
 

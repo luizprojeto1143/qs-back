@@ -34,6 +34,10 @@ model Company {
   librasCalls   LibrasCall[]
   specialists   Specialist[]
   pdis          PDI[]
+  specialties   Specialty[]
+  
+  active        Boolean  @default(true)
+  deletedAt     DateTime?
 }
 
 model Sector {
@@ -80,6 +84,9 @@ model User {
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  active    Boolean  @default(true)
+  deletedAt DateTime?
 }
 
 model LibrasCall {
@@ -300,6 +307,20 @@ model PDI {
   
   status      String   @default("DRAFT") // DRAFT, ACTIVE, COMPLETED
   
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  active    Boolean  @default(true)
+  deletedAt DateTime?
+}
+
+model Specialty {
+  id        String   @id @default(uuid())
+  name      String
+  
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

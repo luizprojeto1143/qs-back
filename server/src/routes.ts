@@ -44,6 +44,7 @@ router.get('/structure', companyController.getStructure);
 router.get('/companies', companyController.listCompanies);
 router.post('/companies', companyController.createCompany);
 router.put('/companies/:id', companyController.updateCompany);
+router.delete('/companies/:id', companyController.deleteCompany);
 
 router.get('/sectors', companyController.listSectors);
 router.post('/sectors', companyController.createSector);
@@ -133,6 +134,12 @@ router.get('/specialists', specialistController.listSpecialists);
 router.post('/specialists', specialistController.createSpecialist);
 router.put('/specialists/:id', specialistController.updateSpecialist);
 router.delete('/specialists/:id', specialistController.deleteSpecialist);
+
+// Specialty Routes
+import * as specialtyController from './controllers/specialtyController';
+router.get('/specialties', specialtyController.listSpecialties);
+router.post('/specialties', specialtyController.createSpecialty);
+router.delete('/specialties/:id', specialtyController.deleteSpecialty);
 
 // PDI Routes
 import * as pdiController from './controllers/pdiController';

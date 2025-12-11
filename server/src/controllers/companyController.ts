@@ -113,16 +113,52 @@ export const listCompanies = async (req: Request, res: Response) => {
         const user = (req as AuthRequest).user;
         if (!user) return res.status(401).json({ error: 'Unauthorized' });
 
+        const { includeInactive } = req.query;
+
         const where: any = {};
+
+        // If not explicitly asking for inactive, filter by active=true
+        if (includeInactive !== 'true') {
+            where.active = true;
+        }
+
         if (user.role !== 'MASTER') {
             where.id = user.companyId;
         }
 
-        const companies = await prisma.company.findMany({ where });
+        const companies = await prisma.company.findMany({
+            where,
+            orderBy: { name: 'asc' }
+        });
         res.json(companies);
     } catch (error) {
         console.error('Error in listCompanies:', error);
         res.status(500).json({ error: 'Error fetching companies', details: error });
+    }
+};
+
+export const deleteCompany = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const user = (req as AuthRequest).user;
+
+        if (!user || user.role !== 'MASTER') {
+            return res.status(403).json({ error: 'Unauthorized' });
+        }
+
+        // Soft delete
+        await prisma.company.update({
+            where: { id },
+            data: {
+                active: false,
+                deletedAt: new Date()
+            }
+        });
+
+        res.status(204).send();
+    } catch (error) {
+        console.error('Error deleting company:', error);
+        res.status(500).json({ error: 'Error deleting company' });
     }
 };
 
