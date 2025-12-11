@@ -63,7 +63,7 @@ const UniversityManagement = () => {
         publishedAt: ''
     });
     const [moduleForm, setModuleForm] = useState({ title: '', order: 1 });
-    const [lessonForm, setLessonForm] = useState({ title: '', description: '', videoUrl: '', duration: 0, order: 1 });
+    const [lessonForm, setLessonForm] = useState({ title: '', description: '', videoUrl: '', transcription: '', duration: 0, order: 1 });
     const [attachments, setAttachments] = useState<{ name: string, url: string, type: string }[]>([]);
     const [uploading, setUploading] = useState(false);
 
@@ -140,7 +140,7 @@ const UniversityManagement = () => {
             await api.post('/lessons', { ...lessonForm, moduleId: selectedModuleId, attachments });
             toast.success('Aula criada com sucesso!');
             setShowLessonModal(false);
-            setLessonForm({ title: '', description: '', videoUrl: '', duration: 0, order: 1 });
+            setLessonForm({ title: '', description: '', videoUrl: '', transcription: '', duration: 0, order: 1 });
             setAttachments([]);
             fetchCourses();
         } catch (error) {
@@ -420,6 +420,12 @@ const UniversityManagement = () => {
                                 value={lessonForm.videoUrl}
                                 onChange={e => setLessonForm({ ...lessonForm, videoUrl: e.target.value })}
                                 required
+                            />
+                            <textarea
+                                className="input-field w-full h-32"
+                                placeholder="Transcrição da Aula (Opcional)"
+                                value={lessonForm.transcription}
+                                onChange={e => setLessonForm({ ...lessonForm, transcription: e.target.value })}
                             />
                             <div className="grid grid-cols-2 gap-4">
                                 <input

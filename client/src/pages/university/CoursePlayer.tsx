@@ -17,6 +17,7 @@ interface Lesson {
     description: string;
     videoUrl: string;
     duration: number;
+    transcription?: string;
     progress: { completed: boolean }[];
     attachments: Attachment[];
 }
@@ -243,13 +244,19 @@ const CoursePlayer = () => {
                                         <MessageSquare className="h-5 w-5 text-blue-600" />
                                         Transcrição da Aula
                                     </h3>
-                                    <div className="prose dark:prose-invert max-w-none text-gray-600 dark:text-gray-300">
-                                        <p>
-                                            [Transcrição automática indisponível no momento. Em breve você poderá acompanhar o texto completo da aula aqui.]
-                                        </p>
-                                        <p className="mt-4 italic text-sm text-gray-400">
-                                            Nota: Estamos trabalhando para gerar legendas automáticas para todos os vídeos visando maior acessibilidade.
-                                        </p>
+                                    <div className="prose dark:prose-invert max-w-none text-gray-600 dark:text-gray-300 whitespace-pre-wrap">
+                                        {currentLesson.transcription ? (
+                                            currentLesson.transcription
+                                        ) : (
+                                            <>
+                                                <p>
+                                                    [Transcrição automática indisponível no momento. Em breve você poderá acompanhar o texto completo da aula aqui.]
+                                                </p>
+                                                <p className="mt-4 italic text-sm text-gray-400">
+                                                    Nota: Estamos trabalhando para gerar legendas automáticas para todos os vídeos visando maior acessibilidade.
+                                                </p>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
                             )}

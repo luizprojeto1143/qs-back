@@ -185,13 +185,14 @@ export const createLesson = async (req: Request, res: Response) => {
             return res.status(403).json({ error: 'Unauthorized' });
         }
 
-        const { title, description, videoUrl, duration, order, moduleId, attachments } = req.body;
+        const { title, description, videoUrl, duration, order, moduleId, attachments, transcription } = req.body;
 
         const lesson = await prisma.lesson.create({
             data: {
                 title,
                 description,
                 videoUrl,
+                transcription,
                 duration: Number(duration),
                 order: Number(order),
                 moduleId,

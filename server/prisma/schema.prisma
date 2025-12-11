@@ -404,6 +404,7 @@ model Lesson {
   title       String
   description String?
   videoUrl    String
+  transcription String? // Text content for accessibility
   duration    Int      // in minutes
   order       Int
   
