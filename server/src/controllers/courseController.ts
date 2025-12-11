@@ -9,28 +9,10 @@ export const listCourses = async (req: Request, res: Response) => {
         const user = (req as AuthRequest).user;
         if (!user) return res.status(401).json({ error: 'Unauthorized' });
 
-        const where: any = { active: true };
-
-        // If user is not MASTER, verify if their company has university enabled
-        if (user.role !== 'MASTER') {
-            if (!user.companyId) return res.status(403).json({ error: 'No company associated' });
-
-            const company = await prisma.company.findUnique({ where: { id: user.companyId } });
-            if (!company || !company.universityEnabled) {
-                return res.status(403).json({ error: 'University not enabled for your company' });
-            }
-        }
-
+        // Simplified query for debugging
         const courses = await prisma.course.findMany({
-            where,
-            include: {
-                modules: {
-                    include: { lessons: true }
-                },
-                enrollments: {
-                    where: { userId: user.userId }
-                }
-            },
+            where: { active: true },
+            // Removed includes to isolate the issue
             orderBy: { createdAt: 'desc' }
         });
 
