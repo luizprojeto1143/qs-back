@@ -41,5 +41,5 @@ app.get('/', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT} (v10.8 - Course Visibility)`);
+  console.log(`Server is running on port ${PORT} (v10.9 - Build Fix)`);
 });

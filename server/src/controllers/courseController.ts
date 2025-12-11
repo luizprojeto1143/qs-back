@@ -17,9 +17,9 @@ export const listCourses = async (req: Request, res: Response) => {
             where: {
                 active: true,
                 OR: [
-                    { companyId: user.companyId },
+                    { companyId: user.companyId || '' },
                     { visibleToAll: true },
-                    { allowedCompanies: { some: { id: user.companyId } } }
+                    { allowedCompanies: { some: { id: user.companyId || '' } } }
                 ]
             },
             include: {
@@ -125,7 +125,7 @@ export const updateCourse = async (req: Request, res: Response) => {
             return res.status(403).json({ error: 'Unauthorized' });
         }
 
-        const { title, description, coverUrl, duration, category, difficulty, active, isMandatory, publishedAt } = req.body;
+        const { title, description, coverUrl, duration, category, difficulty, active, isMandatory, publishedAt, visibleToAll, allowedCompanyIds } = req.body;
 
         const course = await prisma.course.update({
             where: { id },
