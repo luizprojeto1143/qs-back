@@ -36,6 +36,12 @@ export const CompanyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
     const fetchCompanies = async () => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            setLoading(false);
+            return;
+        }
+
         try {
             const response = await api.get('/companies');
             const data = response.data;
