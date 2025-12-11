@@ -57,6 +57,7 @@ const UniversityManagement = () => {
     const [courseForm, setCourseForm] = useState({
         title: '',
         description: '',
+        coverUrl: '',
         category: '',
         duration: 0,
         isMandatory: false,
@@ -112,7 +113,7 @@ const UniversityManagement = () => {
             await api.post('/courses', courseForm);
             toast.success('Curso criado com sucesso!');
             setShowCourseModal(false);
-            setCourseForm({ title: '', description: '', category: '', duration: 0, isMandatory: false, publishedAt: '' });
+            setCourseForm({ title: '', description: '', coverUrl: '', category: '', duration: 0, isMandatory: false, publishedAt: '' });
             fetchCourses();
         } catch (error) {
             toast.error('Erro ao criar curso');
@@ -324,6 +325,12 @@ const UniversityManagement = () => {
                                 value={courseForm.description}
                                 onChange={e => setCourseForm({ ...courseForm, description: e.target.value })}
                                 required
+                            />
+                            <input
+                                className="input-field w-full"
+                                placeholder="URL da Imagem de Capa"
+                                value={courseForm.coverUrl}
+                                onChange={e => setCourseForm({ ...courseForm, coverUrl: e.target.value })}
                             />
                             <div className="grid grid-cols-2 gap-4">
                                 <input

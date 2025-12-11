@@ -482,7 +482,11 @@ export const getUserUniversityDetails = async (req: Request, res: Response) => {
         const loggedUser = (req as AuthRequest).user;
 
         if (!loggedUser || !loggedUser.companyId) return res.status(401).json({ error: 'Unauthorized' });
-        if (loggedUser.role !== 'RH' && loggedUser.role !== 'MASTER') return res.status(403).json({ error: 'Insufficient permissions' });
+
+        // Allow if user is viewing their own profile OR is RH/MASTER
+        if (loggedUser.id !== userId && loggedUser.role !== 'RH' && loggedUser.role !== 'MASTER') {
+            return res.status(403).json({ error: 'Insufficient permissions' });
+        }
 
         const user = await prisma.user.findUnique({
             where: { id: userId },
