@@ -5,7 +5,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "npx prisma generate && tsc",
-    "start": "npx prisma migrate deploy && node dist/index.js",
+    "start": "npx prisma migrate resolve --rolled-back 20251211120000_university_update || true && npx prisma migrate deploy && node dist/index.js",
     "dev": "nodemon src/index.ts",
     "db:deploy": "npx prisma migrate deploy"
   },
