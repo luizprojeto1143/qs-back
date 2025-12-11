@@ -34,11 +34,18 @@ const SidebarItem = ({ icon: Icon, label, path, active, onClick }: any) => {
     );
 };
 
+import { useCompany } from '../contexts/CompanyContext';
+
 const RHLayout = () => {
     const location = useLocation();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
     const { isLibrasAvailable } = useLibrasAvailability();
+    const { companies } = useCompany();
     const navigate = useNavigate();
+
+    // Assuming single company for RH user
+    const currentCompany = companies[0];
+    const isUniversityEnabled = currentCompany?.universityEnabled;
 
     const handleLogout = () => {
         localStorage.removeItem('token');
@@ -51,7 +58,7 @@ const RHLayout = () => {
         { icon: Users, label: 'Colaboradores', path: '/rh/collaborators' },
         { icon: ClipboardList, label: 'Histórico de Visitas', path: '/rh/history' },
         { icon: FileText, label: 'Relatórios', path: '/rh/reports' },
-        { icon: GraduationCap, label: 'Universidade', path: '/rh/university-reports' },
+        ...(isUniversityEnabled ? [{ icon: GraduationCap, label: 'Universidade', path: '/rh/university-reports' }] : []),
         { icon: Calendar, label: 'Agendamentos', path: '/rh/schedules' },
     ];
 

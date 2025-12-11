@@ -5,11 +5,18 @@ import { Home, Calendar, PlusCircle, User, Menu, GraduationCap } from 'lucide-re
 import { Video } from 'lucide-react';
 import { useLibrasAvailability } from '../hooks/useLibrasAvailability';
 
+import { useCompany } from '../contexts/CompanyContext';
+
 const MobileLayout = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const { isLibrasAvailable } = useLibrasAvailability();
+    const { companies } = useCompany();
+
+    // Assuming single company for mobile user (Collaborator)
+    const currentCompany = companies[0];
+    const isUniversityEnabled = currentCompany?.universityEnabled;
 
     const handleLogout = () => {
         localStorage.removeItem('token');
@@ -19,7 +26,7 @@ const MobileLayout = () => {
 
     const navItems = [
         { icon: Home, label: 'Início', path: '/app' },
-        { icon: GraduationCap, label: 'Cursos', path: '/app/university' },
+        ...(isUniversityEnabled ? [{ icon: GraduationCap, label: 'Cursos', path: '/app/university' }] : []),
         { icon: PlusCircle, label: 'Solicitar', path: '/app/request', primary: true },
         { icon: Calendar, label: 'Agenda', path: '/app/schedule' },
         { icon: User, label: 'Perfil', path: '/app/profile' },
@@ -79,13 +86,15 @@ const MobileLayout = () => {
                                     <span className="font-medium">Início</span>
                                 </button>
 
-                                <button
-                                    onClick={() => { navigate('/app/university'); setIsMenuOpen(false); }}
-                                    className="w-full flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-colors"
-                                >
-                                    <GraduationCap className="h-5 w-5" />
-                                    <span className="font-medium">Universidade</span>
-                                </button>
+                                {isUniversityEnabled && (
+                                    <button
+                                        onClick={() => { navigate('/app/university'); setIsMenuOpen(false); }}
+                                        className="w-full flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-colors"
+                                    >
+                                        <GraduationCap className="h-5 w-5" />
+                                        <span className="font-medium">Universidade</span>
+                                    </button>
+                                )}
 
                                 <button
                                     onClick={() => { navigate('/app/schedule'); setIsMenuOpen(false); }}
