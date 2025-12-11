@@ -16,7 +16,8 @@ export const getRHDashboardStats = async (req: Request, res: Response) => {
         const totalCollaborators = await prisma.user.count({
             where: {
                 companyId,
-                role: 'COLABORADOR'
+                role: 'COLABORADOR',
+                active: true
             }
         });
 
@@ -47,7 +48,97 @@ export const getRHDashboardStats = async (req: Request, res: Response) => {
             ? Math.round((resolvedPendencies / totalPendencies) * 100)
             : 0;
 
-        // 5. Recent Activity (Last 5 visits)
+        // --- New Metrics for University ---
+
+        // 5. Total Completed Courses
+        const completedCourses = await prisma.enrollment.count({
+            where: {
+                user: { companyId },
+                completed: true
+            }
+        });
+
+        // 6. PCD Percentage
+        const pcdCount = await prisma.collaboratorProfile.count({
+            where: {
+                user: { companyId, active: true },
+                disabilityType: { not: 'Nenhuma' } // Assuming 'Nenhuma' or null means no disability
+            }
+        });
+
+        const pcdPercentage = totalCollaborators > 0
+            ? Math.round((pcdCount / totalCollaborators) * 100)
+            : 0;
+
+        // 7. Top Sectors by Engagement (Enrollments count)
+        const enrollmentsBySector = await prisma.enrollment.groupBy({
+            by: ['userId'],
+            where: { user: { companyId } },
+            _count: true
+        });
+
+        // We need to join with users to get the sector. Prisma groupBy doesn't support relation join directly in this way easily for aggregation
+        // So we fetch users and aggregate manually or use a raw query. 
+        // Let's use a simpler approach: Fetch all enrollments with user sector and aggregate in code for now (assuming not huge data yet)
+        // Or better: Fetch sectors and count enrollments for each.
+
+        const sectors = await prisma.sector.findMany({
+            where: { companyId },
+            include: {
+                areas: {
+                    include: {
+                        users: {
+                            include: {
+                                enrollments: true
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        const sectorEngagement = sectors.map(sector => {
+            let totalEnrollments = 0;
+            let totalUsers = 0;
+
+            sector.areas.forEach(area => {
+                totalUsers += area.users.length;
+                area.users.forEach(u => {
+                    totalEnrollments += u.enrollments.length;
+                });
+            });
+
+            return {
+                name: sector.name,
+                enrollments: totalEnrollments,
+                avgPerUser: totalUsers > 0 ? (totalEnrollments / totalUsers).toFixed(1) : 0
+            };
+        }).sort((a, b) => b.enrollments - a.enrollments).slice(0, 5);
+
+
+        // 8. Most Watched Courses
+        const mostWatchedCourses = await prisma.course.findMany({
+            where: { companyId },
+            include: {
+                _count: {
+                    select: { enrollments: true }
+                }
+            },
+            orderBy: {
+                enrollments: {
+                    _count: 'desc'
+                }
+            },
+            take: 5
+        });
+
+        const formattedMostWatched = mostWatchedCourses.map(course => ({
+            id: course.id,
+            title: course.title,
+            views: course._count.enrollments
+        }));
+
+        // 9. Recent Activity (Last 5 visits)
         const recentActivity = await prisma.visit.findMany({
             where: { companyId },
             take: 5,
@@ -63,8 +154,12 @@ export const getRHDashboardStats = async (req: Request, res: Response) => {
                 totalCollaborators,
                 visitsThisMonth,
                 openPendencies,
-                resolutionRate: `${resolutionRate}%`
+                resolutionRate: `${resolutionRate}%`,
+                completedCourses,
+                pcdPercentage: `${pcdPercentage}%`
             },
+            sectorEngagement,
+            mostWatchedCourses: formattedMostWatched,
             recentActivity: recentActivity.map(visit => ({
                 id: visit.id,
                 description: `Nova visita registrada: ${visit.area?.name || 'Geral'}`,

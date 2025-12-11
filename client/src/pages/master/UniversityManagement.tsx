@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, Video, BookOpen, Layers, ChevronRight, ChevronDown } from 'lucide-react';
+import { Plus, Trash2, Video, BookOpen, Layers, ChevronRight, ChevronDown, Upload, FileText } from 'lucide-react';
 import { api } from '../../lib/api';
 import { toast } from 'sonner';
 
@@ -10,7 +10,16 @@ interface Course {
     duration: number;
     category: string;
     active: boolean;
+    isMandatory: boolean;
+    publishedAt: string | null;
     modules: Module[];
+}
+
+import QuizEditor from './QuizEditor';
+
+interface Quiz {
+    id: string;
+    title: string;
 }
 
 interface Module {
@@ -18,6 +27,7 @@ interface Module {
     title: string;
     order: number;
     lessons: Lesson[];
+    quizzes: Quiz[];
 }
 
 interface Lesson {
@@ -25,6 +35,7 @@ interface Lesson {
     title: string;
     duration: number;
     videoUrl: string;
+    attachments: { name: string; url: string; type: string }[];
 }
 
 const UniversityManagement = () => {
@@ -36,14 +47,48 @@ const UniversityManagement = () => {
     const [showCourseModal, setShowCourseModal] = useState(false);
     const [showModuleModal, setShowModuleModal] = useState(false);
     const [showLessonModal, setShowLessonModal] = useState(false);
+    const [showQuizEditor, setShowQuizEditor] = useState(false);
 
     // Form States
     const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
     const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
+    const [selectedQuizId, setSelectedQuizId] = useState<string | null>(null);
 
-    const [courseForm, setCourseForm] = useState({ title: '', description: '', category: '', duration: 0 });
+    const [courseForm, setCourseForm] = useState({
+        title: '',
+        description: '',
+        category: '',
+        duration: 0,
+        isMandatory: false,
+        publishedAt: ''
+    });
     const [moduleForm, setModuleForm] = useState({ title: '', order: 1 });
     const [lessonForm, setLessonForm] = useState({ title: '', description: '', videoUrl: '', duration: 0, order: 1 });
+    const [attachments, setAttachments] = useState<{ name: string, url: string, type: string }[]>([]);
+    const [uploading, setUploading] = useState(false);
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setUploading(true);
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const response = await api.post('/upload', formData);
+            setAttachments([...attachments, {
+                name: file.name,
+                url: response.data.url,
+                type: file.type.includes('pdf') ? 'PDF' : 'OTHER'
+            }]);
+            toast.success('Arquivo enviado!');
+        } catch (error) {
+            toast.error('Erro no upload');
+        } finally {
+            setUploading(false);
+        }
+    };
 
     const fetchCourses = async () => {
         try {
@@ -67,7 +112,7 @@ const UniversityManagement = () => {
             await api.post('/courses', courseForm);
             toast.success('Curso criado com sucesso!');
             setShowCourseModal(false);
-            setCourseForm({ title: '', description: '', category: '', duration: 0 });
+            setCourseForm({ title: '', description: '', category: '', duration: 0, isMandatory: false, publishedAt: '' });
             fetchCourses();
         } catch (error) {
             toast.error('Erro ao criar curso');
@@ -92,13 +137,32 @@ const UniversityManagement = () => {
         e.preventDefault();
         if (!selectedModuleId) return;
         try {
-            await api.post('/lessons', { ...lessonForm, moduleId: selectedModuleId });
+            await api.post('/lessons', { ...lessonForm, moduleId: selectedModuleId, attachments });
             toast.success('Aula criada com sucesso!');
             setShowLessonModal(false);
             setLessonForm({ title: '', description: '', videoUrl: '', duration: 0, order: 1 });
+            setAttachments([]);
             fetchCourses();
         } catch (error) {
             toast.error('Erro ao criar aula');
+        }
+    };
+
+    const handleCreateQuiz = async (moduleId: string, courseId: string) => {
+        try {
+            const response = await api.post('/quizzes', {
+                title: 'Prova do Módulo',
+                description: 'Avaliação de conhecimento',
+                courseId,
+                moduleId,
+                minScore: 70
+            });
+            toast.success('Prova criada! Adicione questões.');
+            setSelectedQuizId(response.data.id);
+            setShowQuizEditor(true);
+            fetchCourses();
+        } catch (error) {
+            toast.error('Erro ao criar prova');
         }
     };
 
@@ -114,6 +178,10 @@ const UniversityManagement = () => {
     };
 
     if (loading) return <div>Carregando...</div>;
+
+    if (showQuizEditor && selectedQuizId) {
+        return <QuizEditor quizId={selectedQuizId} onClose={() => { setShowQuizEditor(false); fetchCourses(); }} />;
+    }
 
     return (
         <div className="space-y-6">
@@ -179,15 +247,37 @@ const UniversityManagement = () => {
                                                 <Layers className="h-4 w-4 text-gray-400" />
                                                 {module.title}
                                             </h4>
-                                            <button
-                                                onClick={() => {
-                                                    setSelectedModuleId(module.id);
-                                                    setShowLessonModal(true);
-                                                }}
-                                                className="text-xs text-blue-600 hover:underline"
-                                            >
-                                                + Adicionar Aula
-                                            </button>
+                                            <div className="flex gap-3">
+                                                {module.quizzes && module.quizzes.length > 0 ? (
+                                                    <button
+                                                        onClick={() => {
+                                                            setSelectedQuizId(module.quizzes[0].id);
+                                                            setShowQuizEditor(true);
+                                                        }}
+                                                        className="text-xs text-purple-600 hover:underline flex items-center gap-1"
+                                                    >
+                                                        <FileText className="h-3 w-3" />
+                                                        Editar Prova
+                                                    </button>
+                                                ) : (
+                                                    <button
+                                                        onClick={() => handleCreateQuiz(module.id, course.id)}
+                                                        className="text-xs text-purple-600 hover:underline flex items-center gap-1"
+                                                    >
+                                                        <FileText className="h-3 w-3" />
+                                                        Criar Prova
+                                                    </button>
+                                                )}
+                                                <button
+                                                    onClick={() => {
+                                                        setSelectedModuleId(module.id);
+                                                        setShowLessonModal(true);
+                                                    }}
+                                                    className="text-xs text-blue-600 hover:underline"
+                                                >
+                                                    + Adicionar Aula
+                                                </button>
+                                            </div>
                                         </div>
 
                                         <div className="space-y-2 pl-4 border-l-2 border-gray-100 dark:border-gray-700">
@@ -251,6 +341,26 @@ const UniversityManagement = () => {
                                     onChange={e => setCourseForm({ ...courseForm, duration: Number(e.target.value) })}
                                     required
                                 />
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={courseForm.isMandatory}
+                                        onChange={e => setCourseForm({ ...courseForm, isMandatory: e.target.checked })}
+                                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                    />
+                                    <span className="text-sm text-gray-700 dark:text-gray-300">Curso Obrigatório</span>
+                                </label>
+                                <div className="flex-1">
+                                    <label className="block text-xs text-gray-500 mb-1">Data de Lançamento (Opcional)</label>
+                                    <input
+                                        type="datetime-local"
+                                        className="input-field w-full"
+                                        value={courseForm.publishedAt}
+                                        onChange={e => setCourseForm({ ...courseForm, publishedAt: e.target.value })}
+                                    />
+                                </div>
                             </div>
                             <div className="flex justify-end gap-2 mt-4">
                                 <button type="button" onClick={() => setShowCourseModal(false)} className="btn-secondary">Cancelar</button>
@@ -328,6 +438,34 @@ const UniversityManagement = () => {
                                     onChange={e => setLessonForm({ ...lessonForm, order: Number(e.target.value) })}
                                     required
                                 />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Material de Apoio (PDFs)</label>
+                                <div className="flex items-center gap-2">
+                                    <label className="btn-secondary cursor-pointer flex items-center gap-2">
+                                        <Upload className="h-4 w-4" />
+                                        {uploading ? 'Enviando...' : 'Adicionar Arquivo'}
+                                        <input type="file" className="hidden" accept=".pdf,.doc,.docx" onChange={handleFileUpload} disabled={uploading} />
+                                    </label>
+                                </div>
+                                {attachments.length > 0 && (
+                                    <ul className="space-y-1 mt-2">
+                                        {attachments.map((att, idx) => (
+                                            <li key={idx} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50 p-2 rounded">
+                                                <FileText className="h-3 w-3" />
+                                                <span className="flex-1 truncate">{att.name}</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setAttachments(attachments.filter((_, i) => i !== idx))}
+                                                    className="text-red-500 hover:text-red-700"
+                                                >
+                                                    <Trash2 className="h-3 w-3" />
+                                                </button>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
                             </div>
                             <div className="flex justify-end gap-2 mt-4">
                                 <button type="button" onClick={() => setShowLessonModal(false)} className="btn-secondary">Cancelar</button>

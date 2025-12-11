@@ -26,6 +26,9 @@ export const listCourses = async (req: Request, res: Response) => {
             include: {
                 modules: {
                     include: { lessons: true }
+                },
+                enrollments: {
+                    where: { userId: user.userId }
                 }
             },
             orderBy: { createdAt: 'desc' }
@@ -45,7 +48,7 @@ export const createCourse = async (req: Request, res: Response) => {
             return res.status(403).json({ error: 'Unauthorized' });
         }
 
-        const { title, description, coverUrl, duration, category } = req.body;
+        const { title, description, coverUrl, duration, category, difficulty, isMandatory, publishedAt } = req.body;
 
         const course = await prisma.course.create({
             data: {
@@ -53,7 +56,11 @@ export const createCourse = async (req: Request, res: Response) => {
                 description,
                 coverUrl,
                 duration: Number(duration),
-                category
+                category,
+                difficulty: difficulty || 'Iniciante',
+                isMandatory: isMandatory || false,
+                publishedAt: publishedAt ? new Date(publishedAt) : null,
+                companyId: user.companyId
             }
         });
 
@@ -72,7 +79,7 @@ export const updateCourse = async (req: Request, res: Response) => {
             return res.status(403).json({ error: 'Unauthorized' });
         }
 
-        const { title, description, coverUrl, duration, category, active } = req.body;
+        const { title, description, coverUrl, duration, category, difficulty, active, isMandatory, publishedAt } = req.body;
 
         const course = await prisma.course.update({
             where: { id },
@@ -82,7 +89,10 @@ export const updateCourse = async (req: Request, res: Response) => {
                 coverUrl,
                 duration: Number(duration),
                 category,
-                active
+                difficulty,
+                active,
+                isMandatory,
+                publishedAt: publishedAt ? new Date(publishedAt) : null
             }
         });
 
@@ -144,7 +154,7 @@ export const createLesson = async (req: Request, res: Response) => {
             return res.status(403).json({ error: 'Unauthorized' });
         }
 
-        const { title, description, videoUrl, duration, order, moduleId } = req.body;
+        const { title, description, videoUrl, duration, order, moduleId, attachments } = req.body;
 
         const lesson = await prisma.lesson.create({
             data: {
@@ -153,8 +163,16 @@ export const createLesson = async (req: Request, res: Response) => {
                 videoUrl,
                 duration: Number(duration),
                 order: Number(order),
-                moduleId
-            }
+                moduleId,
+                attachments: {
+                    create: attachments?.map((att: any) => ({
+                        name: att.name,
+                        url: att.url,
+                        type: att.type
+                    }))
+                }
+            },
+            include: { attachments: true }
         });
 
         res.status(201).json(lesson);
@@ -176,18 +194,21 @@ export const getCourseDetails = async (req: Request, res: Response) => {
             where: { id },
             include: {
                 modules: {
+                    orderBy: { order: 'asc' },
                     include: {
                         lessons: {
                             include: {
                                 progress: {
                                     where: { userId: user.userId }
-                                }
+                                },
+                                attachments: true
                             },
                             orderBy: { order: 'asc' }
-                        }
-                    },
-                    orderBy: { order: 'asc' }
-                }
+                        },
+                        quizzes: true
+                    }
+                },
+                quizzes: true
             }
         });
 
@@ -223,7 +244,6 @@ export const updateLessonProgress = async (req: Request, res: Response) => {
         });
 
         // Calculate Course Progress
-        // 1. Get course ID from lesson
         const lesson = await prisma.lesson.findUnique({
             where: { id: lessonId },
             include: { module: true }
@@ -232,12 +252,10 @@ export const updateLessonProgress = async (req: Request, res: Response) => {
         if (lesson) {
             const courseId = lesson.module.courseId;
 
-            // 2. Count total lessons
             const totalLessons = await prisma.lesson.count({
                 where: { module: { courseId } }
             });
 
-            // 3. Count completed lessons
             const completedLessons = await prisma.lessonProgress.count({
                 where: {
                     userId: user.userId,
@@ -248,8 +266,7 @@ export const updateLessonProgress = async (req: Request, res: Response) => {
 
             const percentage = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
 
-            // 4. Update Enrollment
-            await prisma.enrollment.upsert({
+            const enrollment = await prisma.enrollment.upsert({
                 where: {
                     userId_courseId: {
                         userId: user.userId,
@@ -270,6 +287,23 @@ export const updateLessonProgress = async (req: Request, res: Response) => {
                     completedAt: percentage === 100 ? new Date() : null
                 }
             });
+
+            // Generate Certificate if completed
+            if (percentage === 100) {
+                const existingCert = await prisma.certificate.findFirst({
+                    where: { userId: user.userId, courseId }
+                });
+
+                if (!existingCert) {
+                    await prisma.certificate.create({
+                        data: {
+                            userId: user.userId,
+                            courseId,
+                            code: `CERT-${user.userId.substring(0, 4)}-${courseId.substring(0, 4)}-${Date.now()}`.toUpperCase()
+                        }
+                    });
+                }
+            }
         }
 
         res.json(progress);
@@ -318,6 +352,179 @@ export const getCompanyProgress = async (req: Request, res: Response) => {
         res.json(enrollments);
     } catch (error) {
         console.error('Error fetching company progress:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+export const getAnalytics = async (req: Request, res: Response) => {
+    try {
+        const user = (req as AuthRequest).user;
+        if (!user || !user.companyId) return res.status(401).json({ error: 'Unauthorized' });
+
+        if (user.role !== 'RH' && user.role !== 'MASTER') {
+            return res.status(403).json({ error: 'Insufficient permissions' });
+        }
+
+        // 1. Most Watched Courses (by enrollment count)
+        const courses = await prisma.course.findMany({
+            where: {
+                OR: [
+                    { companyId: user.companyId },
+                    { companyId: null } // Global courses
+                ]
+            },
+            include: {
+                _count: {
+                    select: { enrollments: true }
+                },
+                modules: {
+                    include: {
+                        lessons: {
+                            include: {
+                                progress: {
+                                    where: { user: { companyId: user.companyId } }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        const mostWatched = courses
+            .map(c => ({ title: c.title, students: c._count.enrollments }))
+            .sort((a, b) => b.students - a.students)
+            .slice(0, 5);
+
+        // 2. Engagement (Active users in the last 30 days)
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+        const activeEnrollments = await prisma.enrollment.count({
+            where: {
+                user: { companyId: user.companyId },
+                updatedAt: { gte: thirtyDaysAgo }
+            }
+        });
+
+        const totalUsers = await prisma.user.count({
+            where: { companyId: user.companyId, active: true }
+        });
+
+        const engagementRate = totalUsers > 0 ? Math.round((activeEnrollments / totalUsers) * 100) : 0;
+
+        // 3. Drop-off Heatmap (Average completion per lesson)
+        // We'll take the first course as an example or aggregate all
+        // For simplicity, let's return data for the most popular course
+        const popularCourse = courses[0];
+        let heatmap: any[] = [];
+
+        if (popularCourse) {
+            heatmap = popularCourse.modules.flatMap(m =>
+                m.lessons.map(l => {
+                    const totalStarted = l.progress.length;
+                    const completed = l.progress.filter(p => p.completed).length;
+                    return {
+                        lesson: l.title,
+                        completionRate: totalStarted > 0 ? Math.round((completed / totalStarted) * 100) : 0
+                    };
+                })
+            );
+        }
+
+        res.json({
+            mostWatched,
+            engagementRate,
+            heatmap
+        });
+
+    } catch (error) {
+        console.error('Error fetching analytics:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+export const getUserUniversityDetails = async (req: Request, res: Response) => {
+    try {
+        const { userId } = req.params;
+        const loggedUser = (req as AuthRequest).user;
+
+        if (!loggedUser || !loggedUser.companyId) return res.status(401).json({ error: 'Unauthorized' });
+        if (loggedUser.role !== 'RH' && loggedUser.role !== 'MASTER') return res.status(403).json({ error: 'Insufficient permissions' });
+
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            include: {
+                enrollments: {
+                    include: {
+                        course: true
+                    }
+                },
+                certificates: {
+                    include: {
+                        course: true
+                    }
+                },
+                quizAttempts: {
+                    include: {
+                        quiz: true
+                    },
+                    orderBy: { createdAt: 'desc' }
+                }
+            }
+        });
+
+        if (!user || user.companyId !== loggedUser.companyId) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Calculate total learning time (sum of duration of completed/in-progress lessons or just course duration * progress)
+        // A simple approximation: sum of duration of enrolled courses * (progress / 100)
+        const totalLearningTimeMinutes = user.enrollments.reduce((acc, curr) => {
+            return acc + (curr.course.duration * (curr.progress / 100));
+        }, 0);
+
+        const hours = Math.floor(totalLearningTimeMinutes / 60);
+        const minutes = Math.round(totalLearningTimeMinutes % 60);
+
+        res.json({
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                avatar: user.avatar
+            },
+            stats: {
+                coursesCompleted: user.enrollments.filter(e => e.completed).length,
+                coursesInProgress: user.enrollments.filter(e => !e.completed).length,
+                totalLearningTime: `${hours}h ${minutes}min`,
+                certificatesCount: user.certificates.length
+            },
+            enrollments: user.enrollments.map(e => ({
+                id: e.id,
+                courseTitle: e.course.title,
+                progress: e.progress,
+                completed: e.completed,
+                completedAt: e.completedAt,
+                lastAccess: e.updatedAt
+            })),
+            certificates: user.certificates.map(c => ({
+                id: c.id,
+                courseTitle: c.course.title,
+                code: c.code,
+                issuedAt: c.issuedAt
+            })),
+            quizAttempts: user.quizAttempts.map(q => ({
+                id: q.id,
+                quizTitle: q.quiz.title,
+                score: q.score,
+                passed: q.passed,
+                date: q.createdAt
+            }))
+        });
+
+    } catch (error) {
+        console.error('Error fetching user details:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 };

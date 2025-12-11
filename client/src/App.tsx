@@ -38,7 +38,9 @@ import PDIManagement from './pages/PDIManagement';
 import UniversityManagement from './pages/master/UniversityManagement';
 import CourseCatalog from './pages/university/CourseCatalog';
 import CoursePlayer from './pages/university/CoursePlayer';
+import QuizPlayer from './pages/university/QuizPlayer';
 import UniversityReports from './pages/university/UniversityReports';
+import Certificates from './pages/university/Certificates';
 
 function App() {
   console.log('QS System Version: Libras Central (v7)');
@@ -104,6 +106,8 @@ function App() {
             <Route path="libras" element={<LibrasCentral />} />
             <Route path="university" element={<CourseCatalog />} />
             <Route path="university/course/:id" element={<CoursePlayer />} />
+            <Route path="university/quiz/:id" element={<QuizPlayer />} />
+            <Route path="university/certificates" element={<Certificates />} />
           </Route>
         </Routes>
       </Router>

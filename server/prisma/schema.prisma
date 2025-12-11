@@ -40,7 +40,10 @@ model Company {
   active        Boolean  @default(true)
   deletedAt     DateTime?
   
+  
   universityEnabled Boolean @default(false)
+  auditLogs     AuditLog[]
+  learningTrails LearningTrail[]
 }
 
 model Sector {
@@ -94,6 +97,8 @@ model User {
   enrollments Enrollment[]
   lessonProgress LessonProgress[]
   certificates Certificate[]
+  auditLogs     AuditLog[]
+  quizAttempts  UserQuizAttempt[]
 }
 
 model LibrasCall {
@@ -341,6 +346,7 @@ model Course {
   coverUrl    String?
   duration    Int      // in minutes
   category    String   // e.g., "Inclusão", "Técnico", "Soft Skills"
+  difficulty  String   @default("Iniciante") // Iniciante, Intermediário, Avançado
 
   active      Boolean  @default(true)
   
@@ -351,6 +357,29 @@ model Course {
   enrollments Enrollment[]
   certificates Certificate[]
 
+  isMandatory Boolean  @default(false)
+  publishedAt DateTime?
+  
+  trailId     String?
+  trail       LearningTrail? @relation(fields: [trailId], references: [id])
+
+  quizzes     Quiz[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model LearningTrail {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  active      Boolean  @default(true)
+  
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
+  
+  courses     Course[]
+  
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -364,6 +393,7 @@ model Module {
   course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
   
   lessons   Lesson[]
+  quizzes   Quiz[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -381,9 +411,22 @@ model Lesson {
   module      Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   
   progress    LessonProgress[]
+  attachments LessonAttachment[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model LessonAttachment {
+  id        String   @id @default(uuid())
+  name      String
+  url       String
+  type      String   // PDF, DOC, etc.
+  
+  lessonId  String
+  lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
 }
 
 model Enrollment {
@@ -431,4 +474,93 @@ model Certificate {
   course    Course   @relation(fields: [courseId], references: [id])
   
   issuedAt  DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  action    String   // VIEW_COURSE, COMPLETE_LESSON, etc.
+  resource  String   // Course:ID, Lesson:ID
+  details   String?  // JSON
+  createdAt DateTime @default(now())
+  
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id])
+}
+
+// Quiz System Models
+
+model Quiz {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  
+  courseId    String?
+  course      Course?  @relation(fields: [courseId], references: [id])
+  
+  moduleId    String?
+  module      Module?  @relation(fields: [moduleId], references: [id])
+  
+  questions   Question[]
+  attempts    UserQuizAttempt[]
+  
+  minScore    Int      @default(60) // Minimum percentage to pass
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Question {
+  id          String   @id @default(uuid())
+  text        String
+  type        String   // MULTIPLE_CHOICE, TRUE_FALSE
+  
+  quizId      String
+  quiz        Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  
+  options     Option[]
+  answers     UserAnswer[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Option {
+  id          String   @id @default(uuid())
+  text        String
+  isCorrect   Boolean  @default(false)
+  
+  questionId  String
+  question    Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  
+  answers     UserAnswer[]
+}
+
+model UserQuizAttempt {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  
+  quizId      String
+  quiz        Quiz     @relation(fields: [quizId], references: [id])
+  
+  score       Int      // Percentage
+  passed      Boolean
+  
+  answers     UserAnswer[]
+  
+  createdAt   DateTime @default(now())
+}
+
+model UserAnswer {
+  id          String   @id @default(uuid())
+  attemptId   String
+  attempt     UserQuizAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  
+  questionId  String
+  question    Question @relation(fields: [questionId], references: [id])
+  
+  optionId    String
+  option      Option   @relation(fields: [optionId], references: [id])
 }

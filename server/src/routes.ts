@@ -5,6 +5,7 @@ import * as collaboratorController from './controllers/collaboratorController';
 import { authenticateToken } from './middleware/authMiddleware';
 import { rateLimiter } from './middleware/rateLimiter';
 import { createRoom } from './controllers/dailyController';
+import { createQuiz, addQuestion, getQuiz, submitQuiz, deleteQuiz, deleteQuestion, getQuizEditor } from './controllers/quizController';
 
 const router = Router();
 
@@ -135,6 +136,8 @@ router.post('/lessons', courseController.createLesson);
 router.get('/courses/:id', courseController.getCourseDetails);
 router.post('/progress', courseController.updateLessonProgress);
 router.get('/courses/reports/progress', courseController.getCompanyProgress);
+router.get('/courses/reports/analytics', courseController.getAnalytics);
+router.get('/courses/users/:userId', courseController.getUserUniversityDetails);
 
 // PDI Routes
 import * as pdiController from './controllers/pdiController';
@@ -159,5 +162,14 @@ import * as notificationController from './controllers/notificationController';
 router.get('/notifications', notificationController.listNotifications);
 router.put('/notifications/:id/read', notificationController.markAsRead);
 router.put('/notifications/read-all', notificationController.markAllAsRead);
+
+// Quiz Routes
+router.post('/quizzes', authenticateToken, createQuiz);
+router.delete('/quizzes/:id', authenticateToken, deleteQuiz);
+router.get('/quizzes/:id/editor', authenticateToken, getQuizEditor);
+router.post('/quizzes/questions', authenticateToken, addQuestion);
+router.delete('/quizzes/questions/:id', authenticateToken, deleteQuestion);
+router.get('/quizzes/:id', authenticateToken, getQuiz);
+router.post('/quizzes/:id/submit', authenticateToken, submitQuiz);
 
 export default router;
