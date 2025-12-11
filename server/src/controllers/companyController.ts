@@ -30,11 +30,11 @@ export const getStructure = async (req: Request, res: Response) => {
 
 export const createCompany = async (req: Request, res: Response) => {
     try {
-        const { name, cnpj, email, password } = req.body;
+        const { name, cnpj, email, password, universityEnabled } = req.body;
 
         const result = await prisma.$transaction(async (prisma) => {
             const company = await prisma.company.create({
-                data: { name, cnpj }
+                data: { name, cnpj, universityEnabled: universityEnabled || false }
             });
 
             if (email && password) {
@@ -215,7 +215,7 @@ export const listAreas = async (req: Request, res: Response) => {
 export const updateCompany = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const { name, cnpj, email, password } = req.body;
+        const { name, cnpj, email, password, universityEnabled } = req.body;
         const user = (req as AuthRequest).user;
 
         if (!user) return res.status(401).json({ error: 'Unauthorized' });
@@ -230,6 +230,7 @@ export const updateCompany = async (req: Request, res: Response) => {
                 data: {
                     name,
                     cnpj,
+                    universityEnabled,
                     inclusionDiagnosis: req.body.inclusionDiagnosis ? JSON.stringify(req.body.inclusionDiagnosis) : undefined
                 }
             });
@@ -263,9 +264,9 @@ export const updateCompany = async (req: Request, res: Response) => {
         });
 
         res.json(result);
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error updating company:', error);
-        res.status(500).json({ error: 'Error updating company' });
+        res.status(500).json({ error: 'Error updating company', details: error.message });
     }
 };
 
