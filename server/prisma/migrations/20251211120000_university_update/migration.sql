@@ -4,6 +4,9 @@ ALTER TABLE "Company" ADD COLUMN IF NOT EXISTS "librasAvailability" TEXT;
 ALTER TABLE "Company" ADD COLUMN IF NOT EXISTS "inclusionDiagnosis" TEXT;
 ALTER TABLE "Company" ADD COLUMN IF NOT EXISTS "universityEnabled" BOOLEAN NOT NULL DEFAULT false;
 
+-- AlterTable (Fix for existing Course table)
+ALTER TABLE "Course" ADD COLUMN IF NOT EXISTS "difficulty" TEXT NOT NULL DEFAULT 'Iniciante';
+
 -- CreateTable
 CREATE TABLE IF NOT EXISTS "LibrasCall" (
     "id" TEXT NOT NULL,
