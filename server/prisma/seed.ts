@@ -21,8 +21,10 @@ async function main() {
     console.log({ master });
 
     // 2. Create a Demo Company
-    const company = await prisma.company.create({
-        data: {
+    const company = await prisma.company.upsert({
+        where: { cnpj: '12.345.678/0001-90' },
+        update: {},
+        create: {
             name: 'Empresa Demo',
             cnpj: '12.345.678/0001-90',
             address: 'Rua Exemplo, 123',
@@ -54,8 +56,10 @@ async function main() {
     console.log({ company });
 
     // 3. Create an RH User for that company
-    const rhUser = await prisma.user.create({
-        data: {
+    const rhUser = await prisma.user.upsert({
+        where: { email: 'rh@empresa.com' },
+        update: {},
+        create: {
             email: 'rh@empresa.com',
             name: 'Maria RH',
             password: hashedPassword,
@@ -71,8 +75,10 @@ async function main() {
     const area = await prisma.area.findFirst({ where: { sector: { companyId: company.id } } });
 
     if (area) {
-        const collabUser = await prisma.user.create({
-            data: {
+        const collabUser = await prisma.user.upsert({
+            where: { email: 'colab@empresa.com' },
+            update: {},
+            create: {
                 email: 'colab@empresa.com',
                 name: 'João Colaborador',
                 password: hashedPassword,
