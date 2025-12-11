@@ -15,7 +15,8 @@ import {
     Moon,
     Sun,
     Shield,
-    Target
+    Target,
+    GraduationCap
 } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { Bell } from 'lucide-react';
@@ -146,6 +147,7 @@ const DashboardLayout = () => {
         { icon: AlertTriangle, label: 'Pendências', path: '/dashboard/pendencies' },
         { icon: Calendar, label: 'Agendamentos', path: '/dashboard/schedules' },
         { icon: Video, label: 'Feed Acessível', path: '/dashboard/feed' },
+        { icon: GraduationCap, label: 'Universidade', path: '/dashboard/university' },
         { icon: Target, label: 'PDI', path: '/dashboard/pdi' },
         { icon: FileText, label: 'Relatórios', path: '/dashboard/reports' },
         { icon: Settings, label: 'Configurações', path: '/dashboard/settings' },

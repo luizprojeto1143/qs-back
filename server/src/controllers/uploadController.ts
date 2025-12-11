@@ -1,21 +1,23 @@
 import { Request, Response } from 'express';
 import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
+import { v2 as cloudinary } from 'cloudinary';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
+
+// Configure Cloudinary
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
 // Configure storage
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const uploadDir = path.join(__dirname, '../../uploads');
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true });
-        }
-        cb(null, uploadDir);
-    },
-    filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, uniqueSuffix + path.extname(file.originalname));
-    }
+const storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+        folder: 'qs-inclusao', // Folder name in Cloudinary
+        allowed_formats: ['jpg', 'png', 'jpeg', 'pdf', 'doc', 'docx', 'mp4', 'mp3', 'wav'],
+        resource_type: 'auto', // Auto-detect type (image, video, raw)
+    } as any // Cast to any because types might be slightly mismatched
 });
 
 const upload = multer({
@@ -30,14 +32,14 @@ export const uploadFile = (req: Request, res: Response) => {
         return res.status(400).json({ error: 'No file uploaded' });
     }
 
-    // Construct public URL (assuming server serves 'uploads' statically)
-    const baseUrl = process.env.API_URL || 'http://localhost:3001';
-    const fileUrl = `${baseUrl}/uploads/${req.file.filename}`;
+    // Cloudinary returns the URL in `path` or `secure_url`
+    // multer-storage-cloudinary puts the file info in req.file
+    const file = req.file as any;
 
     res.json({
-        url: fileUrl,
-        filename: req.file.filename,
-        mimetype: req.file.mimetype,
-        size: req.file.size
+        url: file.path || file.secure_url,
+        filename: file.filename,
+        mimetype: file.mimetype,
+        size: file.size
     });
 };

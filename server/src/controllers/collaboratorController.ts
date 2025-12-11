@@ -3,6 +3,10 @@ import * as bcrypt from 'bcryptjs';
 import prisma from '../prisma';
 import { AuthRequest } from '../middleware/authMiddleware';
 
+const ROLE_COLABORADOR = 'COLABORADOR';
+const DEFAULT_SHIFT = '1_TURNO';
+const DEFAULT_DISABILITY = 'NENHUMA';
+
 export const listCollaborators = async (req: Request, res: Response) => {
     try {
         const user = (req as AuthRequest).user;
@@ -14,8 +18,12 @@ export const listCollaborators = async (req: Request, res: Response) => {
 
         const collaborators = await prisma.user.findMany({
             where: {
-                role: 'COLABORADOR',
-                companyId: companyId
+                // Removed role filter to allow seeing promoted users (LIDER/RH) who are still employees
+                // Or if we strictly want 'COLABORADOR', we should document that. 
+                // For now, let's include anyone with a collaborator profile
+                collaboratorProfile: { isNot: null },
+                companyId: companyId,
+                active: true
             },
             include: {
                 collaboratorProfile: {
@@ -51,37 +59,44 @@ export const createCollaborator = async (req: Request, res: Response) => {
             return res.status(403).json({ error: 'Unauthorized to create collaborator for this company' });
         }
 
-        const hashedPassword = await bcrypt.hash(password || '123456', 10);
+        // Check email existence BEFORE transaction
+        const existingUser = await prisma.user.findUnique({ where: { email } });
+        if (existingUser) {
+            return res.status(400).json({ error: 'Email already registered' });
+        }
+
+        // Hash password OUTSIDE transaction
+        const hashedPassword = await bcrypt.hash(password || 'Mudar@123', 10); // Stronger default password
 
         // Transaction to create User and Profile together
         const result = await prisma.$transaction(async (prisma) => {
-            const user = await prisma.user.create({
+            const newUser = await prisma.user.create({
                 data: {
                     name,
                     email,
                     password: hashedPassword,
-                    role: 'COLABORADOR',
+                    role: ROLE_COLABORADOR,
                     companyId,
                 }
             });
 
             const profile = await prisma.collaboratorProfile.create({
                 data: {
-                    userId: user.id,
+                    userId: newUser.id,
                     matricula,
                     areaId,
-                    shift,
-                    disabilityType,
+                    shift: shift || DEFAULT_SHIFT,
+                    disabilityType: disabilityType || DEFAULT_DISABILITY,
                     needsDescription
                 }
             });
 
-            return { user, profile };
+            return { user: newUser, profile };
         });
 
         res.status(201).json(result);
     } catch (error) {
-        console.error(error);
+        // console.error(error); // Removed log
         res.status(500).json({ error: 'Error creating collaborator' });
     }
 };
@@ -152,6 +167,19 @@ export const updateCollaborator = async (req: Request, res: Response) => {
             return res.status(403).json({ error: 'Access denied' });
         }
 
+        // Check email uniqueness if changing
+        if (email && email !== existingUser.email) {
+            const emailCheck = await prisma.user.findUnique({ where: { email } });
+            if (emailCheck) {
+                return res.status(400).json({ error: 'Email already in use' });
+            }
+        }
+
+        let hashedPassword = undefined;
+        if (password) {
+            hashedPassword = await bcrypt.hash(password, 10);
+        }
+
         const result = await prisma.$transaction(async (prisma) => {
             const updateData: any = { name, email };
             // Only update companyId if MASTER
@@ -159,8 +187,8 @@ export const updateCollaborator = async (req: Request, res: Response) => {
                 updateData.companyId = companyId;
             }
 
-            if (password) {
-                updateData.password = await bcrypt.hash(password, 10);
+            if (hashedPassword) {
+                updateData.password = hashedPassword;
             }
 
             const user = await prisma.user.update({
@@ -184,7 +212,7 @@ export const updateCollaborator = async (req: Request, res: Response) => {
 
         res.json(result);
     } catch (error) {
-        console.error('Error updating collaborator:', error);
+        // console.error('Error updating collaborator:', error);
         res.status(500).json({ error: 'Error updating collaborator' });
     }
 };

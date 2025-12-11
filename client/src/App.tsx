@@ -35,6 +35,10 @@ import LibrasCentral from './pages/LibrasCentral';
 import SpecialistSettings from './pages/settings/SpecialistSettings';
 import CompanyHistory from './pages/CompanyHistory';
 import PDIManagement from './pages/PDIManagement';
+import UniversityManagement from './pages/master/UniversityManagement';
+import CourseCatalog from './pages/university/CourseCatalog';
+import CoursePlayer from './pages/university/CoursePlayer';
+import UniversityReports from './pages/university/UniversityReports';
 
 function App() {
   console.log('QS System Version: Libras Central (v7)');
@@ -73,6 +77,7 @@ function App() {
             <Route path="qrcode" element={<QRCodeGenerator />} />
             <Route path="specialists" element={<SpecialistSettings />} />
             <Route path="history" element={<CompanyHistory />} />
+            <Route path="university" element={<UniversityManagement />} />
             <Route path="pdi" element={<PDIManagement />} />
           </Route>
 
@@ -85,7 +90,10 @@ function App() {
             <Route path="reports" element={<Reports />} />
             <Route path="history" element={<VisitHistory />} />
             <Route path="schedules" element={<Schedules />} />
+            <Route path="history" element={<VisitHistory />} />
+            <Route path="schedules" element={<Schedules />} />
             <Route path="libras" element={<LibrasCentral />} />
+            <Route path="university-reports" element={<UniversityReports />} />
           </Route>
           {/* Mobile App Routes */}
           <Route path="/app" element={<MobileLayout />}>
@@ -94,6 +102,8 @@ function App() {
             <Route path="request" element={<MobileSchedule />} />
             <Route path="profile" element={<MobileProfile />} />
             <Route path="libras" element={<LibrasCentral />} />
+            <Route path="university" element={<CourseCatalog />} />
+            <Route path="university/course/:id" element={<CoursePlayer />} />
           </Route>
         </Routes>
       </Router>

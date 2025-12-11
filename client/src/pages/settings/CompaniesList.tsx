@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Building, Plus, X } from 'lucide-react';
+import { Building, Plus, X, GraduationCap } from 'lucide-react';
 import { api } from '../../lib/api';
 
 const CompaniesList = () => {
@@ -7,11 +7,17 @@ const CompaniesList = () => {
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
-    const [newCompany, setNewCompany] = useState({ name: '', cnpj: '', email: '', password: '' });
+    const [newCompany, setNewCompany] = useState({
+        name: '',
+        cnpj: '',
+        email: '',
+        password: '',
+        universityEnabled: false
+    });
 
     const fetchCompanies = async () => {
         try {
-            const response = await api.get('/companies');
+            const response = await api.get('/companies?includeInactive=true');
             setCompanies(response.data);
         } catch (error) {
             console.error('Error fetching companies', error);
@@ -33,7 +39,7 @@ const CompaniesList = () => {
             await api[method](url, newCompany);
 
             setIsModalOpen(false);
-            setNewCompany({ name: '', cnpj: '', email: '', password: '' });
+            setNewCompany({ name: '', cnpj: '', email: '', password: '', universityEnabled: false });
             setEditingId(null);
             fetchCompanies();
             alert(editingId ? 'Empresa atualizada com sucesso!' : 'Empresa cadastrada com sucesso!');
@@ -48,7 +54,8 @@ const CompaniesList = () => {
             name: company.name,
             cnpj: company.cnpj,
             email: '', // Don't populate sensitive/unknown data if not needed, or fetch if available
-            password: ''
+            password: '',
+            universityEnabled: company.universityEnabled || false
         });
         setEditingId(company.id);
         setIsModalOpen(true);
@@ -60,7 +67,11 @@ const CompaniesList = () => {
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Cadastro de Empresas</h1>
                 <button
                     type="button"
-                    onClick={() => setIsModalOpen(true)}
+                    onClick={() => {
+                        setNewCompany({ name: '', cnpj: '', email: '', password: '', universityEnabled: false });
+                        setEditingId(null);
+                        setIsModalOpen(true);
+                    }}
                     className="btn-primary flex items-center space-x-2"
                 >
                     <Plus className="h-4 w-4" />
@@ -77,21 +88,37 @@ const CompaniesList = () => {
                             <tr>
                                 <th className="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider">Nome</th>
                                 <th className="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider">CNPJ</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider">Universidade</th>
                                 <th className="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider">Ações</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                             {Array.isArray(companies) && companies.map((company) => (
-                                <tr key={company.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                <tr key={company.id} className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${!company.active ? 'opacity-60' : ''}`}>
                                     <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">
                                         <div className="flex items-center space-x-3">
                                             <div className="p-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg">
                                                 <Building className="h-5 w-5" />
                                             </div>
-                                            <span>{company.name}</span>
+                                            <div>
+                                                <span>{company.name}</span>
+                                                {!company.active && <span className="ml-2 text-xs text-red-500">(Inativa)</span>}
+                                            </div>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 text-gray-500 dark:text-gray-400">{company.cnpj}</td>
+                                    <td className="px-6 py-4">
+                                        {company.universityEnabled ? (
+                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                                                <GraduationCap className="w-3 h-3 mr-1" />
+                                                Ativa
+                                            </span>
+                                        ) : (
+                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+                                                Inativa
+                                            </span>
+                                        )}
+                                    </td>
                                     <td className="px-6 py-4">
                                         <button type="button" onClick={() => handleEdit(company)} className="text-primary hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium">Editar</button>
                                     </td>
@@ -154,6 +181,21 @@ const CompaniesList = () => {
                                     placeholder="Mínimo 6 caracteres"
                                 />
                             </div>
+
+                            <div className="flex items-center space-x-2 pt-2">
+                                <input
+                                    type="checkbox"
+                                    id="universityEnabled"
+                                    checked={newCompany.universityEnabled}
+                                    onChange={e => setNewCompany({ ...newCompany, universityEnabled: e.target.checked })}
+                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                />
+                                <label htmlFor="universityEnabled" className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                                    <GraduationCap className="h-4 w-4" />
+                                    Habilitar Universidade Corporativa
+                                </label>
+                            </div>
+
                             <div className="flex justify-end space-x-3 mt-6">
                                 <button
                                     type="button"

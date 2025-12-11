@@ -21,11 +21,20 @@ const handleResponse = async (response: Response) => {
     if (response.status === 401) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        window.location.href = '/login';
+        // Dispatch event instead of hard reload to allow React to handle it
+        window.dispatchEvent(new Event('auth:logout'));
+        window.location.href = '/login'; // Fallback
         throw new Error('Sessão expirada');
     }
 
-    const data = await response.json().catch(() => ({}));
+    const text = await response.text();
+    let data;
+    try {
+        data = text ? JSON.parse(text) : {};
+    } catch (e) {
+        console.error('Failed to parse JSON response:', text);
+        throw new Error('Invalid JSON response from server');
+    }
 
     if (!response.ok) {
         throw new Error(data.error || `Erro ${response.status}: ${response.statusText}`);
@@ -34,9 +43,10 @@ const handleResponse = async (response: Response) => {
     return { data, status: response.status };
 };
 
+// Use explicit env var or fallback
 const BASE_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api`;
 
-const fetchWithTimeout = async (url: string, options: RequestInit, timeout = 15000) => {
+const fetchWithTimeout = async (url: string, options: RequestInit, timeout = 30000) => { // Increased timeout
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), timeout);
     try {
@@ -55,14 +65,15 @@ const fetchWithTimeout = async (url: string, options: RequestInit, timeout = 150
 const fetchWithRetry = async (url: string, options: RequestInit, retries = 3, backoff = 1000) => {
     try {
         const response = await fetchWithTimeout(url, options);
-        // Retry on 5xx server errors
-        if (response.status >= 500 && retries > 0) {
+        // Retry on 5xx server errors, but not 500 (Internal Server Error) as it might be logic error
+        // Retry on 502, 503, 504 (Gateway/Service Unavailable)
+        if ([502, 503, 504].includes(response.status) && retries > 0) {
             throw new Error(`Server Error ${response.status}`);
         }
         return response;
-    } catch (error: any) {
-        if (retries > 0) {
-            console.warn(`Retrying request to ${url}... (${retries} attempts left)`);
+    } catch (error) {
+        if (retries > 0 && error instanceof Error && (error.name === 'AbortError' || error.message.includes('Server Error'))) {
+            // console.warn(`Retrying request to ${url}... (${retries} attempts left)`);
             await new Promise(resolve => setTimeout(resolve, backoff));
             return fetchWithRetry(url, options, retries - 1, backoff * 2);
         }
@@ -79,32 +90,34 @@ export const api = {
         return handleResponse(response);
     },
 
-    post: async (endpoint: string, body: any, customHeaders: any = {}) => {
-        const headers = getHeaders();
+    post: async (endpoint: string, body: unknown, customHeaders: Record<string, string> = {}) => {
+        const headers = getHeaders() as Record<string, string>;
 
-        if (body instanceof FormData) {
-            delete (headers as any)['Content-Type'];
+        const isFormData = body instanceof FormData;
+        if (isFormData) {
+            delete headers['Content-Type'];
         }
 
         const response = await fetchWithRetry(`${BASE_URL}${endpoint}`, {
             method: 'POST',
             headers: { ...headers, ...customHeaders },
-            body: body instanceof FormData ? body : JSON.stringify(body),
+            body: isFormData ? body : JSON.stringify(body),
         });
         return handleResponse(response);
     },
 
-    put: async (endpoint: string, body: any, customHeaders: any = {}) => {
-        const headers = getHeaders();
+    put: async (endpoint: string, body: unknown, customHeaders: Record<string, string> = {}) => {
+        const headers = getHeaders() as Record<string, string>;
 
-        if (body instanceof FormData) {
-            delete (headers as any)['Content-Type'];
+        const isFormData = body instanceof FormData;
+        if (isFormData) {
+            delete headers['Content-Type'];
         }
 
         const response = await fetchWithRetry(`${BASE_URL}${endpoint}`, {
             method: 'PUT',
             headers: { ...headers, ...customHeaders },
-            body: body instanceof FormData ? body : JSON.stringify(body),
+            body: isFormData ? body : JSON.stringify(body),
         });
         return handleResponse(response);
     },

@@ -9,7 +9,8 @@ import {
     Menu,
     X,
     Calendar,
-    Video
+    Video,
+    GraduationCap
 } from 'lucide-react';
 import { useLibrasAvailability } from '../hooks/useLibrasAvailability';
 
@@ -50,6 +51,7 @@ const RHLayout = () => {
         { icon: Users, label: 'Colaboradores', path: '/rh/collaborators' },
         { icon: ClipboardList, label: 'Histórico de Visitas', path: '/rh/history' },
         { icon: FileText, label: 'Relatórios', path: '/rh/reports' },
+        { icon: GraduationCap, label: 'Universidade', path: '/rh/university-reports' },
         { icon: Calendar, label: 'Agendamentos', path: '/rh/schedules' },
     ];
 

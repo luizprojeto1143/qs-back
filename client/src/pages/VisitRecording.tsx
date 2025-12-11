@@ -236,9 +236,8 @@ const VisitRecording = () => {
                 formDataUpload.append('file', audioFile);
 
                 try {
-                    const res = await api.post('/upload', formDataUpload, {
-                        headers: { 'Content-Type': 'multipart/form-data' }
-                    });
+                    // api.ts handles FormData automatically (removes Content-Type to let browser set boundary)
+                    const res = await api.post('/upload', formDataUpload);
 
                     setFormData(prev => ({
                         ...prev,
@@ -291,9 +290,8 @@ const VisitRecording = () => {
             formDataUpload.append('file', file);
 
             try {
-                const res = await api.post('/upload', formDataUpload, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
+                // api.ts handles FormData automatically
+                const res = await api.post('/upload', formDataUpload);
 
                 setFormData(prev => ({
                     ...prev,

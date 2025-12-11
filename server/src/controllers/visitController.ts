@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import prisma from '../prisma';
+import { AuthRequest } from '../middleware/authMiddleware';
 
 export const createVisit = async (req: Request, res: Response) => {
     try {
@@ -10,10 +11,13 @@ export const createVisit = async (req: Request, res: Response) => {
             relatos, // { lideranca, colaborador, observacoes }
             avaliacoes, // { area, lideranca, colaborador } (JSON strings or objects)
             pendencias, // Array of objects
-            anexos // Array of objects
+            anexos, // Array of objects
+            individualNotes // Array of objects
         } = req.body;
 
-        const masterId = (req as any).user.userId;
+        const masterId = (req as AuthRequest).user?.userId;
+
+        if (!masterId) return res.status(401).json({ error: 'Unauthorized' });
 
         // Resolve User IDs to CollaboratorProfile IDs
         const profiles = await prisma.collaboratorProfile.findMany({
@@ -29,10 +33,6 @@ export const createVisit = async (req: Request, res: Response) => {
             return acc;
         }, {} as Record<string, string>);
 
-        if (profileIds.length === 0 && collaboratorIds.length > 0) {
-            console.warn('No profiles found for provided user IDs:', collaboratorIds);
-        }
-
         // Transaction to ensure data consistency
         const result = await prisma.$transaction(async (prisma) => {
             // 1. Create the Visit record
@@ -44,9 +44,9 @@ export const createVisit = async (req: Request, res: Response) => {
                     relatoLideranca: relatos.lideranca,
                     relatoColaborador: relatos.colaborador,
                     observacoesMaster: relatos.observacoes,
-                    avaliacaoArea: JSON.stringify(avaliacoes?.area || {}),
-                    avaliacaoLideranca: JSON.stringify(avaliacoes?.lideranca || {}),
-                    avaliacaoColaborador: JSON.stringify(avaliacoes?.colaborador || {}),
+                    avaliacaoArea: typeof avaliacoes?.area === 'string' ? avaliacoes.area : JSON.stringify(avaliacoes?.area || {}),
+                    avaliacaoLideranca: typeof avaliacoes?.lideranca === 'string' ? avaliacoes.lideranca : JSON.stringify(avaliacoes?.lideranca || {}),
+                    avaliacaoColaborador: typeof avaliacoes?.colaborador === 'string' ? avaliacoes.colaborador : JSON.stringify(avaliacoes?.colaborador || {}),
                     collaborators: {
                         connect: profileIds.map((id: string) => ({ id }))
                     }
@@ -55,66 +55,53 @@ export const createVisit = async (req: Request, res: Response) => {
 
             // 2. Create Pendencies linked to the visit
             if (pendencias && pendencias.length > 0) {
-                await Promise.all(pendencias.map(async (p: any) => {
-                    // Resolve responsible/collaborator if needed
-                    let collabProfileId = null;
-                    if (p.collaboratorId) {
-                        collabProfileId = userToProfileMap[p.collaboratorId] || null;
-                    }
-
-                    return prisma.pendingItem.create({
-                        data: {
-                            description: p.description,
-                            responsible: p.responsible,
-                            priority: p.priority,
-                            deadline: p.deadline ? new Date(p.deadline) : null,
-                            status: 'PENDENTE',
-                            companyId,
-                            areaId,
-                            visitId: visit.id,
-                            collaboratorId: collabProfileId
-                        }
-                    });
+                // Prepare data for createMany
+                const pendencyData = pendencias.map((p: any) => ({
+                    description: p.description,
+                    responsible: p.responsible,
+                    priority: p.priority,
+                    deadline: p.deadline ? new Date(p.deadline) : null,
+                    status: 'PENDENTE',
+                    companyId,
+                    areaId,
+                    visitId: visit.id,
+                    collaboratorId: p.collaboratorId ? (userToProfileMap[p.collaboratorId] || null) : null
                 }));
+
+                await prisma.pendingItem.createMany({
+                    data: pendencyData
+                });
             }
 
             // 3. Create Attachments
             if (anexos && anexos.length > 0) {
-                await Promise.all(anexos.map((a: any) =>
-                    prisma.visitAttachment.create({
-                        data: {
-                            visitId: visit.id,
-                            type: a.type,
-                            url: a.url,
-                            name: a.name
-                        }
-                    })
-                ));
+                const attachmentData = anexos.map((a: any) => ({
+                    visitId: visit.id,
+                    type: a.type,
+                    url: a.url,
+                    name: a.name
+                }));
+
+                await prisma.visitAttachment.createMany({
+                    data: attachmentData
+                });
             }
 
             // 4. Create Individual Notes
-            if (req.body.individualNotes && req.body.individualNotes.length > 0) {
-                console.log('Processing individual notes:', req.body.individualNotes);
-                console.log('User to Profile Map:', userToProfileMap);
+            if (individualNotes && individualNotes.length > 0) {
+                const notesData = individualNotes
+                    .filter((note: any) => userToProfileMap[note.collaboratorId]) // Ensure profile exists
+                    .map((note: any) => ({
+                        visitId: visit.id,
+                        collaboratorId: userToProfileMap[note.collaboratorId],
+                        content: note.content
+                    }));
 
-                await Promise.all(req.body.individualNotes.map((note: any) => {
-                    const profileId = userToProfileMap[note.collaboratorId];
-                    if (!profileId) {
-                        console.warn(`Skipping note for user ${note.collaboratorId} - Profile not found in map keys: ${Object.keys(userToProfileMap).join(', ')}`);
-                        return Promise.resolve();
-                    }
-
-                    console.log(`Creating note for visit ${visit.id}, profile ${profileId}`);
-                    return prisma.visitNote.create({
-                        data: {
-                            visitId: visit.id,
-                            collaboratorId: profileId,
-                            content: note.content
-                        }
+                if (notesData.length > 0) {
+                    await prisma.visitNote.createMany({
+                        data: notesData
                     });
-                }));
-            } else {
-                console.log('No individual notes found in request body');
+                }
             }
 
             return visit;
@@ -122,19 +109,15 @@ export const createVisit = async (req: Request, res: Response) => {
 
         res.status(201).json(result);
     } catch (error) {
-        console.error('Error creating visit:', error);
-        // Enhanced error logging
-        if (error instanceof Error) {
-            console.error('Stack:', error.stack);
-        }
-        res.status(500).json({ error: 'Error creating visit record', details: String(error) });
+        // console.error('Error creating visit:', error);
+        res.status(500).json({ error: 'Error creating visit record' });
     }
 };
 
 export const listVisits = async (req: Request, res: Response) => {
     try {
-        const user = (req as any).user;
-        const companyId = req.headers['x-company-id'] as string || user.companyId;
+        const user = (req as AuthRequest).user;
+        const companyId = req.headers['x-company-id'] as string || user?.companyId;
 
         if (!companyId) {
             return res.status(400).json({ error: 'Company context required' });
@@ -149,11 +132,11 @@ export const listVisits = async (req: Request, res: Response) => {
                 collaborators: { include: { user: { select: { name: true } } } },
                 generatedPendencies: true
             },
-            orderBy: { date: 'desc' }
+            orderBy: { date: 'desc' },
+            take: 50 // Limit to 50 for now (Pagination TODO)
         });
         res.json(visits);
     } catch (error) {
-        console.error('Error fetching visits:', error);
         res.status(500).json({ error: 'Error fetching visits' });
     }
 };
@@ -161,8 +144,8 @@ export const listVisits = async (req: Request, res: Response) => {
 export const getVisit = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const user = (req as any).user;
-        const companyId = req.headers['x-company-id'] as string || user.companyId;
+        const user = (req as AuthRequest).user;
+        const companyId = req.headers['x-company-id'] as string || user?.companyId;
 
         const visit = await prisma.visit.findUnique({
             where: { id },
@@ -189,8 +172,6 @@ export const getVisit = async (req: Request, res: Response) => {
         if (visit.companyId !== companyId) {
             return res.status(403).json({ error: 'Access denied' });
         }
-
-        if (!visit) return res.status(404).json({ error: 'Visit not found' });
 
         res.json(visit);
     } catch (error) {

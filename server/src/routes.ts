@@ -3,6 +3,7 @@ import * as authController from './controllers/authController';
 import * as companyController from './controllers/companyController';
 import * as collaboratorController from './controllers/collaboratorController';
 import { authenticateToken } from './middleware/authMiddleware';
+import { rateLimiter } from './middleware/rateLimiter';
 import { createRoom } from './controllers/dailyController';
 
 const router = Router();
@@ -10,33 +11,15 @@ const router = Router();
 // Auth Routes
 router.post('/auth/register', authController.register);
 router.post('/auth/login', authController.login);
-router.post('/auth/register-collaborator', authController.registerCollaborator); // Public route
-router.get('/public/areas/:companyId', companyController.listPublicAreas); // Public route
+router.post('/auth/register-collaborator', rateLimiter, authController.registerCollaborator); // Public route
+router.get('/public/areas/:companyId', rateLimiter, companyController.listPublicAreas); // Public route
 
 // Protected Routes
 router.use(authenticateToken);
 
 import prisma from './prisma';
 
-router.get('/me', async (req, res) => {
-    try {
-        const userId = (req as any).user.userId;
-        const user = await prisma.user.findUnique({
-            where: { id: userId },
-            include: { company: true }
-        });
-
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-
-        // Remove password from response
-        const { password, ...userWithoutPassword } = user;
-        res.json({ user: userWithoutPassword });
-    } catch (error) {
-        res.status(500).json({ error: 'Error fetching user profile' });
-    }
-});
+router.get('/me', authController.getProfile);
 
 // Structure Routes
 router.get('/structure', companyController.getStructure);
@@ -140,6 +123,18 @@ import * as specialtyController from './controllers/specialtyController';
 router.get('/specialties', specialtyController.listSpecialties);
 router.post('/specialties', specialtyController.createSpecialty);
 router.delete('/specialties/:id', specialtyController.deleteSpecialty);
+
+// University Routes
+import * as courseController from './controllers/courseController';
+router.get('/courses', courseController.listCourses);
+router.post('/courses', courseController.createCourse);
+router.put('/courses/:id', courseController.updateCourse);
+router.delete('/courses/:id', courseController.deleteCourse);
+router.post('/modules', courseController.createModule);
+router.post('/lessons', courseController.createLesson);
+router.get('/courses/:id', courseController.getCourseDetails);
+router.post('/progress', courseController.updateLessonProgress);
+router.get('/courses/reports/progress', courseController.getCompanyProgress);
 
 // PDI Routes
 import * as pdiController from './controllers/pdiController';

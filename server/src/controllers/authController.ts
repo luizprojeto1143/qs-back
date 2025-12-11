@@ -3,6 +3,9 @@ import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
 import prisma from '../prisma';
 
+if (!process.env.JWT_SECRET) {
+    console.warn('WARNING: JWT_SECRET is not defined. Using default insecure key.');
+}
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
 
 export const register = async (req: Request, res: Response) => {
@@ -128,5 +131,25 @@ export const registerCollaborator = async (req: Request, res: Response) => {
     } catch (error) {
         console.error('Error registering collaborator:', error);
         res.status(500).json({ error: 'Error registering collaborator' });
+    }
+};
+export const getProfile = async (req: Request, res: Response) => {
+    try {
+        const userId = (req as any).user.userId; // Middleware ensures user exists, but we'll fix type in routes
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            include: { company: true }
+        });
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Remove password from response
+        const { password, ...userWithoutPassword } = user;
+        res.json({ user: userWithoutPassword });
+    } catch (error) {
+        console.error('Error fetching profile:', error);
+        res.status(500).json({ error: 'Error fetching user profile' });
     }
 };

@@ -3,7 +3,7 @@ import { api } from '../lib/api';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Building2, Calendar, Search, Filter } from 'lucide-react';
+import { Building2, Calendar, Search } from 'lucide-react';
 
 interface Company {
     id: string;

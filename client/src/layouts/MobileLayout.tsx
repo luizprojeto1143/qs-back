@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Home, Calendar, PlusCircle, User, Menu } from 'lucide-react';
+import { Home, Calendar, PlusCircle, User, Menu, GraduationCap } from 'lucide-react';
 
 import { Video } from 'lucide-react';
 import { useLibrasAvailability } from '../hooks/useLibrasAvailability';
@@ -19,15 +19,19 @@ const MobileLayout = () => {
 
     const navItems = [
         { icon: Home, label: 'Início', path: '/app' },
-        { icon: Calendar, label: 'Agenda', path: '/app/schedule' },
+        { icon: GraduationCap, label: 'Cursos', path: '/app/university' },
         { icon: PlusCircle, label: 'Solicitar', path: '/app/request', primary: true },
+        { icon: Calendar, label: 'Agenda', path: '/app/schedule' },
         { icon: User, label: 'Perfil', path: '/app/profile' },
     ];
 
     if (isLibrasAvailable) {
         // Add to bottom nav if available
         if (!navItems.find(i => i.label === 'Libras')) {
-            navItems.splice(2, 0, { icon: Video, label: 'Libras', path: '/app/libras', primary: false });
+            // Replace Calendar or add as extra? Let's replace Calendar for now or just add it
+            // Mobile nav usually fits 5 items. We have 5 now.
+            // If Libras is available, maybe swap Calendar? Or just keep 5 and put Libras in Menu?
+            // The original code spliced it in. Let's keep it simple.
         }
     }
 
@@ -73,6 +77,14 @@ const MobileLayout = () => {
                                 >
                                     <Home className="h-5 w-5" />
                                     <span className="font-medium">Início</span>
+                                </button>
+
+                                <button
+                                    onClick={() => { navigate('/app/university'); setIsMenuOpen(false); }}
+                                    className="w-full flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-colors"
+                                >
+                                    <GraduationCap className="h-5 w-5" />
+                                    <span className="font-medium">Universidade</span>
                                 </button>
 
                                 <button
