@@ -69,6 +69,11 @@ export const CompanyProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     useEffect(() => {
         fetchCompanies();
+
+        // Poll for company updates (e.g., settings changes like universityEnabled)
+        const interval = setInterval(fetchCompanies, 30000); // Check every 30s
+
+        return () => clearInterval(interval);
     }, []);
 
     const refreshCompanies = () => {
