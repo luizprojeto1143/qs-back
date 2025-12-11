@@ -29,8 +29,13 @@ const CourseCatalog = () => {
             try {
                 const response = await api.get('/courses');
                 setCourses(response.data);
-            } catch (error) {
+            } catch (error: any) {
                 console.error('Error fetching courses', error);
+                if (error.response && error.response.data) {
+                    alert('DEBUG ERRO: ' + JSON.stringify(error.response.data));
+                } else {
+                    alert('DEBUG ERRO: ' + error.message);
+                }
             } finally {
                 setLoading(false);
             }
