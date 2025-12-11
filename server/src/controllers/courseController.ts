@@ -12,6 +12,14 @@ export const listCourses = async (req: Request, res: Response) => {
         // Try to fetch courses normally
         const courses = await prisma.course.findMany({
             where: { active: true },
+            include: {
+                modules: {
+                    include: { lessons: true }
+                },
+                enrollments: {
+                    where: { userId: user.userId }
+                }
+            },
             orderBy: { createdAt: 'desc' }
         });
 
