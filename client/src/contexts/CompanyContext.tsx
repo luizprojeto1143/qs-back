@@ -5,6 +5,7 @@ interface Company {
     id: string;
     name: string;
     cnpj: string;
+    logo?: string;
     universityEnabled?: boolean;
 }
 
