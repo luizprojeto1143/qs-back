@@ -157,9 +157,28 @@ const CoursePlayer = () => {
 
                             {activeTab === 'video' && (
                                 <>
-                                    <div className="aspect-video bg-black rounded-xl overflow-hidden shadow-lg">
+                                    <div className="aspect-video bg-black rounded-xl overflow-hidden shadow-lg relative group">
                                         <iframe
-                                            src={currentLesson.videoUrl.replace('watch?v=', 'embed/')}
+                                            src={(() => {
+                                                try {
+                                                    let videoId = '';
+                                                    const url = currentLesson.videoUrl;
+
+                                                    if (url.includes('youtu.be/')) {
+                                                        videoId = url.split('youtu.be/')[1]?.split('?')[0];
+                                                    } else if (url.includes('watch?v=')) {
+                                                        videoId = url.split('watch?v=')[1]?.split('&')[0];
+                                                    } else if (url.includes('embed/')) {
+                                                        videoId = url.split('embed/')[1]?.split('?')[0];
+                                                    }
+
+                                                    if (!videoId) return url; // Fallback
+
+                                                    return `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`;
+                                                } catch (e) {
+                                                    return currentLesson.videoUrl;
+                                                }
+                                            })()}
                                             className="w-full h-full"
                                             frameBorder="0"
                                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
