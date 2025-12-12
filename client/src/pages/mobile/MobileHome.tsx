@@ -14,7 +14,6 @@ const MobileHome = () => {
     const [feedItems, setFeedItems] = useState<any[]>([]);
     const [nextSchedule, setNextSchedule] = useState<any>(null);
     const [loading, setLoading] = useState(true);
-
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -26,12 +25,19 @@ const MobileHome = () => {
                 const feedData = resFeed.data;
                 const scheduleData = resSchedule.data;
 
-                if (Array.isArray(feedData)) {
+                if (feedData.data && Array.isArray(feedData.data)) {
+                    setFeedItems(feedData.data.map((item: any) => ({
+                        ...item,
+                        type: item.videoLibrasUrl ? 'video' : 'article',
+                        thumbnail: item.videoLibrasUrl ? 'bg-blue-100' : 'bg-green-100',
+                        author: 'RH'
+                    })));
+                } else if (Array.isArray(feedData)) {
                     setFeedItems(feedData.map((item: any) => ({
                         ...item,
                         type: item.videoLibrasUrl ? 'video' : 'article',
-                        thumbnail: item.videoLibrasUrl ? 'bg-blue-100' : 'bg-green-100', // Simple logic for now
-                        author: 'RH' // Backend doesn't return author name yet, defaulting
+                        thumbnail: item.videoLibrasUrl ? 'bg-blue-100' : 'bg-green-100',
+                        author: 'RH'
                     })));
                 }
 

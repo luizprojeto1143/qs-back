@@ -45,10 +45,10 @@ const Reports = () => {
         try {
             if (paramType === 'visitId') {
                 const res = await api.get('/visits');
-                setVisits(res.data);
+                setVisits(res.data.data || res.data);
             } else if (paramType === 'collaboratorId') {
                 const res = await api.get('/collaborators');
-                setCollaborators(res.data);
+                setCollaborators(res.data.data || res.data);
             } else if (paramType === 'areaId') {
                 const res = await api.get('/areas');
                 setAreas(res.data);

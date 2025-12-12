@@ -73,13 +73,13 @@ const VisitRecording = () => {
                     }
 
                     // Fetch Areas and Collaborators
-                    const [resAreas, resCollaborators] = await Promise.all([
+                    const [resAreas, resCollabs] = await Promise.all([
                         api.get('/areas'),
                         api.get('/collaborators')
                     ]);
 
                     setAreas(resAreas.data);
-                    setCollaborators(resCollaborators.data);
+                    setCollaborators(resCollabs.data.data || resCollabs.data);
 
                     // Handle Schedule Integration (Auto-Grouping)
                     if (location.state && location.state.scheduleId) {
@@ -119,14 +119,14 @@ const VisitRecording = () => {
                                 // Add Collaborators
                                 const collaboratorsToAdd: string[] = [];
                                 relatedSchedules.forEach((s: any) => {
-                                    const collab = resCollaborators.data.find((c: any) => c.name === s.collaborator);
+                                    const collab = resCollabs.data.data ? resCollabs.data.data.find((c: any) => c.name === s.collaborator) : resCollabs.data.find((c: any) => c.name === s.collaborator);
                                     if (collab && !collaboratorsToAdd.includes(collab.id)) {
                                         collaboratorsToAdd.push(collab.id);
                                     }
                                 });
 
                                 if (location.state.collaboratorName) {
-                                    const initialCollab = resCollaborators.data.find((c: any) => c.name === location.state.collaboratorName);
+                                    const initialCollab = resCollabs.data.data ? resCollabs.data.data.find((c: any) => c.name === location.state.collaboratorName) : resCollabs.data.find((c: any) => c.name === location.state.collaboratorName);
                                     if (initialCollab && !collaboratorsToAdd.includes(initialCollab.id)) {
                                         collaboratorsToAdd.push(initialCollab.id);
                                     }

@@ -56,7 +56,7 @@ const PDIManagement = () => {
     const fetchPDIs = async () => {
         try {
             const response = await api.get('/pdis');
-            setPdis(response.data);
+            setPdis(response.data.data || response.data);
         } catch (error) {
             console.error('Error fetching PDIs', error);
         }
@@ -65,7 +65,7 @@ const PDIManagement = () => {
     const fetchCollaborators = async () => {
         try {
             const response = await api.get('/collaborators');
-            setCollaborators(response.data);
+            setCollaborators(response.data.data || response.data);
         } catch (error) {
             console.error('Error fetching collaborators', error);
         }

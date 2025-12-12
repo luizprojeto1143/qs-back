@@ -50,7 +50,7 @@ const CollaboratorsList = () => {
                 api.get('/areas')
             ]);
 
-            setCollaborators(resCollabs.data);
+            setCollaborators(resCollabs.data.data || resCollabs.data);
             setAreas(resAreas.data);
         } catch (error) {
             console.error('Error fetching data', error);

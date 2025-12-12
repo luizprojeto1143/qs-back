@@ -27,7 +27,9 @@ const Feed = () => {
         try {
             const response = await api.get('/feed');
             const data = response.data;
-            if (Array.isArray(data)) {
+            if (data.data && Array.isArray(data.data)) {
+                setPosts(data.data);
+            } else if (Array.isArray(data)) {
                 setPosts(data);
             } else {
                 console.error('Feed data is not an array:', data);

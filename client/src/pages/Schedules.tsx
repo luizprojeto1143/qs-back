@@ -45,7 +45,7 @@ const Schedules = () => {
         queryKey: ['collaborators', selectedCompanyId],
         queryFn: async () => {
             const response = await api.get('/collaborators');
-            return response.data;
+            return response.data.data || response.data;
         },
         initialData: []
     });
@@ -61,7 +61,6 @@ const Schedules = () => {
 
     // Filter data based on selectedCompanyId
     const filteredCollaborators = collaborators.filter((c: any) => !selectedCompanyId || c.companyId === selectedCompanyId);
-
     const filteredSchedules = schedules.filter((s: any) => {
         if (!selectedCompanyId) return true;
         if (s.collaborator && typeof s.collaborator === 'object' && s.collaborator.companyId) {
