@@ -56,9 +56,17 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
             verified.role = userStatus.role; // Refresh role as well
         }
 
+        console.log('Auth Debug:', {
+            tokenRole: verified.role,
+            dbRole: userStatus.role,
+            userId: verified.userId,
+            path: req.path
+        });
+
         (req as AuthRequest).user = verified;
         next();
     } catch (error) {
+        console.error('Auth Error:', error);
         res.status(403).json({ error: 'Invalid token' });
     }
 };
@@ -66,6 +74,12 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
 export const requireRole = (roles: string[]) => {
     return (req: Request, res: Response, next: NextFunction) => {
         const user = (req as AuthRequest).user;
+        console.log('Role Check:', {
+            required: roles,
+            userRole: user?.role,
+            hasPermission: user && roles.includes(user.role)
+        });
+
         if (!user || !roles.includes(user.role)) {
             return res.status(403).json({ error: 'Insufficient permissions' });
         }
