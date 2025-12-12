@@ -76,9 +76,7 @@ const CollaboratorRegistration = () => {
             const uploadFormData = new FormData();
             uploadFormData.append('file', avatarFile);
 
-            const uploadRes = await api.post('/upload', uploadFormData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
+            const uploadRes = await api.post('/upload', uploadFormData);
 
             const avatarUrl = uploadRes.data.url;
 
