@@ -145,7 +145,11 @@ const CollaboratorsList = () => {
                             <div key={collab.id} onClick={() => handleEdit(collab)} className="p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer group">
                                 <div className="flex items-center space-x-4">
                                     <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center overflow-hidden text-gray-400 dark:text-gray-500">
-                                        <User className="h-6 w-6" />
+                                        {collab.avatar ? (
+                                            <img src={collab.avatar} alt={collab.name} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <User className="h-6 w-6" />
+                                        )}
                                     </div>
                                     <div>
                                         <h3 className="text-sm font-bold text-gray-900 dark:text-white">{collab.name}</h3>
