@@ -43,7 +43,7 @@ export function UsersList() {
         queryKey: ['users'],
         queryFn: async () => {
             const response = await api.get('/users');
-            return response.data;
+            return response.data.data;
         }
     });
 
