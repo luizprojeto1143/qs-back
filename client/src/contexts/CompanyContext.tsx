@@ -37,6 +37,12 @@ export const CompanyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
     const fetchCompanies = async () => {
+        // Don't fetch if no token (public routes)
+        if (!localStorage.getItem('token')) {
+            setLoading(false);
+            return;
+        }
+
         try {
             const response = await api.get('/companies');
             const data = response.data;
@@ -51,7 +57,10 @@ export const CompanyProvider: React.FC<{ children: React.ReactNode }> = ({ child
             }
         } catch (error: any) {
             console.error('Error fetching companies for context', error);
-            setError(error.message || 'Unknown error');
+            // Don't set global error for auth failures to avoid breaking public pages
+            if (error.message !== 'Sessão expirada') {
+                setError(error.message || 'Unknown error');
+            }
         } finally {
             setLoading(false);
         }
@@ -61,7 +70,11 @@ export const CompanyProvider: React.FC<{ children: React.ReactNode }> = ({ child
         fetchCompanies();
 
         // Poll for company updates (e.g., settings changes like universityEnabled)
-        const interval = setInterval(fetchCompanies, 30000); // Check every 30s
+        const interval = setInterval(() => {
+            if (localStorage.getItem('token')) {
+                fetchCompanies();
+            }
+        }, 30000); // Check every 30s
 
         return () => clearInterval(interval);
     }, []);

@@ -133,10 +133,16 @@ export const listCompanies = async (req: Request, res: Response) => {
             where.id = user.companyId!;
         }
 
+        console.log('listCompanies called by:', user.email, user.role, user.companyId);
+        console.log('Query where:', JSON.stringify(where, null, 2));
+
         const companies = await prisma.company.findMany({
             where,
             orderBy: { name: 'asc' }
         });
+        console.log('Companies found:', companies.length);
+        companies.forEach(c => console.log(`- ${c.name} (${c.id}) Active: ${c.active}`));
+
         res.json(companies);
     } catch (error) {
         console.error('Error in listCompanies:', error);
