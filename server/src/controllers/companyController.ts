@@ -133,7 +133,7 @@ export const listCompanies = async (req: Request, res: Response) => {
             where.id = user.companyId!;
         }
 
-        console.log('listCompanies called by:', user.email, user.role, user.companyId);
+        console.log('listCompanies called by:', user.userId, user.role, user.companyId);
         console.log('Query where:', JSON.stringify(where, null, 2));
 
         const companies = await prisma.company.findMany({
