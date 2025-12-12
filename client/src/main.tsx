@@ -1,3 +1,5 @@
+// Deploy trigger: 2025-12-11 22:58
+import React from 'react'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
