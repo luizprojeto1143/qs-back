@@ -51,7 +51,7 @@ const VisitHistory = () => {
         const fetchVisits = async () => {
             try {
                 const response = await api.get('/visits');
-                setVisits(response.data);
+                setVisits(response.data.data || []);
             } catch (error) {
                 console.error('Error fetching visits', error);
                 toast.error('Erro ao carregar histórico de visitas');

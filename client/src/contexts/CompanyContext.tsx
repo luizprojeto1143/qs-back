@@ -34,69 +34,46 @@ export const CompanyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(localStorage.getItem('selectedCompanyId'));
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-
-    const fetchCompanies = async () => {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            setLoading(false);
-            return;
-        }
-
-        try {
-            const response = await api.get('/companies');
-            const data = response.data;
-
-            if (Array.isArray(data)) {
-                setCompanies(data);
-
-                // Auto-select if only one company (Collaborators/RH) or if none selected yet
-                if (data.length === 1 && !selectedCompanyId) {
-                    const companyId = data[0].id;
-                    setSelectedCompanyId(companyId);
-                    localStorage.setItem('selectedCompanyId', companyId);
-                }
-            } else {
-                console.error('Invalid companies data format:', data);
-                setCompanies([]);
-            }
+    console.error('Invalid companies data format:', data);
+    setCompanies([]);
+}
         } catch (error: any) {
-            console.error('Error fetching companies for context', error);
-            setError(error.message || 'Unknown error');
-        } finally {
-            setLoading(false);
-        }
+    console.error('Error fetching companies for context', error);
+    setError(error.message || 'Unknown error');
+} finally {
+    setLoading(false);
+}
     };
 
-    useEffect(() => {
-        fetchCompanies();
+useEffect(() => {
+    fetchCompanies();
 
-        // Poll for company updates (e.g., settings changes like universityEnabled)
-        const interval = setInterval(fetchCompanies, 30000); // Check every 30s
+    // Poll for company updates (e.g., settings changes like universityEnabled)
+    const interval = setInterval(fetchCompanies, 30000); // Check every 30s
 
-        return () => clearInterval(interval);
-    }, []);
+    return () => clearInterval(interval);
+}, []);
 
-    const refreshCompanies = () => {
-        fetchCompanies();
-    };
+const refreshCompanies = () => {
+    fetchCompanies();
+};
 
-    const selectCompany = (id: string) => {
-        if (id === "") {
-            setSelectedCompanyId(null);
-            localStorage.removeItem('selectedCompanyId');
-        } else {
-            setSelectedCompanyId(id);
-            localStorage.setItem('selectedCompanyId', id);
-        }
-        // window.location.reload(); // Removed reload to allow reactive updates
-    };
+const selectCompany = (id: string) => {
+    if (id === "") {
+        setSelectedCompanyId(null);
+        localStorage.removeItem('selectedCompanyId');
+    } else {
+        setSelectedCompanyId(id);
+        localStorage.setItem('selectedCompanyId', id);
+    }
+    // window.location.reload(); // Removed reload to allow reactive updates
+};
 
-    return (
-        <CompanyContext.Provider value={{ companies, selectedCompanyId, selectCompany, loading, error, apiUrl, refreshCompanies }}>
-            {children}
-        </CompanyContext.Provider>
-    );
+return (
+    <CompanyContext.Provider value={{ companies, selectedCompanyId, selectCompany, loading, error, apiUrl, refreshCompanies }}>
+        {children}
+    </CompanyContext.Provider>
+);
 };
 
 export const useCompany = () => useContext(CompanyContext);
