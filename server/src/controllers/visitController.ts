@@ -2,18 +2,26 @@ import { Request, Response } from 'express';
 import prisma from '../prisma';
 import { AuthRequest } from '../middleware/authMiddleware';
 
+import { createVisitSchema } from '../schemas/dataSchemas';
+import { PAGINATION } from '../config/constants';
+
 export const createVisit = async (req: Request, res: Response) => {
     try {
+        const validation = createVisitSchema.safeParse(req.body);
+        if (!validation.success) {
+            return res.status(400).json({ error: 'Validation error', details: validation.error.format() });
+        }
+
         const {
             companyId,
             areaId,
-            collaboratorIds, // Array of User IDs
-            relatos, // { lideranca, colaborador, observacoes }
-            avaliacoes, // { area, lideranca, colaborador } (JSON strings or objects)
-            pendencias, // Array of objects
-            anexos, // Array of objects
-            individualNotes // Array of objects
-        } = req.body;
+            collaboratorIds,
+            relatos,
+            avaliacoes,
+            pendencias,
+            anexos,
+            individualNotes
+        } = validation.data;
 
         const masterId = (req as AuthRequest).user?.userId;
 
@@ -26,6 +34,10 @@ export const createVisit = async (req: Request, res: Response) => {
         });
 
         const profileIds = profiles.map(p => p.id);
+
+        if (profileIds.length !== collaboratorIds.length) {
+            return res.status(400).json({ error: 'One or more collaborators not found or invalid.' });
+        }
 
         // Map User ID to Profile ID for notes
         const userToProfileMap = profiles.reduce((acc, curr) => {
@@ -123,19 +135,43 @@ export const listVisits = async (req: Request, res: Response) => {
             return res.status(400).json({ error: 'Company context required' });
         }
 
-        const visits = await prisma.visit.findMany({
-            where: { companyId },
-            include: {
-                company: true,
-                area: true,
-                master: { select: { name: true } },
-                collaborators: { include: { user: { select: { name: true } } } },
-                generatedPendencies: true
-            },
-            orderBy: { date: 'desc' },
-            take: 50 // Limit to 50 for now (Pagination TODO)
+
+
+        const page = Number(req.query.page) || PAGINATION.DEFAULT_PAGE;
+        const limit = Math.min(Number(req.query.limit) || PAGINATION.DEFAULT_LIMIT, PAGINATION.MAX_LIMIT);
+        const skip = (page - 1) * limit;
+
+        const where = { companyId };
+
+        const [visits, total] = await Promise.all([
+            prisma.visit.findMany({
+                where,
+                include: {
+                    company: { select: { name: true } },
+                    area: { select: { name: true } },
+                    master: { select: { name: true } },
+                    collaborators: {
+                        include: {
+                            user: { select: { name: true } }
+                        }
+                    }
+                },
+                orderBy: { date: 'desc' },
+                take: limit,
+                skip
+            }),
+            prisma.visit.count({ where })
+        ]);
+
+        res.json({
+            data: visits,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit)
+            }
         });
-        res.json(visits);
     } catch (error) {
         res.status(500).json({ error: 'Error fetching visits' });
     }

@@ -11,125 +11,115 @@ export const getRHDashboardStats = async (req: Request, res: Response) => {
         }
 
         const companyId = user.companyId;
-
-        // 1. Total Collaborators
-        const totalCollaborators = await prisma.user.count({
-            where: {
-                companyId,
-                role: 'COLABORADOR',
-                active: true
-            }
-        });
-
-        // 2. Visits this Month
         const now = new Date();
         const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const visitsThisMonth = await prisma.visit.count({
-            where: {
-                companyId,
-                date: {
-                    gte: firstDayOfMonth
+
+        // Execute independent queries in parallel
+        const [
+            totalCollaborators,
+            visitsThisMonth,
+            openPendencies,
+            totalPendencies,
+            resolvedPendencies,
+            completedCourses,
+            pcdCount,
+            sectors,
+            mostWatchedCourses,
+            recentActivity
+        ] = await Promise.all([
+            // 1. Total Collaborators
+            prisma.user.count({
+                where: { companyId, role: 'COLABORADOR', active: true }
+            }),
+            // 2. Visits this Month
+            prisma.visit.count({
+                where: { companyId, date: { gte: firstDayOfMonth } }
+            }),
+            // 3. Open Pendencies
+            prisma.pendingItem.count({
+                where: { companyId, status: 'PENDENTE' }
+            }),
+            // 4a. Total Pendencies
+            prisma.pendingItem.count({ where: { companyId } }),
+            // 4b. Resolved Pendencies
+            prisma.pendingItem.count({ where: { companyId, status: 'RESOLVIDA' } }),
+            // 5. Total Completed Courses
+            prisma.enrollment.count({
+                where: { user: { companyId }, completed: true }
+            }),
+            // 6. PCD Percentage (Count)
+            prisma.collaboratorProfile.count({
+                where: {
+                    user: { companyId, active: true },
+                    disabilityType: { not: 'Nenhuma' }
                 }
-            }
-        });
+            }),
+            // 7. Sectors (for engagement) - OPTIMIZED
+            prisma.sector.findMany({
+                where: { companyId },
+                select: {
+                    name: true,
+                    areas: {
+                        select: {
+                            _count: {
+                                select: {
+                                    users: { where: { active: true } }
+                                }
+                            },
+                            users: {
+                                where: {
+                                    active: true,
+                                    enrollments: { some: {} } // Users with at least one enrollment
+                                },
+                                select: { id: true } // Only need ID to count, not full object
+                            }
+                        }
+                    }
+                }
+            }),
+            // 8. Most Watched Courses
+            prisma.course.findMany({
+                where: { companyId },
+                include: { _count: { select: { enrollments: true } } },
+                orderBy: { enrollments: { _count: 'desc' } },
+                take: 5
+            }),
+            // 9. Recent Activity
+            prisma.visit.findMany({
+                where: { companyId },
+                take: 5,
+                orderBy: { date: 'desc' },
+                select: {
+                    id: true,
+                    date: true,
+                    area: { select: { name: true } },
+                    master: { select: { name: true } }
+                }
+            })
+        ]);
 
-        // 3. Open Pendencies
-        const openPendencies = await prisma.pendingItem.count({
-            where: {
-                companyId,
-                status: 'PENDENTE'
-            }
-        });
-
-        // 4. Resolution Rate (Resolved / Total)
-        const totalPendencies = await prisma.pendingItem.count({ where: { companyId } });
-        const resolvedPendencies = await prisma.pendingItem.count({ where: { companyId, status: 'RESOLVIDA' } });
+        // Calculate derived metrics
         const resolutionRate = totalPendencies > 0
             ? Math.round((resolvedPendencies / totalPendencies) * 100)
             : 0;
-
-        // --- New Metrics for University ---
-
-        // 5. Total Completed Courses
-        const completedCourses = await prisma.enrollment.count({
-            where: {
-                user: { companyId },
-                completed: true
-            }
-        });
-
-        // 6. PCD Percentage
-        const pcdCount = await prisma.collaboratorProfile.count({
-            where: {
-                user: { companyId, active: true },
-                disabilityType: { not: 'Nenhuma' } // Assuming 'Nenhuma' or null means no disability
-            }
-        });
 
         const pcdPercentage = totalCollaborators > 0
             ? Math.round((pcdCount / totalCollaborators) * 100)
             : 0;
 
-        // 7. Top Sectors by Engagement (Enrollments count)
-        const enrollmentsBySector = await prisma.enrollment.groupBy({
-            by: ['userId'],
-            where: { user: { companyId } },
-            _count: true
-        });
-
-        // We need to join with users to get the sector. Prisma groupBy doesn't support relation join directly in this way easily for aggregation
-        // So we fetch users and aggregate manually or use a raw query. 
-        // Let's use a simpler approach: Fetch all enrollments with user sector and aggregate in code for now (assuming not huge data yet)
-        // Or better: Fetch sectors and count enrollments for each.
-
-        const sectors = await prisma.sector.findMany({
-            where: { companyId },
-            include: {
-                areas: {
-                    include: {
-                        users: {
-                            include: {
-                                enrollments: true
-                            }
-                        }
-                    }
-                }
-            }
-        });
-
         const sectorEngagement = sectors.map(sector => {
-            let totalEnrollments = 0;
-            let totalUsers = 0;
+            // Sum up total users in the sector
+            const totalUsers = sector.areas.reduce((acc, area) => acc + area._count.users, 0);
 
-            sector.areas.forEach(area => {
-                totalUsers += area.users.length;
-                area.users.forEach(u => {
-                    totalEnrollments += u.enrollments.length;
-                });
-            });
+            // Sum up active users (those with enrollments)
+            // Note: This is an approximation. Ideally we'd do a single count query, but Prisma's nested aggregation is limited.
+            // We are fetching IDs of engaged users, which is much lighter than full objects.
+            const activeUsers = sector.areas.reduce((acc, area) => acc + area.users.length, 0);
 
             return {
                 name: sector.name,
-                enrollments: totalEnrollments,
-                avgPerUser: totalUsers > 0 ? (totalEnrollments / totalUsers).toFixed(1) : 0
+                engagement: totalUsers > 0 ? Math.round((activeUsers / totalUsers) * 100) : 0
             };
-        }).sort((a, b) => b.enrollments - a.enrollments).slice(0, 5);
-
-
-        // 8. Most Watched Courses
-        const mostWatchedCourses = await prisma.course.findMany({
-            where: { companyId },
-            include: {
-                _count: {
-                    select: { enrollments: true }
-                }
-            },
-            orderBy: {
-                enrollments: {
-                    _count: 'desc'
-                }
-            },
-            take: 5
         });
 
         const formattedMostWatched = mostWatchedCourses.map(course => ({
@@ -137,17 +127,6 @@ export const getRHDashboardStats = async (req: Request, res: Response) => {
             title: course.title,
             views: course._count.enrollments
         }));
-
-        // 9. Recent Activity (Last 5 visits)
-        const recentActivity = await prisma.visit.findMany({
-            where: { companyId },
-            take: 5,
-            orderBy: { date: 'desc' },
-            include: {
-                area: { select: { name: true } },
-                master: { select: { name: true } }
-            }
-        });
 
         res.json({
             stats: {

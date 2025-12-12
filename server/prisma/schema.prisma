@@ -102,6 +102,8 @@ model User {
   certificates Certificate[]
   auditLogs     AuditLog[]
   quizAttempts  UserQuizAttempt[]
+
+  @@index([companyId])
 }
 
 model LibrasCall {
@@ -128,6 +130,9 @@ model Notification {
   read      Boolean  @default(false)
   link      String?
   createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([read])
 }
 
 model CollaboratorProfile {
@@ -226,6 +231,10 @@ model PendingItem {
 
   createdAt   DateTime @default(now())
   resolvedAt  DateTime?
+
+  @@index([companyId])
+  @@index([status])
+  @@index([responsible])
 }
 
 model Schedule {
@@ -244,6 +253,8 @@ model Schedule {
   
   notes     String?
   createdAt DateTime @default(now())
+
+  @@index([companyId])
 }
 
 model FeedPost {

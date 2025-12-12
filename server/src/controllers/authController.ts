@@ -2,15 +2,20 @@ import { Request, Response } from 'express';
 import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
 import prisma from '../prisma';
+import { loginSchema, registerSchema, registerCollaboratorSchema } from '../schemas/authSchemas';
 
 if (!process.env.JWT_SECRET) {
-    console.warn('WARNING: JWT_SECRET is not defined. Using default insecure key.');
+    throw new Error('FATAL: JWT_SECRET is not defined.');
 }
-const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
+const JWT_SECRET = process.env.JWT_SECRET;
 
 export const register = async (req: Request, res: Response) => {
     try {
-        const { email, password, name, role, companyId } = req.body;
+        const validation = registerSchema.safeParse(req.body);
+        if (!validation.success) {
+            return res.status(400).json({ error: 'Validation error', details: validation.error.format() });
+        }
+        const { email, password, name, role, companyId } = validation.data;
 
         // Validate Company if provided
         if (companyId) {
@@ -27,9 +32,9 @@ export const register = async (req: Request, res: Response) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Default role to COLABORADOR if not provided or invalid
-        // Prevent creating MASTER via public endpoint unless specifically authorized (simplified here)
-        const safeRole = (role === 'MASTER' || role === 'RH' || role === 'LIDER') ? role : 'COLABORADOR';
+        // Force role to COLABORADOR for public registration
+        // MASTER users must be created via the protected /users endpoint
+        const safeRole = 'COLABORADOR';
 
         const user = await prisma.user.create({
             data: {
@@ -43,15 +48,19 @@ export const register = async (req: Request, res: Response) => {
 
         res.status(201).json({ message: 'User created successfully', userId: user.id });
     } catch (error) {
-        console.error(error);
+        console.error('Registration error:', error);
         res.status(500).json({ error: 'Error creating user' });
     }
 };
 
 export const login = async (req: Request, res: Response) => {
     try {
-        const { email, password } = req.body;
-        console.log(`Login attempt for email: ${email}`);
+        const validation = loginSchema.safeParse(req.body);
+        if (!validation.success) {
+            return res.status(400).json({ error: 'Validation error', details: validation.error.format() });
+        }
+        const { email, password } = validation.data;
+        // console.log(`Login attempt for email: ${email}`); // Removed for security (PII)
 
         const user = await prisma.user.findUnique({ where: { email } });
         if (!user) {
@@ -80,17 +89,20 @@ export const login = async (req: Request, res: Response) => {
             },
         });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Error logging in', details: (error as any).message });
+        console.error('Login error:', error);
+        res.status(500).json({ error: 'Internal server error' });
     }
 };
 
 export const registerCollaborator = async (req: Request, res: Response) => {
     try {
-        const { email, password, name, matricula, areaId, companyId } = req.body;
+        const validation = registerCollaboratorSchema.safeParse(req.body);
+        if (!validation.success) {
+            return res.status(400).json({ error: 'Validation error', details: validation.error.format() });
+        }
+        const { email, password, name, matricula, areaId, companyId, shift, disabilityType, needsDescription } = validation.data;
 
         // 1. Validate Company
-        if (!companyId) return res.status(400).json({ error: 'Company ID is required' });
         const company = await prisma.company.findUnique({ where: { id: companyId } });
         if (!company) return res.status(400).json({ error: 'Invalid Company' });
 
@@ -117,9 +129,9 @@ export const registerCollaborator = async (req: Request, res: Response) => {
                     userId: user.id,
                     matricula,
                     areaId,
-                    shift: req.body.shift || '1_TURNO',
-                    disabilityType: req.body.disabilityType || 'NENHUMA',
-                    needsDescription: req.body.needsDescription || ''
+                    shift: shift || '1_TURNO',
+                    disabilityType: disabilityType || 'NENHUMA',
+                    needsDescription: needsDescription || ''
                 }
             });
 

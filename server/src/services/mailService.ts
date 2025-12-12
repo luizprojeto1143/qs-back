@@ -14,8 +14,8 @@ export const sendInviteEmail = async (to: string, roomUrl: string, collaboratorI
     if (!process.env.SMTP_USER) {
         console.log('---------------------------------------------------');
         console.log('⚠️ SMTP not configured. Email would be sent to:', to);
-        console.log('Room URL:', roomUrl);
-        console.log('Collaborator:', collaboratorInfo);
+        // console.log('Room URL:', roomUrl); // Removed for security
+        // console.log('Collaborator:', collaboratorInfo); // Removed for security
         console.log('---------------------------------------------------');
         return;
     }

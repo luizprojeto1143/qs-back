@@ -30,6 +30,11 @@ export const getStructure = async (req: Request, res: Response) => {
 
 export const createCompany = async (req: Request, res: Response) => {
     try {
+        const user = (req as AuthRequest).user;
+        if (!user || user.role !== 'MASTER') {
+            return res.status(403).json({ error: 'Unauthorized. Only MASTER can create companies.' });
+        }
+
         const { name, cnpj, email, password, universityEnabled } = req.body;
 
         const result = await prisma.$transaction(async (prisma) => {
@@ -108,6 +113,8 @@ export const createArea = async (req: Request, res: Response) => {
     }
 };
 
+import { Prisma } from '@prisma/client';
+
 export const listCompanies = async (req: Request, res: Response) => {
     try {
         const user = (req as AuthRequest).user;
@@ -115,7 +122,7 @@ export const listCompanies = async (req: Request, res: Response) => {
 
         const { includeInactive } = req.query;
 
-        const where: any = {};
+        const where: Prisma.CompanyWhereInput = {};
 
         // If not explicitly asking for inactive, filter by active=true
         if (includeInactive !== 'true') {
@@ -123,7 +130,7 @@ export const listCompanies = async (req: Request, res: Response) => {
         }
 
         if (user.role !== 'MASTER') {
-            where.id = user.companyId;
+            where.id = user.companyId!;
         }
 
         const companies = await prisma.company.findMany({
@@ -167,7 +174,7 @@ export const listSectors = async (req: Request, res: Response) => {
         const user = (req as AuthRequest).user;
         const companyId = req.headers['x-company-id'] as string || user?.companyId;
 
-        const where: any = {};
+        const where: Prisma.SectorWhereInput = {};
         if (companyId) {
             where.companyId = companyId;
         } else if (user?.role !== 'MASTER') {
@@ -190,7 +197,7 @@ export const listAreas = async (req: Request, res: Response) => {
         const user = (req as AuthRequest).user;
         const companyId = req.headers['x-company-id'] as string || user?.companyId;
 
-        const where: any = {};
+        const where: Prisma.AreaWhereInput = {};
         if (companyId) {
             where.sector = { companyId };
         } else if (user?.role !== 'MASTER') {
@@ -224,20 +231,29 @@ export const updateCompany = async (req: Request, res: Response) => {
             return res.status(403).json({ error: 'Access denied' });
         }
 
+        // Restrict fields for non-MASTER users
+        const dataToUpdate: Prisma.CompanyUpdateInput = {
+            inclusionDiagnosis: req.body.inclusionDiagnosis ? JSON.stringify(req.body.inclusionDiagnosis) : undefined
+        };
+
+        if (user.role === 'MASTER') {
+            dataToUpdate.name = name;
+            dataToUpdate.cnpj = cnpj;
+            dataToUpdate.universityEnabled = universityEnabled;
+        } else {
+            // RH can only update specific settings, not core identity
+            // If they try to update restricted fields, we ignore them or throw error.
+            // For now, we just ignore them in the data object.
+        }
+
         const result = await prisma.$transaction(async (prisma) => {
             const company = await prisma.company.update({
                 where: { id },
-                data: {
-                    name,
-                    cnpj,
-                    universityEnabled,
-                    inclusionDiagnosis: req.body.inclusionDiagnosis ? JSON.stringify(req.body.inclusionDiagnosis) : undefined
-                }
+                data: dataToUpdate
             });
 
             if (email || password) {
                 // Find the admin user (RH) for this company
-                // We assume the first RH user found is the main admin to be updated
                 const adminUser = await prisma.user.findFirst({
                     where: {
                         companyId: id,
@@ -246,7 +262,7 @@ export const updateCompany = async (req: Request, res: Response) => {
                 });
 
                 if (adminUser) {
-                    const updateData: any = {};
+                    const updateData: Prisma.UserUpdateInput = {};
                     if (email) updateData.email = email;
                     if (password) {
                         const hashedPassword = await import('bcryptjs').then(bcrypt => bcrypt.hash(password, 10));

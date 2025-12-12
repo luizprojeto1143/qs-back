@@ -95,13 +95,37 @@ export const generateReport = async (req: Request, res: Response) => {
                 // Try to find profile by ID first, then by User ID
                 let collaborator = await prisma.collaboratorProfile.findUnique({
                     where: { id: filters.collaboratorId },
-                    include: { user: true, area: true }
+                    include: {
+                        user: {
+                            select: {
+                                id: true,
+                                name: true,
+                                email: true,
+                                role: true,
+                                active: true,
+                                companyId: true
+                            }
+                        },
+                        area: true
+                    }
                 });
 
                 if (!collaborator) {
                     collaborator = await prisma.collaboratorProfile.findUnique({
                         where: { userId: filters.collaboratorId },
-                        include: { user: true, area: true }
+                        include: {
+                            user: {
+                                select: {
+                                    id: true,
+                                    name: true,
+                                    email: true,
+                                    role: true,
+                                    active: true,
+                                    companyId: true
+                                }
+                            },
+                            area: true
+                        }
                     });
                 }
 
@@ -150,54 +174,12 @@ export const generateReport = async (req: Request, res: Response) => {
                     where: { id: companyId },
                     select: { inclusionDiagnosis: true }
                 });
-                data = company?.inclusionDiagnosis ? JSON.parse(company.inclusionDiagnosis) : { categories: {} };
-                break;
-
-            case 'LEADERSHIP_REPORT':
-                // Group by Area/Sector
-                const visitsWithRatings = await prisma.visit.findMany({
-                    where: { companyId },
-                    include: { area: { include: { sector: true } } },
-                    orderBy: { date: 'desc' }
-                });
-
-                const groupedData: any = {};
-
-                visitsWithRatings.forEach(v => {
-                    if (!v.area) return;
-                    const sectorName = v.area.sector.name;
-                    const areaName = v.area.name;
-
-                    if (!groupedData[sectorName]) groupedData[sectorName] = {};
-                    if (!groupedData[sectorName][areaName]) groupedData[sectorName][areaName] = [];
-
-                    try {
-                        const ratings = v.avaliacaoLideranca ? JSON.parse(v.avaliacaoLideranca) : {};
-                        const values = Object.values(ratings).map((val: any) => Number(val)).filter(val => !isNaN(val));
-                        if (values.length > 0) {
-                            const avg = values.reduce((a, b) => a + b, 0) / values.length;
-                            groupedData[sectorName][areaName].push({ date: v.date, score: avg });
-                        }
-                    } catch (e) { }
-                });
-
-                data = { groupedData };
-                break;
-
-            case 'PENDENCIES_REPORT':
-                const pendencyStatus = filters?.status;
-                const whereClause: any = { companyId };
-                if (pendencyStatus) whereClause.status = pendencyStatus;
-
-                const allPendencies = await prisma.pendingItem.findMany({
-                    where: whereClause,
-                    include: {
-                        area: true,
-                        collaborator: { include: { user: true } }
-                    },
-                    orderBy: { createdAt: 'desc' }
-                });
-                data = { pendencies: allPendencies };
+                try {
+                    data = company?.inclusionDiagnosis ? JSON.parse(company.inclusionDiagnosis) : { categories: {} };
+                } catch (e) {
+                    console.error('Error parsing inclusionDiagnosis', e);
+                    data = { categories: {}, error: 'Invalid data format' };
+                }
                 break;
 
             case 'SECTOR_REPORT':
@@ -244,6 +226,22 @@ export const generateReport = async (req: Request, res: Response) => {
                     ],
                     details: "Relatório consolidado de desempenho da liderança."
                 };
+                break;
+
+            case 'PENDENCIES_REPORT':
+                const pendencyStatus = filters?.status;
+                const whereClause: any = { companyId };
+                if (pendencyStatus) whereClause.status = pendencyStatus;
+
+                const allPendencies = await prisma.pendingItem.findMany({
+                    where: whereClause,
+                    include: {
+                        area: true,
+                        collaborator: { include: { user: true } }
+                    },
+                    orderBy: { createdAt: 'desc' }
+                });
+                data = { pendencies: allPendencies };
                 break;
 
             case 'EXECUTIVE_SUMMARY':

@@ -154,27 +154,25 @@ const VisitRecording = () => {
             if (!formData.areaId || !formData.companyId) return;
 
             try {
-                // Fetch schedules
-                const res = await api.get('/schedules');
+                // Find the area name to match
+                const selectedArea = areas.find(a => a.id === formData.areaId);
+                const areaName = selectedArea?.name;
+
+                if (!areaName) return;
+
+                const today = new Date().toISOString().split('T')[0];
+
+                // OPTIMIZED: Fetch only filtered schedules from backend
+                const res = await api.get('/schedules', {
+                    params: {
+                        date: today,
+                        area: areaName,
+                        status: 'APROVADO'
+                    }
+                });
+
                 if (res.data) {
-                    const allSchedules = res.data;
-
-                    // Filter: Status APROVADO, Same Company, Same Area, Today (or recent?)
-                    const today = new Date().toISOString().split('T')[0];
-
-                    // Find the area name to match (since schedule stores area name currently)
-                    const selectedArea = areas.find(a => a.id === formData.areaId);
-                    const areaName = selectedArea?.name;
-
-                    if (!areaName) return;
-
-                    const approvedSchedules = allSchedules.filter((s: any) => {
-                        const sDate = new Date(s.date).toISOString().split('T')[0];
-                        return s.status === 'APROVADO' &&
-                            s.area === areaName &&
-                            sDate === today &&
-                            (!formData.companyId || s.companyId === formData.companyId);
-                    });
+                    const approvedSchedules = res.data;
 
                     if (approvedSchedules.length > 0) {
                         // 1. Link Schedules
@@ -190,7 +188,6 @@ const VisitRecording = () => {
 
                         setFormData(prev => {
                             // 3. Pre-fill Report (Concatenate reasons)
-                            // Only append if not already present to avoid duplication on re-renders
                             let newReport = prev.relatos.colaborador;
                             const reasonsToAdd = approvedSchedules
                                 .map((s: any) => `${s.collaborator}: ${s.reason || 'Sem motivo'}`)
@@ -286,6 +283,14 @@ const VisitRecording = () => {
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
             const file = e.target.files[0];
+
+            // Client-side validation
+            const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+            if (file.size > MAX_SIZE) {
+                toast.error('Arquivo muito grande! O limite é 10MB.');
+                return;
+            }
+
             const formDataUpload = new FormData();
             formDataUpload.append('file', file);
 

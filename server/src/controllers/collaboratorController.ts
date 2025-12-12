@@ -7,37 +7,59 @@ const ROLE_COLABORADOR = 'COLABORADOR';
 const DEFAULT_SHIFT = '1_TURNO';
 const DEFAULT_DISABILITY = 'NENHUMA';
 
+import { createCollaboratorSchema } from '../schemas/dataSchemas';
+
 export const listCollaborators = async (req: Request, res: Response) => {
     try {
         const user = (req as AuthRequest).user;
         const companyId = req.headers['x-company-id'] as string || user?.companyId;
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 20;
+        const skip = (page - 1) * limit;
 
         if (!companyId) {
             return res.status(400).json({ error: 'Company context required' });
         }
 
-        const collaborators = await prisma.user.findMany({
-            where: {
-                // Removed role filter to allow seeing promoted users (LIDER/RH) who are still employees
-                // Or if we strictly want 'COLABORADOR', we should document that. 
-                // For now, let's include anyone with a collaborator profile
-                collaboratorProfile: { isNot: null },
-                companyId: companyId,
-                active: true
-            },
-            include: {
-                collaboratorProfile: {
-                    include: {
-                        area: {
-                            include: {
-                                sector: true
+        const [collaborators, total] = await Promise.all([
+            prisma.user.findMany({
+                where: {
+                    collaboratorProfile: { isNot: null },
+                    companyId: companyId,
+                    active: true
+                },
+                include: {
+                    collaboratorProfile: {
+                        include: {
+                            area: {
+                                include: {
+                                    sector: true
+                                }
                             }
                         }
                     }
+                },
+                take: limit,
+                skip: skip
+            }),
+            prisma.user.count({
+                where: {
+                    collaboratorProfile: { isNot: null },
+                    companyId: companyId,
+                    active: true
                 }
+            })
+        ]);
+
+        res.json({
+            data: collaborators,
+            meta: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit)
             }
         });
-        res.json(collaborators);
     } catch (error) {
         res.status(500).json({ error: 'Error fetching collaborators' });
     }
@@ -45,10 +67,15 @@ export const listCollaborators = async (req: Request, res: Response) => {
 
 export const createCollaborator = async (req: Request, res: Response) => {
     try {
+        const validation = createCollaboratorSchema.safeParse(req.body);
+        if (!validation.success) {
+            return res.status(400).json({ error: 'Validation error', details: validation.error.format() });
+        }
+
         const {
             name, email, password, companyId, // User data
             matricula, areaId, shift, disabilityType, needsDescription // Profile data
-        } = req.body;
+        } = validation.data;
 
         const user = (req as AuthRequest).user;
 
@@ -65,8 +92,22 @@ export const createCollaborator = async (req: Request, res: Response) => {
             return res.status(400).json({ error: 'Email already registered' });
         }
 
+        // Check matricula uniqueness in the same company
+        const existingMatricula = await prisma.collaboratorProfile.findFirst({
+            where: {
+                matricula,
+                user: { companyId }
+            }
+        });
+
+        if (existingMatricula) {
+            return res.status(400).json({ error: 'Matrícula already exists in this company' });
+        }
+
         // Hash password OUTSIDE transaction
-        const hashedPassword = await bcrypt.hash(password || 'Mudar@123', 10); // Stronger default password
+        // FIXED: Stronger default password
+        const defaultPassword = 'Mudar@' + Math.random().toString(36).slice(-8) + '!';
+        const hashedPassword = await bcrypt.hash(password || defaultPassword, 10);
 
         // Transaction to create User and Profile together
         const result = await prisma.$transaction(async (prisma) => {
@@ -91,7 +132,7 @@ export const createCollaborator = async (req: Request, res: Response) => {
                 }
             });
 
-            return { user: newUser, profile };
+            return { user: newUser, profile, tempPassword: !password ? defaultPassword : null };
         });
 
         res.status(201).json(result);
@@ -151,10 +192,17 @@ export const getCollaborator = async (req: Request, res: Response) => {
 export const updateCollaborator = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
+
+        // Use Zod for validation (Partial schema for updates)
+        const validation = createCollaboratorSchema.partial().safeParse(req.body);
+        if (!validation.success) {
+            return res.status(400).json({ error: 'Validation error', details: validation.error.format() });
+        }
+
         const {
             name, email, password, companyId, // User data
             matricula, areaId, shift, disabilityType, needsDescription // Profile data
-        } = req.body;
+        } = validation.data;
 
         const requestingUser = (req as AuthRequest).user;
         if (!requestingUser) return res.status(401).json({ error: 'Unauthorized' });

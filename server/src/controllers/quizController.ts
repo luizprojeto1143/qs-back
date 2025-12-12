@@ -157,6 +157,11 @@ export const submitQuiz = async (req: Request, res: Response) => {
         const user = (req as AuthRequest).user;
         if (!user) return res.status(401).json({ error: 'Unauthorized' });
 
+        interface QuizAnswer {
+            questionId: string;
+            optionId: string;
+        }
+
         const { answers } = req.body; // Array of { questionId, optionId }
 
         const quiz = await prisma.quiz.findUnique({
@@ -174,7 +179,7 @@ export const submitQuiz = async (req: Request, res: Response) => {
         const totalQuestions = quiz.questions.length;
 
         // Calculate Score
-        const userAnswersData = answers.map((ans: any) => {
+        const userAnswersData = (answers as QuizAnswer[]).map((ans) => {
             const question = quiz.questions.find(q => q.id === ans.questionId);
             const selectedOption = question?.options.find(o => o.id === ans.optionId);
 

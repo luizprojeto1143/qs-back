@@ -2,19 +2,38 @@ import { Request, Response } from 'express';
 import prisma from '../prisma';
 import { AuthRequest } from '../middleware/authMiddleware';
 
+import { createFeedPostSchema } from '../schemas/dataSchemas';
+
 export const createPost = async (req: Request, res: Response) => {
     try {
-        const { title, description, category, imageUrl, videoLibrasUrl } = req.body;
+        const validation = createFeedPostSchema.safeParse(req.body);
+        if (!validation.success) {
+            return res.status(400).json({ error: 'Validation error', details: validation.error.format() });
+        }
+        const { title, description, category, imageUrl, videoLibrasUrl } = validation.data;
         const user = (req as AuthRequest).user;
 
         if (!user || !user.companyId) {
             return res.status(400).json({ error: 'User or Company not found' });
         }
 
+        // Integrity Check: Validate Category
+        const categoryExists = await prisma.feedCategory.findFirst({
+            where: { name: category, companyId: user.companyId }
+        });
+
+        if (!categoryExists) {
+            return res.status(400).json({ error: 'Invalid category. Please select an existing category.' });
+        }
+
+        // XSS Mitigation: Basic sanitization (strip script tags)
+        // In a real app, use 'sanitize-html' library
+        const sanitizedDescription = description ? description.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gm, "") : "";
+
         const post = await prisma.feedPost.create({
             data: {
                 title,
-                description,
+                description: sanitizedDescription,
                 category,
                 imageUrl,
                 videoLibrasUrl,
@@ -32,21 +51,37 @@ export const createPost = async (req: Request, res: Response) => {
 export const listPosts = async (req: Request, res: Response) => {
     try {
         const user = (req as AuthRequest).user;
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 10;
+        const skip = (page - 1) * limit;
 
         if (!user || !user.companyId) {
             return res.status(400).json({ error: 'User or Company not found' });
         }
 
-        const posts = await prisma.feedPost.findMany({
-            where: {
-                companyId: user.companyId
-            },
-            orderBy: {
-                createdAt: 'desc'
+        const [posts, total] = await Promise.all([
+            prisma.feedPost.findMany({
+                where: {
+                    companyId: user.companyId
+                },
+                orderBy: {
+                    createdAt: 'desc'
+                },
+                take: limit,
+                skip: skip
+            }),
+            prisma.feedPost.count({ where: { companyId: user.companyId } })
+        ]);
+
+        res.json({
+            data: posts,
+            meta: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit)
             }
         });
-
-        res.json(posts);
     } catch (error) {
         console.error('Error listing posts:', error);
         res.status(500).json({ error: 'Error listing posts' });
@@ -56,7 +91,11 @@ export const listPosts = async (req: Request, res: Response) => {
 export const updatePost = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const { title, description, category, imageUrl, videoLibrasUrl } = req.body;
+        const validation = createFeedPostSchema.partial().safeParse(req.body);
+        if (!validation.success) {
+            return res.status(400).json({ error: 'Validation error', details: validation.error.format() });
+        }
+        const { title, description, category, imageUrl, videoLibrasUrl } = validation.data;
         const user = (req as AuthRequest).user;
 
         if (!user || !user.companyId) {

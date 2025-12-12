@@ -5,6 +5,11 @@ const DAILY_API_KEY = process.env.DAILY_API_KEY;
 
 export const createRoom = async (req: Request, res: Response) => {
     try {
+        if (!DAILY_API_KEY) {
+            console.error('DAILY_API_KEY not configured');
+            return res.status(500).json({ error: 'Video service not configured' });
+        }
+
         const user = (req as AuthRequest).user;
         if (!user || !user.companyId) {
             return res.status(400).json({ error: 'User or Company not found' });
@@ -37,13 +42,14 @@ export const createRoom = async (req: Request, res: Response) => {
             },
             body: JSON.stringify({
                 name: roomName,
-                privacy: 'public', // Public for now to allow easy access, can be private later
+                privacy: 'private', // CHANGED TO PRIVATE for security
                 properties: {
                     start_audio_off: true,
                     start_video_off: true,
                     enable_chat: true,
                     enable_people_ui: true,
-                    enable_screenshare: true
+                    enable_screenshare: true,
+                    // enable_knocking: true // Allow users to ask to join
                 }
             })
         });

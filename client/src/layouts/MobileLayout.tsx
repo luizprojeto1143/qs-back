@@ -50,7 +50,7 @@ const MobileLayout = () => {
                     <img src="/logo.png" alt="QS Inclusão" className="h-8 w-auto object-contain" />
                     <span className="font-bold text-gray-900">QS Inclusão <span className="text-xs text-gray-400 font-normal">v7.2</span></span>
                 </div>
-                <button onClick={() => setIsMenuOpen(true)} className="p-2 text-gray-600 hover:bg-gray-100 rounded-full">
+                <button onClick={() => setIsMenuOpen(true)} className="p-2 text-gray-600 hover:bg-gray-100 rounded-full" aria-label="Abrir menu">
                     <Menu className="h-6 w-6" />
                 </button>
             </header>
@@ -71,6 +71,7 @@ const MobileLayout = () => {
                             <button
                                 onClick={() => setIsMenuOpen(false)}
                                 className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded-full"
+                                aria-label="Fechar menu"
                             >
                                 <Menu className="h-5 w-5" />
                             </button>
@@ -145,6 +146,7 @@ const MobileLayout = () => {
                     <button
                         key={item.path}
                         onClick={() => navigate(item.path)}
+                        aria-label={item.label}
                         className={`flex flex-col items-center justify-center space-y-1 w-16 ${item.primary
                             ? 'mb-4'
                             : ''

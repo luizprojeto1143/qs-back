@@ -11,27 +11,32 @@ export const requestCall = async (req: Request, res: Response) => {
             return res.status(400).json({ error: 'User or Company not found' });
         }
 
-        // Check if there is already a pending call for this user
-        const existingCall = await prisma.librasCall.findFirst({
-            where: {
-                requesterId: user.userId,
-                status: 'WAITING'
+        // Use transaction to prevent race conditions (double booking)
+        const result = await prisma.$transaction(async (prisma) => {
+            // Check if there is already a pending call for this user
+            const existingCall = await prisma.librasCall.findFirst({
+                where: {
+                    requesterId: user.userId,
+                    status: { in: ['WAITING', 'IN_PROGRESS'] } // Check both statuses
+                }
+            });
+
+            if (existingCall) {
+                return { call: existingCall, message: 'Already waiting or in progress' };
             }
+
+            const call = await prisma.librasCall.create({
+                data: {
+                    companyId: user.companyId!,
+                    requesterId: user.userId,
+                    status: 'WAITING'
+                }
+            });
+
+            return { call };
         });
 
-        if (existingCall) {
-            return res.json({ call: existingCall, message: 'Already waiting' });
-        }
-
-        const call = await prisma.librasCall.create({
-            data: {
-                companyId: user.companyId,
-                requesterId: user.userId,
-                status: 'WAITING'
-            }
-        });
-
-        res.json({ call });
+        res.json(result);
     } catch (error) {
         console.error('Error requesting call:', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -60,15 +65,12 @@ export const checkCallStatus = async (req: Request, res: Response) => {
         let roomUrl = null;
         if (call.status === 'IN_PROGRESS') {
             // Generate room URL same way as before
-            const roomName = `qs-libras-${user.companyId.substring(0, 8)}`;
-            // We can't easily call createRoom controller directly here without mocking req/res
-            // So we'll just return the status and let the frontend call /daily/room or we return the constructed URL
-            // Ideally, we should store the room URL in the call model, but for now let's just return the status
-            // and the frontend will call the daily endpoint or we can construct it here if we want to be fancy.
-            // Simpler: Frontend sees IN_PROGRESS -> calls /daily/room to join.
+            // Ideally this should be stored in the DB when the call is accepted to ensure consistency
+            // But for now we reconstruct it based on company ID logic
+            roomUrl = `https://qs-inclusao.daily.co/qs-libras-${user.companyId.substring(0, 8)}`;
         }
 
-        res.json({ status: call.status });
+        res.json({ status: call.status, roomUrl });
     } catch (error) {
         console.error('Error checking call status:', error);
         res.status(500).json({ error: 'Internal server error' });

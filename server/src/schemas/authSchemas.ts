@@ -1,0 +1,44 @@
+import { z } from 'zod';
+
+export const loginSchema = z.object({
+    email: z.string().email(),
+    password: z.string().min(6)
+});
+
+export const registerSchema = z.object({
+    email: z.string().email(),
+    password: z.string().min(6),
+    name: z.string().min(2),
+    role: z.enum(['MASTER', 'RH', 'LIDER', 'COLABORADOR']).optional(),
+    companyId: z.string().uuid().optional()
+});
+
+export const registerCollaboratorSchema = z.object({
+    email: z.string().email(),
+    password: z.string().min(6),
+    name: z.string().min(2),
+    matricula: z.string().min(1),
+    areaId: z.string().uuid(),
+    companyId: z.string().uuid(),
+    shift: z.string().optional(),
+    disabilityType: z.string().optional(),
+    needsDescription: z.string().optional()
+});
+
+export const createUserSchema = z.object({
+    email: z.string().email(),
+    password: z.string().min(6),
+    name: z.string().min(2),
+    role: z.enum(['MASTER', 'RH', 'LIDER', 'COLABORADOR']),
+    companyId: z.string().uuid().optional(),
+    areaId: z.string().uuid().optional()
+});
+
+export const updateUserSchema = z.object({
+    name: z.string().min(2).optional(),
+    role: z.enum(['MASTER', 'RH', 'LIDER', 'COLABORADOR']).optional(),
+    companyId: z.string().uuid().optional().nullable(),
+    areaId: z.string().uuid().optional().nullable(),
+    active: z.boolean().optional(),
+    password: z.string().min(6).optional()
+});

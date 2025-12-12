@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import * as dotenv from 'dotenv';
+import helmet from 'helmet';
+import { errorHandler } from './middleware/errorHandler';
 
 dotenv.config();
 
@@ -9,14 +11,17 @@ const PORT = process.env.PORT || 3001;
 
 import routes from './routes';
 
+// Security Middleware
+app.use(helmet());
+
 app.use(cors({
   origin: (origin, callback) => {
     const allowedOrigins = process.env.ALLOWED_ORIGINS
       ? process.env.ALLOWED_ORIGINS.split(',')
       : ['https://qs-back.vercel.app', 'http://localhost:5173', 'http://localhost:3000'];
 
-    // Allow Vercel preview deployments
-    if (!origin || allowedOrigins.includes(origin) || /\.vercel\.app$/.test(origin)) {
+    // Strict CORS: Only allow exact matches from allowedOrigins
+    if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -30,10 +35,21 @@ app.use(express.json());
 app.use('/api', routes);
 app.use('/uploads', express.static('uploads'));
 
-// Global Error Handler
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error('Global Error:', err);
-  res.status(500).json({ error: 'Internal Server Error', details: err.message });
+// Centralized Error Handler
+app.use(errorHandler);
+
+import compression from 'compression';
+
+// ...
+
+// Security Middleware
+app.use(helmet());
+app.use(compression()); // Gzip Compression
+
+// ...
+
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'UP', timestamp: new Date(), version: '10.15' });
 });
 
 app.get('/', (req, res) => {
@@ -41,5 +57,5 @@ app.get('/', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT} (v10.12 - Seed Deps Fix)`);
+  console.log(`Server is running on port ${PORT} (v10.15 - High Performance)`);
 });

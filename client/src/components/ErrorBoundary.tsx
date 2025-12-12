@@ -35,11 +35,7 @@ class ErrorBoundary extends Component<Props, State> {
                         <p className="text-gray-500 mb-6">
                             Ocorreu um erro inesperado na aplicação. Por favor, recarregue a página.
                         </p>
-                        <div className="bg-gray-100 p-4 rounded-lg text-left mb-6 overflow-auto max-h-40">
-                            <code className="text-xs text-red-600 font-mono">
-                                {this.state.error?.toString()}
-                            </code>
-                        </div>
+                        {/* Stack trace removed for security */}
                         <button
                             onClick={() => window.location.reload()}
                             className="w-full py-3 px-4 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 transition-colors"

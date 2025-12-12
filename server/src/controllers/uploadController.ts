@@ -28,13 +28,19 @@ const upload = multer({
 export const uploadMiddleware = upload.single('file');
 
 export const uploadFile = (req: Request, res: Response) => {
+    // Error handling is done by multer middleware, but if we reach here without a file:
     if (!req.file) {
-        return res.status(400).json({ error: 'No file uploaded' });
+        return res.status(400).json({ error: 'No file uploaded or file type not allowed' });
     }
 
     // Cloudinary returns the URL in `path` or `secure_url`
     // multer-storage-cloudinary puts the file info in req.file
-    const file = req.file as any;
+    interface CloudinaryFile extends Express.Multer.File {
+        path: string;
+        secure_url?: string;
+    }
+
+    const file = req.file as CloudinaryFile;
 
     res.json({
         url: file.path || file.secure_url,
@@ -42,4 +48,17 @@ export const uploadFile = (req: Request, res: Response) => {
         mimetype: file.mimetype,
         size: file.size
     });
+};
+
+// Error handling middleware for Multer
+export const handleUploadError = (err: any, req: Request, res: Response, next: Function) => {
+    if (err instanceof multer.MulterError) {
+        if (err.code === 'LIMIT_FILE_SIZE') {
+            return res.status(400).json({ error: 'File too large. Limit is 10MB.' });
+        }
+        return res.status(400).json({ error: `Upload error: ${err.message}` });
+    } else if (err) {
+        return res.status(400).json({ error: 'Invalid file type or upload failed.' });
+    }
+    next();
 };

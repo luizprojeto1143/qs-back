@@ -1,175 +1,145 @@
 import { Router } from 'express';
-import * as authController from './controllers/authController';
-import * as companyController from './controllers/companyController';
-import * as collaboratorController from './controllers/collaboratorController';
-import { authenticateToken } from './middleware/authMiddleware';
+import { authenticateToken, requireRole } from './middleware/authMiddleware';
 import { rateLimiter } from './middleware/rateLimiter';
+
+// Import Modular Routes
+import authRoutes from './routes/auth.routes';
+import companyRoutes from './routes/company.routes';
+import universityRoutes from './routes/university.routes';
+
+// Import Controllers for remaining inline routes
+import * as collaboratorController from './controllers/collaboratorController';
+import * as feedController from './controllers/feedController';
+import * as visitController from './controllers/visitController';
+import * as pendencyController from './controllers/pendencyController';
+import * as scheduleController from './controllers/scheduleController';
+import * as dashboardController from './controllers/dashboardController';
+import * as reportController from './controllers/reportController';
+import * as settingsController from './controllers/settingsController';
+import * as librasController from './controllers/librasController';
+import * as librasCallController from './controllers/librasCallController';
+import * as specialistController from './controllers/specialistController';
+import * as specialtyController from './controllers/specialtyController';
+import * as pdiController from './controllers/pdiController';
+import * as userController from './controllers/userController';
+import * as uploadController from './controllers/uploadController';
+import * as notificationController from './controllers/notificationController';
 import { createRoom } from './controllers/dailyController';
 import { createQuiz, addQuestion, getQuiz, submitQuiz, deleteQuiz, deleteQuestion, getQuizEditor } from './controllers/quizController';
 
 const router = Router();
 
-// Auth Routes
-router.post('/auth/register', authController.register);
-router.post('/auth/login', authController.login);
-router.post('/auth/register-collaborator', rateLimiter, authController.registerCollaborator); // Public route
-router.get('/public/areas/:companyId', rateLimiter, companyController.listPublicAreas); // Public route
+// Mount Modular Routes
+router.use('/auth', authRoutes);
+router.use('/', companyRoutes); // Mounts /companies, /sectors, /areas, /structure, /public/areas
+router.use('/', universityRoutes); // Mounts /courses, etc.
 
-// Protected Routes
+// Protected Routes Middleware (for inline routes)
 router.use(authenticateToken);
-
-import prisma from './prisma';
-
-router.get('/me', authController.getProfile);
-
-// Structure Routes
-router.get('/structure', companyController.getStructure);
-
-router.get('/companies', companyController.listCompanies);
-router.post('/companies', companyController.createCompany);
-router.put('/companies/:id', companyController.updateCompany);
-router.delete('/companies/:id', companyController.deleteCompany);
-
-router.get('/sectors', companyController.listSectors);
-router.post('/sectors', companyController.createSector);
-router.put('/sectors/:id', companyController.updateSector);
-
-router.get('/areas', companyController.listAreas);
-router.post('/areas', companyController.createArea);
-router.put('/areas/:id', companyController.updateArea);
 
 // Collaborator Routes
 router.get('/collaborators', collaboratorController.listCollaborators);
-router.post('/collaborators', collaboratorController.createCollaborator);
+router.post('/collaborators', requireRole(['MASTER', 'RH']), collaboratorController.createCollaborator);
 router.get('/collaborators/:id', collaboratorController.getCollaborator);
-router.put('/collaborators/:id', collaboratorController.updateCollaborator);
+router.put('/collaborators/:id', requireRole(['MASTER', 'RH']), collaboratorController.updateCollaborator);
 
 // Feed Routes
-import * as feedController from './controllers/feedController';
 router.get('/feed', feedController.listPosts);
-router.post('/feed', feedController.createPost);
-router.put('/feed/:id', feedController.updatePost);
-router.delete('/feed/:id', feedController.deletePost);
+router.post('/feed', requireRole(['MASTER', 'RH']), feedController.createPost);
+router.put('/feed/:id', requireRole(['MASTER', 'RH']), feedController.updatePost);
+router.delete('/feed/:id', requireRole(['MASTER', 'RH']), feedController.deletePost);
 
 // Visit Routes
-import * as visitController from './controllers/visitController';
 router.get('/visits', visitController.listVisits);
-router.post('/visits', visitController.createVisit);
+router.post('/visits', requireRole(['MASTER', 'RH', 'LIDER']), visitController.createVisit);
 router.get('/visits/:id', visitController.getVisit);
 
 // Pendency Routes
-import * as pendencyController from './controllers/pendencyController';
 router.get('/pendencies', pendencyController.listPendencies);
-router.post('/pendencies', pendencyController.createPendency);
-router.put('/pendencies/:id', pendencyController.updatePendency);
-router.delete('/pendencies/:id', pendencyController.deletePendency);
+router.post('/pendencies', requireRole(['MASTER', 'RH', 'LIDER']), pendencyController.createPendency);
+router.put('/pendencies/:id', requireRole(['MASTER', 'RH', 'LIDER']), pendencyController.updatePendency);
+router.delete('/pendencies/:id', requireRole(['MASTER', 'RH']), pendencyController.deletePendency);
 
 // Schedule Routes
-import * as scheduleController from './controllers/scheduleController';
 router.post('/schedules', scheduleController.createSchedule);
 router.get('/schedules', scheduleController.listSchedules);
-router.put('/schedules/:id', scheduleController.updateScheduleStatus);
+router.put('/schedules/:id', requireRole(['MASTER', 'RH']), scheduleController.updateScheduleStatus);
 
 // Dashboard Routes
-import * as dashboardController from './controllers/dashboardController';
-router.get('/dashboard/rh', dashboardController.getRHDashboardStats);
-router.get('/dashboard/master', dashboardController.getMasterDashboardStats);
+router.get('/dashboard/rh', requireRole(['MASTER', 'RH']), dashboardController.getRHDashboardStats);
+router.get('/dashboard/master', requireRole(['MASTER']), dashboardController.getMasterDashboardStats);
 
 // Report Routes
-import * as reportController from './controllers/reportController';
-router.get('/reports', reportController.listReports);
-router.post('/reports', reportController.generateReport);
+router.get('/reports', requireRole(['MASTER', 'RH']), reportController.listReports);
+router.post('/reports', requireRole(['MASTER', 'RH']), reportController.generateReport);
 
 // Settings Routes
-import * as settingsController from './controllers/settingsController';
 router.get('/settings/terms', settingsController.getTerms);
-router.post('/settings/terms', settingsController.updateTerms);
+router.post('/settings/terms', requireRole(['MASTER']), settingsController.updateTerms);
 router.get('/settings/feed-categories', settingsController.getFeedCategories);
-router.post('/settings/feed-categories', settingsController.createFeedCategory);
-router.delete('/settings/feed-categories/:id', settingsController.deleteFeedCategory);
+router.post('/settings/feed-categories', requireRole(['MASTER', 'RH']), settingsController.createFeedCategory);
+router.delete('/settings/feed-categories/:id', requireRole(['MASTER', 'RH']), settingsController.deleteFeedCategory);
 
 router.get('/settings/shifts', settingsController.getShifts);
-router.post('/settings/shifts', settingsController.createShift);
-router.delete('/settings/shifts/:id', settingsController.deleteShift);
+router.post('/settings/shifts', requireRole(['MASTER', 'RH']), settingsController.createShift);
+router.delete('/settings/shifts/:id', requireRole(['MASTER', 'RH']), settingsController.deleteShift);
 
 // Availability
 router.get('/settings/availability', settingsController.getAvailability);
-router.post('/settings/availability', settingsController.updateAvailability);
+router.post('/settings/availability', requireRole(['MASTER', 'RH']), settingsController.updateAvailability);
 
 // Libras Central Routes
-import * as librasController from './controllers/librasController';
 router.get('/libras/availability', librasController.checkAvailability);
-router.get('/settings/libras', librasController.getSettings);
-router.post('/settings/libras', librasController.updateSettings);
-router.post('/daily/room', createRoom);
+router.get('/settings/libras', requireRole(['MASTER', 'RH']), librasController.getSettings);
+router.post('/settings/libras', requireRole(['MASTER', 'RH']), librasController.updateSettings);
+router.post('/daily/room', requireRole(['MASTER', 'RH']), createRoom);
 
 // Libras Call System
-import * as librasCallController from './controllers/librasCallController';
 router.post('/libras/calls', librasCallController.requestCall);
-router.get('/libras/calls/pending', librasCallController.listPendingCalls);
+router.get('/libras/calls/pending', requireRole(['MASTER', 'RH']), librasCallController.listPendingCalls);
 router.get('/libras/calls/:id/status', librasCallController.checkCallStatus);
-router.put('/libras/calls/:id/accept', librasCallController.acceptCall);
+router.put('/libras/calls/:id/accept', requireRole(['MASTER', 'RH']), librasCallController.acceptCall);
 router.put('/libras/calls/:id/status', librasCallController.updateCallStatus);
-router.post('/libras/calls/:id/invite', librasCallController.inviteToCall);
+router.post('/libras/calls/:id/invite', requireRole(['MASTER', 'RH']), librasCallController.inviteToCall);
 
 // Specialist Routes
-import * as specialistController from './controllers/specialistController';
 router.get('/specialists', specialistController.listSpecialists);
-router.post('/specialists', specialistController.createSpecialist);
-router.put('/specialists/:id', specialistController.updateSpecialist);
-router.delete('/specialists/:id', specialistController.deleteSpecialist);
+router.post('/specialists', requireRole(['MASTER', 'RH']), specialistController.createSpecialist);
+router.put('/specialists/:id', requireRole(['MASTER', 'RH']), specialistController.updateSpecialist);
+router.delete('/specialists/:id', requireRole(['MASTER', 'RH']), specialistController.deleteSpecialist);
 
 // Specialty Routes
-import * as specialtyController from './controllers/specialtyController';
 router.get('/specialties', specialtyController.listSpecialties);
-router.post('/specialties', specialtyController.createSpecialty);
-router.delete('/specialties/:id', specialtyController.deleteSpecialty);
-
-// University Routes
-import * as courseController from './controllers/courseController';
-router.get('/courses', courseController.listCourses);
-router.post('/courses', courseController.createCourse);
-router.put('/courses/:id', courseController.updateCourse);
-router.delete('/courses/:id', courseController.deleteCourse);
-router.post('/modules', courseController.createModule);
-router.post('/lessons', courseController.createLesson);
-router.get('/courses/:id', courseController.getCourseDetails);
-router.post('/progress', courseController.updateLessonProgress);
-router.get('/courses/reports/progress', courseController.getCompanyProgress);
-router.get('/courses/reports/analytics', courseController.getAnalytics);
-router.get('/courses/users/:userId', courseController.getUserUniversityDetails);
+router.post('/specialties', requireRole(['MASTER', 'RH']), specialtyController.createSpecialty);
+router.delete('/specialties/:id', requireRole(['MASTER', 'RH']), specialtyController.deleteSpecialty);
 
 // PDI Routes
-import * as pdiController from './controllers/pdiController';
 router.post('/pdis', pdiController.createPDI);
 router.get('/pdis', pdiController.listPDIs);
 router.put('/pdis/:id', pdiController.updatePDI);
 router.delete('/pdis/:id', pdiController.deletePDI);
 
 // User Management (MASTER only)
-import * as userController from './controllers/userController';
-router.get('/users', userController.listUsers);
-router.post('/users', userController.createUser);
-router.put('/users/:id', userController.updateUser);
-router.delete('/users/:id', userController.deleteUser);
+router.get('/users', requireRole(['MASTER']), userController.listUsers);
+router.post('/users', requireRole(['MASTER']), userController.createUser);
+router.put('/users/:id', requireRole(['MASTER']), userController.updateUser);
+router.delete('/users/:id', requireRole(['MASTER']), userController.deleteUser);
 
 // Upload Routes
-import * as uploadController from './controllers/uploadController';
-router.post('/upload', uploadController.uploadMiddleware, uploadController.uploadFile);
+router.post('/upload', rateLimiter, uploadController.uploadMiddleware, uploadController.handleUploadError, uploadController.uploadFile);
 
 // Notification Routes
-import * as notificationController from './controllers/notificationController';
 router.get('/notifications', notificationController.listNotifications);
 router.put('/notifications/:id/read', notificationController.markAsRead);
 router.put('/notifications/read-all', notificationController.markAllAsRead);
 
 // Quiz Routes
-router.post('/quizzes', authenticateToken, createQuiz);
-router.delete('/quizzes/:id', authenticateToken, deleteQuiz);
-router.get('/quizzes/:id/editor', authenticateToken, getQuizEditor);
-router.post('/quizzes/questions', authenticateToken, addQuestion);
-router.delete('/quizzes/questions/:id', authenticateToken, deleteQuestion);
-router.get('/quizzes/:id', authenticateToken, getQuiz);
-router.post('/quizzes/:id/submit', authenticateToken, submitQuiz);
+router.post('/quizzes', requireRole(['MASTER', 'RH']), createQuiz);
+router.delete('/quizzes/:id', requireRole(['MASTER', 'RH']), deleteQuiz);
+router.get('/quizzes/:id/editor', requireRole(['MASTER', 'RH']), getQuizEditor);
+router.post('/quizzes/questions', requireRole(['MASTER', 'RH']), addQuestion);
+router.delete('/quizzes/questions/:id', requireRole(['MASTER', 'RH']), deleteQuestion);
+router.get('/quizzes/:id', getQuiz);
+router.post('/quizzes/:id/submit', submitQuiz);
 
 export default router;

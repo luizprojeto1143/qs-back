@@ -46,7 +46,56 @@ const RHDashboard = () => {
         fetchStats();
     }, []);
 
-    if (loading) return <div className="p-8 text-center">Carregando dados...</div>;
+    import { SkeletonCard, Skeleton } from '../components/Skeleton';
+
+    // ...
+
+    if (loading) {
+        return (
+            <div className="space-y-8 animate-in fade-in duration-500">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <Skeleton className="h-8 w-64 mb-2" />
+                        <Skeleton className="h-4 w-48" />
+                    </div>
+                </div>
+
+                {/* Stats Grid 1 */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {[1, 2, 3, 4].map((i) => (
+                        <SkeletonCard key={i} />
+                    ))}
+                </div>
+
+                {/* Stats Grid 2 */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {[1, 2, 3, 4].map((i) => (
+                        <SkeletonCard key={i} />
+                    ))}
+                </div>
+
+                {/* Bottom Sections */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {[1, 2, 3].map((i) => (
+                        <div key={i} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 lg:col-span-1 space-y-4">
+                            <Skeleton className="h-6 w-48 mb-4" />
+                            <div className="space-y-4">
+                                {[1, 2, 3].map((j) => (
+                                    <div key={j} className="flex items-center space-x-3">
+                                        <Skeleton className="h-10 w-10 rounded-full" />
+                                        <div className="space-y-2 flex-1">
+                                            <Skeleton className="h-4 w-full" />
+                                            <Skeleton className="h-3 w-2/3" />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-8">
