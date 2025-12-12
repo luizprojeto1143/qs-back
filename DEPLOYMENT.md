@@ -1,61 +1,61 @@
-# Deployment Guide
+# Guia de Deploy
 
-This guide details how to deploy the **QS Backend** to Render and the **QS Frontend** to Vercel.
+Este guia detalha como fazer o deploy do **Backend (QS)** no Render e do **Frontend (QS)** na Vercel.
 
-## Backend Deployment (Render)
+## Deploy do Backend (Render)
 
-1.  **Create a New Web Service**:
-    - Go to your [Render Dashboard](https://dashboard.render.com/).
-    - Click **New +** -> **Web Service**.
-    - Connect your GitHub repository.
+1.  **Criar Novo Web Service**:
+    - Vá para o seu [Dashboard do Render](https://dashboard.render.com/).
+    - Clique em **New +** -> **Web Service**.
+    - Conecte seu repositório do GitHub.
 
-2.  **Configuration**:
-    - **Name**: `qs-back` (or your preferred name)
-    - **Region**: Choose the one closest to your users (e.g., Ohio, Frankfurt).
-    - **Branch**: `main` (or your production branch)
+2.  **Configuração**:
+    - **Name**: `qs-back` (ou o nome que preferir)
+    - **Region**: Escolha a mais próxima (ex: Ohio, Frankfurt).
+    - **Branch**: `main`
     - **Root Directory**: `server`
     - **Runtime**: `Node`
     - **Build Command**: `npm install && npm run build`
     - **Start Command**: `npx prisma migrate deploy && npm run start:prod`
 
-3.  **Environment Variables**:
-    - Add the following environment variables in the "Environment" tab:
+3.  **Variáveis de Ambiente**:
+    - Adicione as seguintes variáveis na aba "Environment":
         - `NODE_VERSION`: `20.11.0`
-        - `DATABASE_URL`: Your Supabase connection string.
-        - `JWT_SECRET`: A strong secret key for authentication.
-        - `AWS_ACCESS_KEY_ID`: Your AWS Access Key.
-        - `AWS_SECRET_ACCESS_KEY`: Your AWS Secret Key.
-        - `AWS_REGION`: Your AWS Region (e.g., `us-east-1`).
-        - `AWS_BUCKET_NAME`: Your S3 Bucket Name.
-        - `CLOUDINARY_CLOUD_NAME`: Your Cloudinary Cloud Name.
-        - `CLOUDINARY_API_KEY`: Your Cloudinary API Key.
-        - `CLOUDINARY_API_SECRET`: Your Cloudinary API Secret.
-        - `EMAIL_USER`: Email address for sending notifications.
-        - `EMAIL_PASS`: Password or App Password for the email.
+        - `DATABASE_URL`: Sua string de conexão do Supabase.
+        - `JWT_SECRET`: Uma chave secreta forte para autenticação.
+        - `AWS_ACCESS_KEY_ID`: Sua Access Key da AWS.
+        - `AWS_SECRET_ACCESS_KEY`: Sua Secret Key da AWS.
+        - `AWS_REGION`: Sua região da AWS (ex: `us-east-1`).
+        - `AWS_BUCKET_NAME`: Nome do seu Bucket S3.
+        - `CLOUDINARY_CLOUD_NAME`: Seu Cloud Name do Cloudinary.
+        - `CLOUDINARY_API_KEY`: Sua API Key do Cloudinary.
+        - `CLOUDINARY_API_SECRET`: Seu API Secret do Cloudinary.
+        - `EMAIL_USER`: Email para envio de notificações.
+        - `EMAIL_PASS`: Senha ou App Password do email.
 
 4.  **Deploy**:
-    - Click **Create Web Service**. Render will start the build and deployment process.
+    - Clique em **Create Web Service**.
 
-## Frontend Deployment (Vercel)
+## Deploy do Frontend (Vercel)
 
-1.  **Import Project**:
-    - Go to your [Vercel Dashboard](https://vercel.com/dashboard).
-    - Click **Add New...** -> **Project**.
-    - Import your GitHub repository.
+1.  **Importar Projeto**:
+    - Vá para o seu [Dashboard da Vercel](https://vercel.com/dashboard).
+    - Clique em **Add New...** -> **Project**.
+    - Importe seu repositório.
 
-2.  **Configuration**:
+2.  **Configuração**:
     - **Framework Preset**: `Vite`
-    - **Root Directory**: `client` (Click "Edit" next to Root Directory and select `client`).
+    - **Root Directory**: `client` (**IMPORTANTE**: Clique em "Edit" ao lado de Root Directory e selecione a pasta `client`. Se você pular isso, o deploy vai falhar).
 
-3.  **Environment Variables**:
-    - Expand the "Environment Variables" section.
-    - Add:
-        - `VITE_API_URL`: The URL of your deployed Render backend (e.g., `https://qs-back.onrender.com`).
+3.  **Variáveis de Ambiente**:
+    - Expanda a seção "Environment Variables".
+    - Adicione:
+        - `VITE_API_URL`: A URL do seu backend no Render (ex: `https://qs-back.onrender.com`).
 
 4.  **Deploy**:
-    - Click **Deploy**. Vercel will build and deploy your frontend.
+    - Clique em **Deploy**.
 
-## Verification
+## Verificação
 
-- **Backend**: Visit your Render URL (e.g., `https://qs-back.onrender.com/health` or a known endpoint) to confirm it's running.
-- **Frontend**: Visit your Vercel URL and try to log in or interact with the backend to ensure the connection is working.
+- **Backend**: Acesse a URL do Render (ex: `https://qs-back.onrender.com/health`) para confirmar se está rodando.
+- **Frontend**: Acesse a URL da Vercel e tente logar para testar a conexão.
