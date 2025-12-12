@@ -13,7 +13,7 @@ router.use(authenticateToken);
 
 router.get('/structure', companyController.getStructure);
 
-router.get('/companies', requireRole(['MASTER']), companyController.listCompanies);
+router.get('/companies', companyController.listCompanies);
 router.post('/companies', requireRole(['MASTER']), companyController.createCompany);
 router.put('/companies/:id', requireRole(['MASTER', 'RH']), companyController.updateCompany);
 router.delete('/companies/:id', requireRole(['MASTER']), companyController.deleteCompany);

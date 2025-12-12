@@ -51,7 +51,10 @@ const VisitHistory = () => {
         const fetchVisits = async () => {
             try {
                 const response = await api.get('/visits');
-                setVisits(response.data.data || []);
+                // Handle both { data: [...] } and [...] formats
+                const rawData = response.data;
+                const visitsList = Array.isArray(rawData) ? rawData : (rawData?.data || []);
+                setVisits(Array.isArray(visitsList) ? visitsList : []);
             } catch (error) {
                 console.error('Error fetching visits', error);
                 toast.error('Erro ao carregar histórico de visitas');
