@@ -41,6 +41,17 @@ const CollaboratorRegistration = () => {
         }
     }, [companyId]);
 
+    const [avatarFile, setAvatarFile] = useState<File | null>(null);
+    const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            setAvatarFile(file);
+            setAvatarPreview(URL.createObjectURL(file));
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -54,9 +65,29 @@ const CollaboratorRegistration = () => {
             return;
         }
 
+        if (!avatarFile) {
+            toast.error('A foto de perfil é obrigatória.');
+            return;
+        }
+
         setLoading(true);
         try {
-            await api.post('/auth/register-collaborator', formData);
+            // 1. Upload Photo
+            const uploadFormData = new FormData();
+            uploadFormData.append('file', avatarFile);
+
+            const uploadRes = await api.post('/upload', uploadFormData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+
+            const avatarUrl = uploadRes.data.url;
+
+            // 2. Register User with Avatar URL
+            await api.post('/auth/register-collaborator', {
+                ...formData,
+                avatar: avatarUrl
+            });
+
             setSuccess(true);
             toast.success('Cadastro realizado com sucesso!');
         } catch (error: any) {
@@ -107,6 +138,25 @@ const CollaboratorRegistration = () => {
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
+                    {/* Avatar Upload */}
+                    <div className="flex flex-col items-center mb-6">
+                        <div className="w-24 h-24 bg-gray-100 rounded-full mb-2 flex items-center justify-center overflow-hidden border-2 border-dashed border-gray-300 relative">
+                            {avatarPreview ? (
+                                <img src={avatarPreview} alt="Preview" className="w-full h-full object-cover" />
+                            ) : (
+                                <User className="h-10 w-10 text-gray-400" />
+                            )}
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleFileChange}
+                                className="absolute inset-0 opacity-0 cursor-pointer"
+                                required
+                            />
+                        </div>
+                        <p className="text-xs text-gray-500">Toque para adicionar foto (Obrigatório)</p>
+                    </div>
+
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Nome Completo</label>
                         <div className="relative">

@@ -22,7 +22,8 @@ export const registerCollaboratorSchema = z.object({
     companyId: z.string().uuid(),
     shift: z.string().optional(),
     disabilityType: z.string().optional(),
-    needsDescription: z.string().optional()
+    needsDescription: z.string().optional(),
+    avatar: z.string().min(1, "Foto é obrigatória")
 });
 
 export const createUserSchema = z.object({

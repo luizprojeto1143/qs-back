@@ -120,7 +120,8 @@ export const registerCollaborator = async (req: Request, res: Response) => {
                     password: hashedPassword,
                     name,
                     role: 'COLABORADOR',
-                    companyId
+                    companyId,
+                    avatar: validation.data.avatar // Save avatar URL
                 }
             });
 

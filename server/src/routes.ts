@@ -37,6 +37,16 @@ router.use('/', universityRoutes); // Mounts /courses, etc.
 // Protected Routes Middleware (for inline routes)
 router.use(authenticateToken);
 
+// User Profile Route
+router.get('/me', (req, res) => {
+    // Import dynamically to avoid circular dependency if any, or just use the imported controller
+    // Since authController is not imported as * as authController, I need to check imports
+    // Wait, authController IS NOT imported in the file view above. I need to import it.
+    // Actually, looking at imports: import * as userController... but authController is missing.
+    // I will add the import and the route.
+    import('./controllers/authController').then(c => c.getProfile(req, res));
+});
+
 // Collaborator Routes
 router.get('/collaborators', collaboratorController.listCollaborators);
 router.post('/collaborators', requireRole(['MASTER', 'RH']), collaboratorController.createCollaborator);
