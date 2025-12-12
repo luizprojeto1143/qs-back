@@ -95,7 +95,7 @@ router.post('/settings/availability', requireRole(['MASTER', 'RH']), settingsCon
 router.get('/libras/availability', librasController.checkAvailability);
 router.get('/settings/libras', requireRole(['MASTER', 'RH']), librasController.getSettings);
 router.post('/settings/libras', requireRole(['MASTER', 'RH']), librasController.updateSettings);
-router.post('/daily/room', requireRole(['MASTER', 'RH']), createRoom);
+router.post('/daily/room', requireRole(['MASTER', 'RH', 'COLABORADOR']), createRoom);
 
 // Libras Call System
 router.post('/libras/calls', librasCallController.requestCall);
