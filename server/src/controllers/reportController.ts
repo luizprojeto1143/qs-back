@@ -103,7 +103,8 @@ export const generateReport = async (req: Request, res: Response) => {
                                 email: true,
                                 role: true,
                                 active: true,
-                                companyId: true
+                                companyId: true,
+                                avatar: true
                             }
                         },
                         area: true
@@ -121,7 +122,8 @@ export const generateReport = async (req: Request, res: Response) => {
                                     email: true,
                                     role: true,
                                     active: true,
-                                    companyId: true
+                                    companyId: true,
+                                    avatar: true
                                 }
                             },
                             area: true
