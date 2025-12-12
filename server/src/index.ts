@@ -16,18 +16,8 @@ import routes from './routes';
 app.use(helmet());
 
 app.use(cors({
-  origin: (origin, callback) => {
-    const allowedOrigins = process.env.ALLOWED_ORIGINS
-      ? process.env.ALLOWED_ORIGINS.split(',')
-      : ['https://qs-back.vercel.app', 'http://localhost:5173', 'http://localhost:3000'];
-
-    // Strict CORS: Only allow exact matches from allowedOrigins
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: true, // Allow all origins
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-company-id']
 }));
