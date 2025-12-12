@@ -58,7 +58,8 @@ export const handleUploadError = (err: any, req: Request, res: Response, next: F
         }
         return res.status(400).json({ error: `Upload error: ${err.message}` });
     } else if (err) {
-        return res.status(400).json({ error: 'Invalid file type or upload failed.' });
+        console.error('Multer/Cloudinary Error:', err);
+        return res.status(400).json({ error: `Invalid file type or upload failed: ${err.message || err}` });
     }
     next();
 };
