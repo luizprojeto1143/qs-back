@@ -402,8 +402,12 @@ const ReportViewer = () => {
                     <div className="space-y-8">
                         {/* Collaborator Profile Header */}
                         <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 flex items-center space-x-6">
-                            <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center text-2xl font-bold text-gray-500">
-                                {reportData.collaborator?.user?.name?.charAt(0) || 'C'}
+                            <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center text-2xl font-bold text-gray-500 overflow-hidden">
+                                {reportData.collaborator?.user?.avatar ? (
+                                    <img src={reportData.collaborator.user.avatar} alt={reportData.collaborator.user.name} className="w-full h-full object-cover" />
+                                ) : (
+                                    reportData.collaborator?.user?.name?.charAt(0) || 'C'
+                                )}
                             </div>
                             <div>
                                 <h2 className="text-2xl font-bold text-gray-900">{reportData.collaborator?.user?.name}</h2>
