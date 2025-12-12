@@ -196,11 +196,14 @@ const LibrasCentral = () => {
         }
     };
 
+    const [token, setToken] = useState<string | null>(null);
+
     const startCall = async () => {
         try {
             const response = await api.post('/daily/room', {});
-            const url = response.data.url;
+            const { url, token } = response.data;
             setRoomUrl(url);
+            setToken(token);
             setCallStatus('IN_PROGRESS');
         } catch (error) {
             console.error('Error starting Daily call', error);
@@ -221,7 +224,8 @@ const LibrasCentral = () => {
                 },
                 showLeaveButton: true,
                 showFullscreenButton: true,
-                url: roomUrl, // Pass URL here too for safety
+                url: roomUrl,
+                token: token || undefined // Pass token here
             });
 
             callFrameRef.current = callFrame;
@@ -229,8 +233,8 @@ const LibrasCentral = () => {
             callFrame.on('error', (e) => {
                 console.error('Daily error:', e);
                 toast.error(`Erro na chamada: ${e?.errorMsg || 'Desconhecido'}`);
-                // Don't reset status to IDLE on error, allow retry
                 setRoomUrl(null);
+                setToken(null);
                 callFrame.destroy();
                 callFrameRef.current = null;
             });
@@ -239,10 +243,8 @@ const LibrasCentral = () => {
                 console.log('Left meeting:', e);
                 callFrame.destroy();
                 setRoomUrl(null);
+                setToken(null);
                 callFrameRef.current = null;
-
-                // Only reset to IDLE if it wasn't an error (Daily sends 'error' event usually, but let's be safe)
-                // If user clicked leave, we reset.
                 setCallStatus('IDLE');
 
                 if (currentCallId) {
@@ -252,9 +254,10 @@ const LibrasCentral = () => {
 
             callFrame.join({
                 url: roomUrl,
+                token: token || undefined, // And here just to be sure
                 userName: userName,
                 showLeaveButton: true,
-                cssFile: 'https://api.daily.co/v1/ui/css/daily.css' // Ensure default styles
+                cssFile: 'https://api.daily.co/v1/ui/css/daily.css'
             });
         } catch (error) {
             console.error('Error joining Daily call', error);
@@ -267,7 +270,7 @@ const LibrasCentral = () => {
                 callFrameRef.current = null;
             }
         };
-    }, [roomUrl, userName, currentCallId]);
+    }, [roomUrl, token, userName, currentCallId]);
 
     // Render Invite Modal
     const renderInviteModal = () => (
