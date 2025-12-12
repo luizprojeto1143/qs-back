@@ -10,6 +10,9 @@ interface Term {
 }
 
 export const TermsEnforcer: React.FC = () => {
+    const [showModal, setShowModal] = useState(false);
+    const [term, setTerm] = useState<Term | null>(null);
+    const [loading, setLoading] = useState(false);
     const [expanded, setExpanded] = useState(false);
 
     useEffect(() => {
