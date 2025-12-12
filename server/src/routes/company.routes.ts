@@ -13,10 +13,10 @@ router.use(authenticateToken);
 
 router.get('/structure', companyController.getStructure);
 
-router.get('/', requireRole(['MASTER']), companyController.listCompanies);
-router.post('/', requireRole(['MASTER']), companyController.createCompany);
-router.put('/:id', requireRole(['MASTER', 'RH']), companyController.updateCompany);
-router.delete('/:id', requireRole(['MASTER']), companyController.deleteCompany);
+router.get('/companies', requireRole(['MASTER']), companyController.listCompanies);
+router.post('/companies', requireRole(['MASTER']), companyController.createCompany);
+router.put('/companies/:id', requireRole(['MASTER', 'RH']), companyController.updateCompany);
+router.delete('/companies/:id', requireRole(['MASTER']), companyController.deleteCompany);
 
 router.get('/sectors', companyController.listSectors);
 router.post('/sectors', requireRole(['MASTER', 'RH']), companyController.createSector);
