@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Users, ClipboardList, AlertTriangle, CheckCircle } from 'lucide-react';
 import { api } from '../lib/api';
+import { SkeletonCard, Skeleton } from '../components/Skeleton';
 
 const StatCard = ({ icon: Icon, label, value, color }: any) => (
     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center space-x-4">
@@ -45,10 +46,6 @@ const RHDashboard = () => {
         };
         fetchStats();
     }, []);
-
-    import { SkeletonCard, Skeleton } from '../components/Skeleton';
-
-    // ...
 
     if (loading) {
         return (

@@ -163,13 +163,7 @@ const VisitRecording = () => {
                 const today = new Date().toISOString().split('T')[0];
 
                 // OPTIMIZED: Fetch only filtered schedules from backend
-                const res = await api.get('/schedules', {
-                    params: {
-                        date: today,
-                        area: areaName,
-                        status: 'APROVADO'
-                    }
-                });
+                const res = await api.get(`/schedules?date=${today}&area=${areaName}&status=APROVADO`);
 
                 if (res.data) {
                     const approvedSchedules = res.data;
