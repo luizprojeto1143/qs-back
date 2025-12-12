@@ -47,6 +47,7 @@ model Company {
   universityEnabled Boolean @default(false)
   auditLogs     AuditLog[]
   learningTrails LearningTrail[]
+  termsAcceptances UserTermsAcceptance[]
 }
 
 model Sector {
@@ -102,6 +103,7 @@ model User {
   certificates Certificate[]
   auditLogs     AuditLog[]
   quizAttempts  UserQuizAttempt[]
+  termsAcceptances UserTermsAcceptance[]
 
   @@index([companyId])
 }
@@ -290,6 +292,27 @@ model TermOfUse {
   content   String
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
+  
+  acceptances UserTermsAcceptance[]
+}
+
+model UserTermsAcceptance {
+  id        String   @id @default(uuid())
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  
+  termId    String
+  term      TermOfUse @relation(fields: [termId], references: [id])
+  
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
+  
+  acceptedAt DateTime @default(now())
+  ipAddress  String?
+  userAgent  String?  // Browser/Device info
+  
+  @@unique([userId, termId]) // User accepts a specific version only once
 }
 
 model Shift {

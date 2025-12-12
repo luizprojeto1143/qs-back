@@ -4,7 +4,19 @@ import { Suspense, lazy } from 'react';
 import { CompanyProvider } from './contexts/CompanyContext';
 import ErrorBoundary from './components/ErrorBoundary';
 
-// Lazy Load Pages to reduce initial bundle size
+import { TermsEnforcer } from './components/TermsEnforcer';
+
+// ...
+
+function App() {
+  console.log('QS System Version: Frontend Polish (v10.16)');
+  return (
+    <CompanyProvider>
+      <Toaster position="top-right" richColors />
+      <ErrorBoundary>
+        <Router>
+          <TermsEnforcer />
+          <Suspense fallback={<PageLoader />}>
 const Login = lazy(() => import('./pages/Login'));
 const DashboardLayout = lazy(() => import('./layouts/DashboardLayout'));
 const VisitRecording = lazy(() => import('./pages/VisitRecording'));
@@ -48,84 +60,84 @@ const Certificates = lazy(() => import('./pages/university/Certificates'));
 
 // Loading Fallback
 const PageLoader = () => (
-  <div className="min-h-screen flex items-center justify-center bg-gray-50">
-    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-  </div>
-);
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            </div>
+            );
 
-function App() {
-  console.log('QS System Version: Frontend Polish (v10.16)');
-  return (
-    <CompanyProvider>
-      <Toaster position="top-right" richColors />
-      <ErrorBoundary>
-        <Router>
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/" element={<Navigate to="/login" replace />} />
+            function App() {
+              console.log('QS System Version: Frontend Polish (v10.16)');
+            return (
+            <CompanyProvider>
+              <Toaster position="top-right" richColors />
+              <ErrorBoundary>
+                <Router>
+                  <Suspense fallback={<PageLoader />}>
+                    <Routes>
+                      <Route path="/login" element={<Login />} />
+                      <Route path="/" element={<Navigate to="/login" replace />} />
 
-              <Route path="/dashboard" element={<DashboardLayout />}>
-                <Route index element={<DashboardHome />} />
-                <Route path="visits" element={<VisitRecording />} />
-                <Route path="pendencies" element={<Pendencies />} />
-                <Route path="collaborators" element={<CollaboratorsList />} />
+                      <Route path="/dashboard" element={<DashboardLayout />}>
+                        <Route index element={<DashboardHome />} />
+                        <Route path="visits" element={<VisitRecording />} />
+                        <Route path="pendencies" element={<Pendencies />} />
+                        <Route path="collaborators" element={<CollaboratorsList />} />
 
-                <Route path="feed" element={<Feed />} />
-                <Route path="schedules" element={<Schedules />} />
-                <Route path="reports" element={<Reports />} />
-                <Route path="report-viewer" element={<ReportViewer />} />
-                <Route path="inclusion-diagnosis" element={<InclusionDiagnosisEditor />} />
-                <Route path="settings" element={<Settings />} />
-                <Route path="libras" element={<LibrasCentral />} />
+                        <Route path="feed" element={<Feed />} />
+                        <Route path="schedules" element={<Schedules />} />
+                        <Route path="reports" element={<Reports />} />
+                        <Route path="report-viewer" element={<ReportViewer />} />
+                        <Route path="inclusion-diagnosis" element={<InclusionDiagnosisEditor />} />
+                        <Route path="settings" element={<Settings />} />
+                        <Route path="libras" element={<LibrasCentral />} />
 
-                {/* Settings Routes */}
-                <Route path="companies" element={<CompaniesList />} />
-                <Route path="sectors" element={<SectorsList />} />
-                <Route path="areas" element={<AreasList />} />
-                <Route path="terms" element={<TermsOfUse />} />
-                <Route path="feed-categories" element={<FeedCategories />} />
-                <Route path="shifts" element={<ShiftsList />} />
-                <Route path="availability" element={<Availability />} />
-                <Route path="libras-availability" element={<LibrasAvailability />} />
-                <Route path="users" element={<UsersList />} />
-                <Route path="qrcode" element={<QRCodeGenerator />} />
-                <Route path="specialists" element={<SpecialistSettings />} />
-                <Route path="history" element={<CompanyHistory />} />
-                <Route path="university" element={<UniversityManagement />} />
-                <Route path="pdi" element={<PDIManagement />} />
-              </Route>
+                        {/* Settings Routes */}
+                        <Route path="companies" element={<CompaniesList />} />
+                        <Route path="sectors" element={<SectorsList />} />
+                        <Route path="areas" element={<AreasList />} />
+                        <Route path="terms" element={<TermsOfUse />} />
+                        <Route path="feed-categories" element={<FeedCategories />} />
+                        <Route path="shifts" element={<ShiftsList />} />
+                        <Route path="availability" element={<Availability />} />
+                        <Route path="libras-availability" element={<LibrasAvailability />} />
+                        <Route path="users" element={<UsersList />} />
+                        <Route path="qrcode" element={<QRCodeGenerator />} />
+                        <Route path="specialists" element={<SpecialistSettings />} />
+                        <Route path="history" element={<CompanyHistory />} />
+                        <Route path="university" element={<UniversityManagement />} />
+                        <Route path="pdi" element={<PDIManagement />} />
+                      </Route>
 
-              <Route path="/register/collaborator" element={<CollaboratorRegistration />} />
+                      <Route path="/register/collaborator" element={<CollaboratorRegistration />} />
 
-              {/* RH Routes */}
-              <Route path="/rh" element={<RHLayout />}>
-                <Route index element={<RHDashboard />} />
-                <Route path="collaborators" element={<CollaboratorsList />} />
-                <Route path="reports" element={<Reports />} />
-                <Route path="history" element={<VisitHistory />} />
-                <Route path="schedules" element={<Schedules />} />
-                <Route path="libras" element={<LibrasCentral />} />
-                <Route path="university-reports" element={<UniversityReports />} />
-              </Route>
-              {/* Mobile App Routes */}
-              <Route path="/app" element={<MobileLayout />}>
-                <Route index element={<MobileHome />} />
-                <Route path="schedule" element={<MobileSchedule />} />
-                <Route path="request" element={<MobileSchedule />} />
-                <Route path="profile" element={<MobileProfile />} />
-                <Route path="libras" element={<LibrasCentral />} />
-                <Route path="university" element={<CourseCatalog />} />
-                <Route path="university/course/:id" element={<CoursePlayer />} />
-                <Route path="university/quiz/:id" element={<QuizPlayer />} />
-                <Route path="university/certificates" element={<Certificates />} />
-              </Route>
-            </Routes>
-          </Suspense>
-        </Router>
-      </ErrorBoundary>
-    </CompanyProvider>
-  );
+                      {/* RH Routes */}
+                      <Route path="/rh" element={<RHLayout />}>
+                        <Route index element={<RHDashboard />} />
+                        <Route path="collaborators" element={<CollaboratorsList />} />
+                        <Route path="reports" element={<Reports />} />
+                        <Route path="history" element={<VisitHistory />} />
+                        <Route path="schedules" element={<Schedules />} />
+                        <Route path="libras" element={<LibrasCentral />} />
+                        <Route path="university-reports" element={<UniversityReports />} />
+                      </Route>
+                      {/* Mobile App Routes */}
+                      <Route path="/app" element={<MobileLayout />}>
+                        <Route index element={<MobileHome />} />
+                        <Route path="schedule" element={<MobileSchedule />} />
+                        <Route path="request" element={<MobileSchedule />} />
+                        <Route path="profile" element={<MobileProfile />} />
+                        <Route path="libras" element={<LibrasCentral />} />
+                        <Route path="university" element={<CourseCatalog />} />
+                        <Route path="university/course/:id" element={<CoursePlayer />} />
+                        <Route path="university/quiz/:id" element={<QuizPlayer />} />
+                        <Route path="university/certificates" element={<Certificates />} />
+                      </Route>
+                    </Routes>
+                  </Suspense>
+                </Router>
+              </ErrorBoundary>
+            </CompanyProvider>
+            );
 }
 
-export default App;
+            export default App;

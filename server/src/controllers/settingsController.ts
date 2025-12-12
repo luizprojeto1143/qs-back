@@ -15,6 +15,39 @@ export const getTerms = async (req: Request, res: Response) => {
     }
 };
 
+export const checkTermsStatus = async (req: Request, res: Response) => {
+    try {
+        const user = (req as AuthRequest).user;
+        if (!user) return res.status(401).json({ error: 'Unauthorized' });
+
+        const latestTerm = await prisma.termOfUse.findFirst({
+            where: { active: true },
+            orderBy: { createdAt: 'desc' }
+        });
+
+        if (!latestTerm) {
+            return res.json({ accepted: true }); // No terms to accept
+        }
+
+        const acceptance = await prisma.userTermsAcceptance.findUnique({
+            where: {
+                userId_termId: {
+                    userId: user.userId,
+                    termId: latestTerm.id
+                }
+            }
+        });
+
+        res.json({
+            accepted: !!acceptance,
+            latestTerm
+        });
+    } catch (error) {
+        console.error('Error checking terms status:', error);
+        res.status(500).json({ error: 'Error checking terms status' });
+    }
+};
+
 export const updateTerms = async (req: Request, res: Response) => {
     try {
         const { content, version } = req.body;
@@ -24,6 +57,79 @@ export const updateTerms = async (req: Request, res: Response) => {
         res.json(terms);
     } catch (error) {
         res.status(500).json({ error: 'Error updating terms' });
+    }
+};
+
+export const acceptTerms = async (req: Request, res: Response) => {
+    try {
+        const user = (req as AuthRequest).user;
+        if (!user) return res.status(401).json({ error: 'Unauthorized' });
+
+        const { termId, userAgent } = req.body;
+        const ipAddress = req.ip || req.socket.remoteAddress;
+
+        // Check if already accepted
+        const existing = await prisma.userTermsAcceptance.findUnique({
+            where: {
+                userId_termId: {
+                    userId: user.userId,
+                    termId
+                }
+            }
+        });
+
+        if (existing) {
+            return res.json({ message: 'Terms already accepted' });
+        }
+
+        await prisma.userTermsAcceptance.create({
+            data: {
+                userId: user.userId,
+                termId,
+                companyId: user.companyId,
+                ipAddress: typeof ipAddress === 'string' ? ipAddress : 'unknown',
+                userAgent: userAgent || 'unknown'
+            }
+        });
+
+        res.json({ message: 'Terms accepted successfully' });
+    } catch (error) {
+        console.error('Error accepting terms:', error);
+        res.status(500).json({ error: 'Error accepting terms' });
+    }
+};
+
+export const getTermsAcceptanceReport = async (req: Request, res: Response) => {
+    try {
+        const user = (req as AuthRequest).user;
+        if (!user) return res.status(401).json({ error: 'Unauthorized' });
+
+        // Filter by company unless MASTER wants to see all (optional, let's stick to company scope for now)
+        // If MASTER has no companyId (system admin), they might want to see all or filter by param.
+        // For now, let's use the user's companyId context.
+
+        const whereClause: any = {};
+        if (user.companyId) {
+            whereClause.companyId = user.companyId;
+        }
+
+        const report = await prisma.userTermsAcceptance.findMany({
+            where: whereClause,
+            include: {
+                user: {
+                    select: { name: true, email: true, role: true }
+                },
+                term: {
+                    select: { version: true }
+                }
+            },
+            orderBy: { acceptedAt: 'desc' }
+        });
+
+        res.json(report);
+    } catch (error) {
+        console.error('Error fetching terms report:', error);
+        res.status(500).json({ error: 'Error fetching report' });
     }
 };
 

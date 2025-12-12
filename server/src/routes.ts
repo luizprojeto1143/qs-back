@@ -75,7 +75,10 @@ router.post('/reports', requireRole(['MASTER', 'RH']), reportController.generate
 
 // Settings Routes
 router.get('/settings/terms', settingsController.getTerms);
-router.post('/settings/terms', requireRole(['MASTER']), settingsController.updateTerms);
+router.get('/settings/terms/status', settingsController.checkTermsStatus);
+router.post('/settings/terms', requireRole(['MASTER', 'RH']), settingsController.updateTerms);
+router.post('/settings/terms/accept', settingsController.acceptTerms);
+router.get('/settings/terms/report', requireRole(['MASTER', 'RH']), settingsController.getTermsAcceptanceReport);
 router.get('/settings/feed-categories', settingsController.getFeedCategories);
 router.post('/settings/feed-categories', requireRole(['MASTER', 'RH']), settingsController.createFeedCategory);
 router.delete('/settings/feed-categories/:id', requireRole(['MASTER', 'RH']), settingsController.deleteFeedCategory);
