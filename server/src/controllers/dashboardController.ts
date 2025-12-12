@@ -15,47 +15,37 @@ export const getRHDashboardStats = async (req: Request, res: Response) => {
         const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
         // Execute independent queries in parallel
-        const [
-            totalCollaborators,
-            visitsThisMonth,
-            openPendencies,
-            totalPendencies,
-            resolvedPendencies,
-            completedCourses,
-            pcdCount,
-            sectors,
-            mostWatchedCourses,
-            recentActivity
-        ] = await Promise.all([
-            // 1. Total Collaborators
-            prisma.user.count({
-                where: { companyId, role: 'COLABORADOR', active: true }
-            }),
-            // 2. Visits this Month
-            prisma.visit.count({
-                where: { companyId, date: { gte: firstDayOfMonth } }
-            }),
-            // 3. Open Pendencies
-            prisma.pendingItem.count({
-                where: { companyId, status: 'PENDENTE' }
-            }),
-            // 4a. Total Pendencies
-            prisma.pendingItem.count({ where: { companyId } }),
-            // 4b. Resolved Pendencies
-            prisma.pendingItem.count({ where: { companyId, status: 'RESOLVIDA' } }),
-            // 5. Total Completed Courses
-            prisma.enrollment.count({
-                where: { user: { companyId }, completed: true }
-            }),
-            // 6. PCD Percentage (Count)
-            prisma.collaboratorProfile.count({
-                where: {
-                    user: { companyId, active: true },
-                    disabilityType: { not: 'Nenhuma' }
-                }
-            }),
-            // 7. Sectors (for engagement) - OPTIMIZED
-            prisma.sector.findMany({
+        // Execute queries independently to prevent one failure from crashing the whole dashboard
+        const totalCollaborators = await prisma.user.count({
+            where: { companyId, role: 'COLABORADOR', active: true }
+        }).catch(() => 0);
+
+        const visitsThisMonth = await prisma.visit.count({
+            where: { companyId, date: { gte: firstDayOfMonth } }
+        }).catch(() => 0);
+
+        const openPendencies = await prisma.pendingItem.count({
+            where: { companyId, status: 'PENDENTE' }
+        }).catch(() => 0);
+
+        const totalPendencies = await prisma.pendingItem.count({ where: { companyId } }).catch(() => 0);
+        const resolvedPendencies = await prisma.pendingItem.count({ where: { companyId, status: 'RESOLVIDA' } }).catch(() => 0);
+
+        const completedCourses = await prisma.enrollment.count({
+            where: { user: { companyId }, completed: true }
+        }).catch(() => 0);
+
+        const pcdCount = await prisma.collaboratorProfile.count({
+            where: {
+                user: { companyId, active: true },
+                disabilityType: { not: 'Nenhuma' }
+            }
+        }).catch(() => 0);
+
+        // Complex query: Sectors
+        let sectors: any[] = [];
+        try {
+            sectors = await prisma.sector.findMany({
                 where: { companyId },
                 select: {
                     name: true,
@@ -69,34 +59,37 @@ export const getRHDashboardStats = async (req: Request, res: Response) => {
                             users: {
                                 where: {
                                     active: true,
-                                    enrollments: { some: {} } // Users with at least one enrollment
+                                    enrollments: { some: {} }
                                 },
-                                select: { id: true } // Only need ID to count, not full object
+                                select: { id: true }
                             }
                         }
                     }
                 }
-            }),
-            // 8. Most Watched Courses
-            prisma.course.findMany({
-                where: { companyId },
-                include: { _count: { select: { enrollments: true } } },
-                orderBy: { enrollments: { _count: 'desc' } },
-                take: 5
-            }),
-            // 9. Recent Activity
-            prisma.visit.findMany({
-                where: { companyId },
-                take: 5,
-                orderBy: { date: 'desc' },
-                select: {
-                    id: true,
-                    date: true,
-                    area: { select: { name: true } },
-                    master: { select: { name: true } }
-                }
-            })
-        ]);
+            });
+        } catch (error) {
+            console.error('Error fetching sectors for dashboard:', error);
+            sectors = [];
+        }
+
+        const mostWatchedCourses = await prisma.course.findMany({
+            where: { companyId },
+            include: { _count: { select: { enrollments: true } } },
+            orderBy: { enrollments: { _count: 'desc' } },
+            take: 5
+        }).catch(() => []);
+
+        const recentActivity = await prisma.visit.findMany({
+            where: { companyId },
+            take: 5,
+            orderBy: { date: 'desc' },
+            select: {
+                id: true,
+                date: true,
+                area: { select: { name: true } },
+                master: { select: { name: true } }
+            }
+        }).catch(() => []);
 
         // Calculate derived metrics
         const resolutionRate = totalPendencies > 0
@@ -108,13 +101,8 @@ export const getRHDashboardStats = async (req: Request, res: Response) => {
             : 0;
 
         const sectorEngagement = sectors.map(sector => {
-            // Sum up total users in the sector
-            const totalUsers = sector.areas.reduce((acc, area) => acc + area._count.users, 0);
-
-            // Sum up active users (those with enrollments)
-            // Note: This is an approximation. Ideally we'd do a single count query, but Prisma's nested aggregation is limited.
-            // We are fetching IDs of engaged users, which is much lighter than full objects.
-            const activeUsers = sector.areas.reduce((acc, area) => acc + area.users.length, 0);
+            const totalUsers = sector.areas.reduce((acc: number, area: any) => acc + area._count.users, 0);
+            const activeUsers = sector.areas.reduce((acc: number, area: any) => acc + area.users.length, 0);
 
             return {
                 name: sector.name,
@@ -125,7 +113,7 @@ export const getRHDashboardStats = async (req: Request, res: Response) => {
         const formattedMostWatched = mostWatchedCourses.map(course => ({
             id: course.id,
             title: course.title,
-            views: course._count.enrollments
+            views: course._count?.enrollments || 0
         }));
 
         res.json({
@@ -143,7 +131,7 @@ export const getRHDashboardStats = async (req: Request, res: Response) => {
                 id: visit.id,
                 description: `Nova visita registrada: ${visit.area?.name || 'Geral'}`,
                 time: visit.date,
-                author: visit.master.name
+                author: visit.master?.name || 'Desconhecido'
             }))
         });
 
