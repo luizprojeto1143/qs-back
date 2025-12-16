@@ -75,30 +75,35 @@ const VisitHistory = () => {
                     <h1 className="text-2xl font-bold text-gray-900">Histórico de Visitas</h1>
                     <p className="text-gray-500">Registro completo de acompanhamentos</p>
                 </div>
-                <div className="flex space-x-3">
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <input
-                            type="text"
-                            placeholder="Buscar..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                    </div>
-                    <input
-                        type="date"
-                        value={dateFilter}
-                        onChange={(e) => setDateFilter(e.target.value)}
-                        className="border border-gray-200 rounded-xl px-3 py-2 text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    <button onClick={handleExport} className="btn-secondary flex items-center space-x-2">
-                        <Download className="h-4 w-4" />
-                        <span>Exportar CSV</span>
-                    </button>
-                </div>
             </div>
-
+            <div className="flex space-x-3">
+                <button
+                    onClick={() => navigate('/dashboard/visits/new')}
+                    className="bg-primary text-white px-4 py-2 rounded-xl hover:bg-primary-dark transition-colors flex items-center space-x-2 shadow-sm font-medium"
+                >
+                    <span>Novo Acompanhamento</span>
+                </button>
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input
+                        type="text"
+                        placeholder="Buscar..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                </div>
+                <input
+                    type="date"
+                    value={dateFilter}
+                    onChange={(e) => setDateFilter(e.target.value)}
+                    className="border border-gray-200 rounded-xl px-3 py-2 text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <button onClick={handleExport} className="btn-secondary flex items-center space-x-2">
+                    <Download className="h-4 w-4" />
+                    <span>Exportar CSV</span>
+                </button>
+            </div>
             {loading ? (
                 <div className="space-y-4">
                     <SkeletonRow />
@@ -149,8 +154,9 @@ const VisitHistory = () => {
                         </div>
                     ))}
                 </div>
-            )}
-        </div>
+            )
+            }
+        </div >
     );
 };
 
