@@ -62,6 +62,7 @@ router.delete('/feed/:id', requireRole(['MASTER', 'RH']), feedController.deleteP
 // Visit Routes
 router.get('/visits', visitController.listVisits);
 router.post('/visits', requireRole(['MASTER', 'RH', 'LIDER']), visitController.createVisit);
+router.put('/visits/:id', requireRole(['MASTER', 'RH', 'LIDER']), visitController.updateVisit);
 router.get('/visits/:id', visitController.getVisit);
 
 // Pendency Routes

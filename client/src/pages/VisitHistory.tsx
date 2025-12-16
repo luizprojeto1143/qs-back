@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Search, Calendar, MapPin, User, Download } from 'lucide-react';
+import { Search, Calendar, MapPin, User, Download, Pencil } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { SkeletonRow } from '../components/Skeleton';
 import { api } from '../lib/api';
 
 const VisitHistory = () => {
+    const navigate = useNavigate();
     const [visits, setVisits] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -133,6 +135,13 @@ const VisitHistory = () => {
                                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                         Concluído
                                     </span>
+                                    <button
+                                        onClick={() => navigate('/dashboard/visits/new', { state: { visitId: visit.id, mode: 'edit' } })}
+                                        className="ml-2 p-1 text-gray-400 hover:text-blue-500 inline-block align-middle"
+                                        title="Editar"
+                                    >
+                                        <Pencil className="h-4 w-4" />
+                                    </button>
                                     <p className="text-xs text-gray-400 mt-2">Registrado por {visit.master?.name}</p>
                                     <p className="text-xs text-gray-400">{new Date(visit.date).toLocaleDateString()}</p>
                                 </div>

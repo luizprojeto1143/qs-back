@@ -39,6 +39,42 @@ export const createVisitSchema = z.object({
     })).optional()
 });
 
+export const updateVisitSchema = z.object({
+    companyId: z.string().uuid(),
+    areaId: z.string().uuid().optional().nullable(),
+    collaboratorIds: z.array(z.string().uuid()),
+    relatos: z.object({
+        lideranca: z.string().optional(),
+        colaborador: z.string().optional(),
+        observacoes: z.string().optional()
+    }),
+    avaliacoes: z.object({
+        area: z.union([z.string(), z.record(z.string(), z.any())]).optional(),
+        lideranca: z.union([z.string(), z.record(z.string(), z.any())]).optional(),
+        colaborador: z.union([z.string(), z.record(z.string(), z.any())]).optional()
+    }).optional(),
+    pendencias: z.array(z.object({
+        id: z.string().optional(), // Allow ID for updates
+        description: z.string(),
+        responsible: z.string(),
+        priority: z.enum(['BAIXA', 'MEDIA', 'ALTA']),
+        deadline: z.string().optional().nullable(),
+        collaboratorId: z.string().uuid().optional().nullable(),
+        status: z.string().optional() // Allow status update
+    })).optional(),
+    anexos: z.array(z.object({
+        id: z.string().optional(), // Allow ID to identify existing attachments
+        type: z.string(),
+        url: z.string().url(),
+        name: z.string().optional()
+    })).optional(),
+    individualNotes: z.array(z.object({
+        id: z.string().optional(), // Allow ID
+        collaboratorId: z.string().uuid(),
+        content: z.string()
+    })).optional()
+});
+
 export const createPDISchema = z.object({
     userId: z.string().uuid(),
     objective: z.string().min(1, 'Objetivo é obrigatório'),

@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import prisma from '../prisma';
 import { AuthRequest } from '../middleware/authMiddleware';
 
-import { createVisitSchema } from '../schemas/dataSchemas';
+import { createVisitSchema, updateVisitSchema } from '../schemas/dataSchemas';
 import { PAGINATION } from '../config/constants';
 
 export const createVisit = async (req: Request, res: Response) => {
@@ -212,5 +212,158 @@ export const getVisit = async (req: Request, res: Response) => {
         res.json(visit);
     } catch (error) {
         res.status(500).json({ error: 'Error fetching visit' });
+    }
+};
+
+export const updateVisit = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const validation = updateVisitSchema.safeParse(req.body);
+        if (!validation.success) {
+            return res.status(400).json({ error: 'Validation error', details: validation.error.format() });
+        }
+
+        const {
+            companyId,
+            areaId,
+            collaboratorIds,
+            relatos,
+            avaliacoes,
+            pendencias,
+            anexos,
+            individualNotes
+        } = validation.data;
+
+        const user = (req as AuthRequest).user;
+        const requestCompanyId = req.headers['x-company-id'] as string || user?.companyId;
+
+        // Check if visit exists
+        const existingVisit = await prisma.visit.findUnique({
+            where: { id },
+            include: { generatedPendencies: true } // Need to know existing pendencies
+        });
+
+        if (!existingVisit) return res.status(404).json({ error: 'Visit not found' });
+        if (existingVisit.companyId !== requestCompanyId) return res.status(403).json({ error: 'Access denied' });
+
+        // Resolve User IDs to CollaboratorProfile IDs
+        const profiles = await prisma.collaboratorProfile.findMany({
+            where: { userId: { in: collaboratorIds } },
+            select: { id: true, userId: true }
+        });
+
+        const profileIds = profiles.map(p => p.id);
+        const userToProfileMap = profiles.reduce((acc, curr) => {
+            acc[curr.userId] = curr.id;
+            return acc;
+        }, {} as Record<string, string>);
+
+        const result = await prisma.$transaction(async (prisma) => {
+            // 1. Update Visit Base Data
+            const visit = await prisma.visit.update({
+                where: { id },
+                data: {
+                    companyId,
+                    areaId,
+                    relatoLideranca: relatos.lideranca,
+                    relatoColaborador: relatos.colaborador,
+                    observacoesMaster: relatos.observacoes,
+                    avaliacaoArea: typeof avaliacoes?.area === 'string' ? avaliacoes.area : JSON.stringify(avaliacoes?.area || {}),
+                    avaliacaoLideranca: typeof avaliacoes?.lideranca === 'string' ? avaliacoes.lideranca : JSON.stringify(avaliacoes?.lideranca || {}),
+                    avaliacaoColaborador: typeof avaliacoes?.colaborador === 'string' ? avaliacoes.colaborador : JSON.stringify(avaliacoes?.colaborador || {}),
+                    collaborators: {
+                        set: profileIds.map(id => ({ id })) // Replace all collaborators
+                    }
+                }
+            });
+
+            // 2. Handle Pendencies (Diff Logic)
+            if (pendencias) {
+                const existingIds = existingVisit.generatedPendencies.map(p => p.id);
+                const incomingIds = pendencias.filter(p => p.id && existingIds.includes(p.id)).map(p => p.id as string);
+
+                // IDs to delete (in DB but not in payload)
+                const idsToDelete = existingIds.filter(id => !incomingIds.includes(id));
+
+                // Delete removed pendencies
+                if (idsToDelete.length > 0) {
+                    await prisma.pendingItem.deleteMany({
+                        where: { id: { in: idsToDelete } }
+                    });
+                }
+
+                // Update or Create
+                for (const p of pendencias) {
+                    if (p.id && existingIds.includes(p.id)) {
+                        // Update
+                        await prisma.pendingItem.update({
+                            where: { id: p.id },
+                            data: {
+                                description: p.description,
+                                responsible: p.responsible,
+                                priority: p.priority,
+                                deadline: p.deadline ? new Date(p.deadline) : null,
+                                status: p.status as any || undefined
+                            }
+                        });
+                    } else {
+                        // Create New
+                        await prisma.pendingItem.create({
+                            data: {
+                                description: p.description,
+                                responsible: p.responsible,
+                                priority: p.priority,
+                                deadline: p.deadline ? new Date(p.deadline) : null,
+                                status: 'PENDENTE',
+                                companyId,
+                                areaId,
+                                visitId: visit.id,
+                                collaboratorId: p.collaboratorId ? (userToProfileMap[p.collaboratorId] || null) : null
+                            }
+                        });
+                    }
+                }
+            }
+
+            // 3. Attachments (Simple Replace)
+            if (anexos) {
+                await prisma.visitAttachment.deleteMany({ where: { visitId: id } });
+                if (anexos.length > 0) {
+                    await prisma.visitAttachment.createMany({
+                        data: anexos.map(a => ({
+                            visitId: id,
+                            type: a.type,
+                            url: a.url,
+                            name: a.name
+                        }))
+                    });
+                }
+            }
+
+            // 4. Individual Notes (Simple Replace)
+            if (individualNotes) {
+                await prisma.visitNote.deleteMany({ where: { visitId: id } });
+                if (individualNotes.length > 0) {
+                    const notesData = individualNotes
+                        .filter((note: any) => userToProfileMap[note.collaboratorId])
+                        .map((note: any) => ({
+                            visitId: id,
+                            collaboratorId: userToProfileMap[note.collaboratorId],
+                            content: note.content
+                        }));
+
+                    if (notesData.length > 0) {
+                        await prisma.visitNote.createMany({ data: notesData });
+                    }
+                }
+            }
+
+            return visit;
+        });
+
+        res.json(result);
+    } catch (error) {
+        // console.error('Error updating visit:', error);
+        res.status(500).json({ error: 'Error updating visit record' });
     }
 };

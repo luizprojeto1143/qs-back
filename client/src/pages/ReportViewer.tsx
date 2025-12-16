@@ -587,6 +587,41 @@ const ReportViewer = () => {
                             </div>
                         )}
 
+                        {/* Generated Pendencies */}
+                        {reportData.generatedPendencies && reportData.generatedPendencies.length > 0 && (
+                            <div>
+                                <h3 className="text-xl font-bold mb-4 border-b pb-2 mt-8">Pendências Geradas</h3>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm text-left border-collapse">
+                                        <thead className="bg-gray-100">
+                                            <tr>
+                                                <th className="p-3 border">Descrição</th>
+                                                <th className="p-3 border">Responsável</th>
+                                                <th className="p-3 border">Prioridade</th>
+                                                <th className="p-3 border">Status</th>
+                                                <th className="p-3 border">Prazo</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {reportData.generatedPendencies.map((p: any) => (
+                                                <tr key={p.id} className="border-b">
+                                                    <td className="p-3 border">{p.description}</td>
+                                                    <td className="p-3 border">{p.responsible}</td>
+                                                    <td className={`p-3 border font-bold ${p.priority === 'ALTA' ? 'text-red-600' : p.priority === 'MEDIA' ? 'text-yellow-600' : 'text-blue-600'}`}>{p.priority}</td>
+                                                    <td className="p-3 border">
+                                                        <span className={`px-2 py-1 rounded text-xs font-bold ${p.status === 'RESOLVIDA' || p.status === 'CONCLUIDA' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                                            {p.status}
+                                                        </span>
+                                                    </td>
+                                                    <td className="p-3 border">{p.deadline ? new Date(p.deadline).toLocaleDateString() : '-'}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Attachments */}
                         {reportData.attachments && reportData.attachments.length > 0 && (
                             <div>
