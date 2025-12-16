@@ -69,7 +69,8 @@ function App() {
 
               <Route path="/dashboard" element={<DashboardLayout />}>
                 <Route index element={<DashboardHome />} />
-                <Route path="visits" element={<VisitRecording />} />
+                <Route path="visits" element={<VisitHistory />} />
+                <Route path="visits/new" element={<VisitRecording />} />
                 <Route path="pendencies" element={<Pendencies />} />
                 <Route path="collaborators" element={<CollaboratorsList />} />
 
