@@ -588,9 +588,9 @@ const UniversityReports = () => {
                             <div className="p-12 text-center text-red-500">Erro ao carregar dados do usuário.</div>
                         )}
                     </div>
-                </div >
+                </div>
             )}
-        </div >
+        </div>
     );
 };
 

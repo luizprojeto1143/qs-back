@@ -166,7 +166,6 @@ const CollaboratorHistory = ({ collaboratorId, onClose }: CollaboratorHistoryPro
                 )}
             </div>
         </div>
-        </div >
     );
 };
 
