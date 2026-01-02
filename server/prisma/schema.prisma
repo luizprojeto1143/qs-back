@@ -344,7 +344,18 @@ model UserTermsAcceptance {
 model Shift {
   id        String   @id @default(uuid())
   name      String
+  type      String   @default("5X2") // 5X2, 6X1, 12X36, 4X3, PERSONALIZADO
   active    Boolean  @default(true)
+  
+  // Horários
+  startTime   String?  // Ex: "08:00"
+  endTime     String?  // Ex: "17:00"
+  breakStart  String?  // Início do intervalo
+  breakEnd    String?  // Fim do intervalo
+  
+  // Dias (JSON array de 0-6, onde 0=Domingo, 6=Sábado)
+  workDays    String?  @default("[1,2,3,4,5]") // Seg a Sex por padrão
+  restDays    String?  @default("[0,6]") // Sáb e Dom por padrão
   
   companyId String
   company   Company  @relation(fields: [companyId], references: [id])

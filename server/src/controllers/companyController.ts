@@ -370,3 +370,36 @@ export const listPublicAreas = async (req: Request, res: Response) => {
         res.status(500).json({ error: 'Error fetching areas' });
     }
 };
+// Public Shifts for Registration
+export const listPublicShifts = async (req: Request, res: Response) => {
+    try {
+        const { companyId } = req.params;
+
+        if (!companyId) {
+            return res.status(400).json({ error: 'Company ID is required' });
+        }
+
+        const shifts = await prisma.shift.findMany({
+            where: {
+                companyId,
+                active: true
+            },
+            orderBy: {
+                name: 'asc'
+            },
+            select: {
+                id: true,
+                name: true,
+                type: true,
+                startTime: true,
+                endTime: true,
+                workDays: true
+            }
+        });
+
+        res.json(shifts);
+    } catch (error) {
+        console.error('Error fetching public shifts:', error);
+        res.status(500).json({ error: 'Error fetching shifts' });
+    }
+};

@@ -220,7 +220,7 @@ export const getShifts = async (req: Request, res: Response) => {
 
 export const createShift = async (req: Request, res: Response) => {
     try {
-        const { name } = req.body;
+        const { name, type, startTime, endTime, breakStart, breakEnd, workDays, restDays } = req.body;
         const user = (req as AuthRequest).user;
         if (!user || !user.companyId) {
             return res.status(400).json({ error: 'User or Company not found' });
@@ -229,6 +229,13 @@ export const createShift = async (req: Request, res: Response) => {
         const shift = await prisma.shift.create({
             data: {
                 name: name.toUpperCase(),
+                type: type || '5X2',
+                startTime,
+                endTime,
+                breakStart,
+                breakEnd,
+                workDays,
+                restDays,
                 companyId: user.companyId
             }
         });
@@ -236,6 +243,45 @@ export const createShift = async (req: Request, res: Response) => {
     } catch (error) {
         console.error('Error creating shift:', error);
         res.status(500).json({ error: 'Error creating shift' });
+    }
+};
+
+export const updateShift = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { name, type, startTime, endTime, breakStart, breakEnd, workDays, restDays } = req.body;
+        const user = (req as AuthRequest).user;
+
+        if (!user || !user.companyId) {
+            return res.status(400).json({ error: 'User or Company not found' });
+        }
+
+        // Verify ownership
+        const existing = await prisma.shift.findFirst({
+            where: { id, companyId: user.companyId }
+        });
+
+        if (!existing) {
+            return res.status(404).json({ error: 'Shift not found' });
+        }
+
+        const shift = await prisma.shift.update({
+            where: { id },
+            data: {
+                name: name ? name.toUpperCase() : undefined,
+                type,
+                startTime,
+                endTime,
+                breakStart,
+                breakEnd,
+                workDays,
+                restDays
+            }
+        });
+        res.json(shift);
+    } catch (error) {
+        console.error('Error updating shift:', error);
+        res.status(500).json({ error: 'Error updating shift' });
     }
 };
 

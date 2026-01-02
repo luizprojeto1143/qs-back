@@ -10,6 +10,7 @@ const CollaboratorRegistration = () => {
     const companyId = searchParams.get('companyId');
 
     const [areas, setAreas] = useState<any[]>([]);
+    const [shifts, setShifts] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
 
@@ -21,23 +22,27 @@ const CollaboratorRegistration = () => {
         matricula: '',
         areaId: '',
         companyId: companyId || '',
-        shift: '1_TURNO',
+        shift: '',
         disabilityType: 'NENHUMA',
         needsDescription: ''
     });
 
     useEffect(() => {
         if (companyId) {
-            const fetchAreas = async () => {
+            const fetchData = async () => {
                 try {
-                    const res = await api.get(`/public/areas/${companyId}`);
-                    setAreas(res.data);
+                    const [areasRes, shiftsRes] = await Promise.all([
+                        api.get(`/public/areas/${companyId}`),
+                        api.get(`/public/shifts/${companyId}`)
+                    ]);
+                    setAreas(areasRes.data);
+                    setShifts(shiftsRes.data);
                 } catch (error) {
-                    console.error('Error fetching areas', error);
-                    toast.error('Erro ao carregar áreas da empresa.');
+                    console.error('Error fetching data', error);
+                    toast.error('Erro ao carregar dados da empresa.');
                 }
             };
-            fetchAreas();
+            fetchData();
         }
     }, [companyId]);
 
@@ -241,10 +246,12 @@ const CollaboratorRegistration = () => {
                                     value={formData.shift}
                                     onChange={e => setFormData({ ...formData, shift: e.target.value })}
                                 >
-                                    <option value="1_TURNO">1º Turno</option>
-                                    <option value="2_TURNO">2º Turno</option>
-                                    <option value="3_TURNO">3º Turno</option>
-                                    <option value="ESCALA_12X36">Escala 12x36</option>
+                                    <option value="">Selecione seu turno...</option>
+                                    {shifts.map(shift => (
+                                        <option key={shift.id} value={shift.name}>
+                                            {shift.name} ({shift.type} - {shift.startTime} às {shift.endTime})
+                                        </option>
+                                    ))}
                                 </select>
                             </div>
                         </div>

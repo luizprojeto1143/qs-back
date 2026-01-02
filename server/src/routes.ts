@@ -96,8 +96,10 @@ router.get('/settings/feed-categories', settingsController.getFeedCategories);
 router.post('/settings/feed-categories', requireRole(['MASTER', 'RH']), settingsController.createFeedCategory);
 router.delete('/settings/feed-categories/:id', requireRole(['MASTER', 'RH']), settingsController.deleteFeedCategory);
 
+// Shifts
 router.get('/settings/shifts', settingsController.getShifts);
 router.post('/settings/shifts', requireRole(['MASTER', 'RH']), settingsController.createShift);
+router.put('/settings/shifts/:id', requireRole(['MASTER', 'RH']), settingsController.updateShift);
 router.delete('/settings/shifts/:id', requireRole(['MASTER', 'RH']), settingsController.deleteShift);
 
 // Availability

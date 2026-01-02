@@ -5,8 +5,9 @@ import { rateLimiter } from '../middleware/rateLimiter';
 
 const router = Router();
 
-// Public
+// Public Routes (No Auth)
 router.get('/public/areas/:companyId', rateLimiter, companyController.listPublicAreas);
+router.get('/public/shifts/:companyId', rateLimiter, companyController.listPublicShifts);
 
 // Protected
 router.use(authenticateToken);
