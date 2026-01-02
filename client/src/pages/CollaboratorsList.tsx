@@ -9,6 +9,7 @@ const CollaboratorsList = () => {
     const { selectedCompanyId, companies: contextCompanies } = useCompany();
     const [collaborators, setCollaborators] = useState<any[]>([]);
     const [areas, setAreas] = useState<any[]>([]);
+    const [shifts, setShifts] = useState<any[]>([]);
     const [companies, setCompanies] = useState<any[]>(contextCompanies);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -22,7 +23,8 @@ const CollaboratorsList = () => {
         matricula: '',
         companyId: selectedCompanyId || '',
         areaId: '',
-        shift: '1_TURNO',
+        shift: '',
+        nextRestDay: '',
         disabilityType: 'NENHUMA',
         needsDescription: '',
         password: ''
@@ -45,13 +47,15 @@ const CollaboratorsList = () => {
                 setCompanies(resCompanies.data);
             }
 
-            const [resCollabs, resAreas] = await Promise.all([
+            const [resCollabs, resAreas, resShifts] = await Promise.all([
                 api.get('/collaborators'),
-                api.get('/areas')
+                api.get('/areas'),
+                api.get('/settings/shifts')
             ]);
 
             setCollaborators(resCollabs.data.data || resCollabs.data);
             setAreas(resAreas.data);
+            setShifts(resShifts.data);
         } catch (error) {
             console.error('Error fetching data', error);
         } finally {
@@ -77,7 +81,7 @@ const CollaboratorsList = () => {
             setIsModalOpen(false);
             setNewCollab({
                 name: '', email: '', matricula: '', companyId: selectedCompanyId || '', areaId: '',
-                shift: '1_TURNO', disabilityType: 'NENHUMA', needsDescription: '', password: ''
+                shift: '', nextRestDay: '', disabilityType: 'NENHUMA', needsDescription: '', password: ''
             });
             setEditingId(null);
             fetchData();
@@ -95,7 +99,8 @@ const CollaboratorsList = () => {
             matricula: collab.collaboratorProfile?.matricula || '',
             companyId: collab.companyId,
             areaId: collab.collaboratorProfile?.areaId || '',
-            shift: collab.collaboratorProfile?.shift || '1_TURNO',
+            shift: collab.collaboratorProfile?.shift || '',
+            nextRestDay: collab.collaboratorProfile?.nextRestDay ? new Date(collab.collaboratorProfile.nextRestDay).toISOString().split('T')[0] : '',
             disabilityType: collab.collaboratorProfile?.disabilityType || 'NENHUMA',
             needsDescription: collab.collaboratorProfile?.needsDescription || '',
             password: '' // Don't populate password
@@ -269,11 +274,22 @@ const CollaboratorsList = () => {
                                         value={newCollab.shift}
                                         onChange={e => setNewCollab({ ...newCollab, shift: e.target.value })}
                                     >
-                                        <option value="1_TURNO">1º Turno</option>
-                                        <option value="2_TURNO">2º Turno</option>
-                                        <option value="3_TURNO">3º Turno</option>
-                                        <option value="ESCALA_12X36">Escala 12x36</option>
+                                        <option value="">Selecione...</option>
+                                        {shifts.map(shift => (
+                                            <option key={shift.id} value={shift.name}>
+                                                {shift.name} ({shift.type})
+                                            </option>
+                                        ))}
                                     </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Próxima Folga</label>
+                                    <input
+                                        type="date"
+                                        className="input-field"
+                                        value={newCollab.nextRestDay}
+                                        onChange={e => setNewCollab({ ...newCollab, nextRestDay: e.target.value })}
+                                    />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Deficiência</label>

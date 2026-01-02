@@ -104,7 +104,8 @@ export const createCollaboratorSchema = z.object({
     companyId: z.string().uuid(),
     matricula: z.string().min(1, 'Matrícula é obrigatória'),
     areaId: z.string().uuid(),
-    shift: z.enum(['1_TURNO', '2_TURNO', '3_TURNO', 'COMERCIAL', 'ADMINISTRATIVO']).optional().default('1_TURNO'),
+    shift: z.string().optional(),
+    nextRestDay: z.string().optional(),
     disabilityType: z.enum(['FISICA', 'AUDITIVA', 'VISUAL', 'INTELECTUAL', 'MULTIPLA', 'TEA', 'OUTRA', 'NENHUMA']).optional().default('NENHUMA'),
     needsDescription: z.string().optional()
 });

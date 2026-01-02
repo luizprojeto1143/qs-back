@@ -74,7 +74,7 @@ export const createCollaborator = async (req: Request, res: Response) => {
 
         const {
             name, email, password, companyId, // User data
-            matricula, areaId, shift, disabilityType, needsDescription // Profile data
+            matricula, areaId, shift, nextRestDay, disabilityType, needsDescription // Profile data
         } = validation.data;
 
         const user = (req as AuthRequest).user;
@@ -127,6 +127,7 @@ export const createCollaborator = async (req: Request, res: Response) => {
                     matricula,
                     areaId,
                     shift: shift || DEFAULT_SHIFT,
+                    nextRestDay: nextRestDay ? new Date(nextRestDay) : null,
                     disabilityType: disabilityType || DEFAULT_DISABILITY,
                     needsDescription
                 }
@@ -201,8 +202,22 @@ export const updateCollaborator = async (req: Request, res: Response) => {
 
         const {
             name, email, password, companyId, // User data
-            matricula, areaId, shift, disabilityType, needsDescription // Profile data
+            matricula, areaId, shift, nextRestDay, disabilityType, needsDescription // Profile data
         } = validation.data;
+
+        // ... (existing code)
+
+        const profile = await prisma.collaboratorProfile.update({
+            where: { userId: id },
+            data: {
+                matricula,
+                areaId,
+                shift,
+                nextRestDay: nextRestDay ? new Date(nextRestDay) : undefined,
+                disabilityType,
+                needsDescription
+            }
+        });
 
         const requestingUser = (req as AuthRequest).user;
         if (!requestingUser) return res.status(401).json({ error: 'Unauthorized' });
@@ -250,6 +265,7 @@ export const updateCollaborator = async (req: Request, res: Response) => {
                     matricula,
                     areaId,
                     shift,
+                    nextRestDay: nextRestDay ? new Date(nextRestDay) : undefined,
                     disabilityType,
                     needsDescription
                 }
