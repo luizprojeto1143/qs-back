@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { AlertCircle, CheckCircle, Clock, Filter, Plus, X, User, MoreHorizontal, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -7,6 +8,8 @@ import { api } from '../lib/api';
 
 const Pendencies = () => {
     const { selectedCompanyId, companies: contextCompanies } = useCompany();
+    const [searchParams] = useSearchParams();
+
     const [pendencies, setPendencies] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -17,6 +20,14 @@ const Pendencies = () => {
     const [companies, setCompanies] = useState<any[]>(contextCompanies);
     const [areas, setAreas] = useState<any[]>([]);
 
+    const [filters, setFilters] = useState({
+        status: searchParams.get('status') || '',
+        priority: searchParams.get('priority') || '',
+        responsible: '',
+        areaId: searchParams.get('areaId') || ''
+    });
+
+    const [showFilters, setShowFilters] = useState(!!searchParams.get('areaId')); // Auto-open filters if areaId is present
 
     const [newPendency, setNewPendency] = useState({
         description: '',
@@ -56,7 +67,7 @@ const Pendencies = () => {
 
     useEffect(() => {
         fetchData();
-    }, [selectedCompanyId]); // Re-fetch when company changes
+    }, [selectedCompanyId]);
 
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -120,19 +131,12 @@ const Pendencies = () => {
         }
     };
 
-    const [filters, setFilters] = useState({
-        status: '',
-        priority: '',
-        responsible: ''
-    });
-
-    const [showFilters, setShowFilters] = useState(false);
-
     const filteredPendencies = pendencies.filter(p => {
         const matchesStatus = !filters.status || p.status === filters.status;
         const matchesPriority = !filters.priority || p.priority === filters.priority;
         const matchesResponsible = !filters.responsible || p.responsible.toLowerCase().includes(filters.responsible.toLowerCase());
-        return matchesStatus && matchesPriority && matchesResponsible;
+        const matchesArea = !filters.areaId || p.areaId === filters.areaId;
+        return matchesStatus && matchesPriority && matchesResponsible && matchesArea;
     });
 
     return (
@@ -168,7 +172,7 @@ const Pendencies = () => {
             </div>
 
             {showFilters && (
-                <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
                         <select
@@ -192,6 +196,19 @@ const Pendencies = () => {
                             <option value="BAIXA">Baixa</option>
                             <option value="MEDIA">Média</option>
                             <option value="ALTA">Alta</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Área</label>
+                        <select
+                            className="input-field"
+                            value={filters.areaId}
+                            onChange={e => setFilters({ ...filters, areaId: e.target.value })}
+                        >
+                            <option value="">Todas</option>
+                            {areas.map(a => (
+                                <option key={a.id} value={a.id}>{a.name}</option>
+                            ))}
                         </select>
                     </div>
                     <div>

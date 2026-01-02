@@ -1,4 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useCompany } from '../../contexts/CompanyContext';
 import { api } from '../../lib/api';
 import { toast } from 'sonner';
@@ -64,6 +66,7 @@ const getRiskBadge = (color: string) => {
 
 const QSScoreDashboard: React.FC = () => {
     const { selectedCompanyId } = useCompany();
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [scoreData, setScoreData] = useState<QSScoreData | null>(null);
     const [riskMap, setRiskMap] = useState<RiskMapData | null>(null);
@@ -80,8 +83,8 @@ const QSScoreDashboard: React.FC = () => {
         setLoading(true);
         try {
             const [scoreRes, riskRes] = await Promise.all([
-                api.get(`/qs-score/company/${selectedCompanyId}`),
-                api.get(`/qs-score/risk-map/${selectedCompanyId}`),
+                api.get(`/ qs - score / company / ${selectedCompanyId} `),
+                api.get(`/ qs - score / risk - map / ${selectedCompanyId} `),
             ]);
             setScoreData(scoreRes.data);
             setRiskMap(riskRes.data);
@@ -101,7 +104,7 @@ const QSScoreDashboard: React.FC = () => {
         if (!selectedCompanyId) return;
         setRecalculating(true);
         try {
-            await api.post(`/qs-score/recalculate/${selectedCompanyId}`, {});
+            await api.post(`/ qs - score / recalculate / ${selectedCompanyId} `, {});
             toast.success('Scores recalculados com sucesso!');
             loadData();
         } catch (error) {
@@ -145,24 +148,24 @@ const QSScoreDashboard: React.FC = () => {
                     disabled={recalculating}
                     className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50"
                 >
-                    <RefreshCw className={`w-4 h-4 ${recalculating ? 'animate-spin' : ''}`} />
+                    <RefreshCw className={`w - 4 h - 4 ${recalculating ? 'animate-spin' : ''} `} />
                     Recalcular Scores
                 </button>
             </div>
 
             {/* Score Principal */}
             {scoreData && (
-                <div className={`p-8 rounded-3xl border-2 ${getScoreBgColor(scoreData.score)} transition-all`}>
+                <div className={`p - 8 rounded - 3xl border - 2 ${getScoreBgColor(scoreData.score)} transition - all`}>
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Score Geral da Empresa</p>
                             <div className="flex items-baseline gap-4 mt-2">
-                                <span className={`text-6xl font-bold ${getScoreColor(scoreData.score)}`}>
+                                <span className={`text - 6xl font - bold ${getScoreColor(scoreData.score)} `}>
                                     {scoreData.score}
                                 </span>
                                 <span className="text-2xl text-gray-400">/1000</span>
                             </div>
-                            <p className={`text-lg font-medium mt-2 ${getScoreColor(scoreData.score)}`}>
+                            <p className={`text - lg font - medium mt - 2 ${getScoreColor(scoreData.score)} `}>
                                 {scoreData.classification}
                             </p>
                         </div>
@@ -193,7 +196,7 @@ const QSScoreDashboard: React.FC = () => {
                         <div className="h-4 bg-white/50 rounded-full overflow-hidden">
                             <div
                                 className="h-full bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 transition-all duration-1000"
-                                style={{ width: `${scoreData.score / 10}%` }}
+                                style={{ width: `${scoreData.score / 10}% ` }}
                             />
                         </div>
                         <div className="flex justify-between mt-2 text-xs text-gray-500">
@@ -268,17 +271,18 @@ const QSScoreDashboard: React.FC = () => {
                             .map((area) => (
                                 <div
                                     key={area.areaId}
-                                    className={`p-4 rounded-xl border-2 transition-all hover:shadow-md cursor-pointer ${area.color === 'red' ? 'border-red-200 bg-red-50/50' :
-                                        area.color === 'yellow' ? 'border-yellow-200 bg-yellow-50/50' :
-                                            'border-green-200 bg-green-50/50'
-                                        }`}
+                                    onClick={() => navigate(`/ dashboard / pendencies ? areaId = ${area.areaId} `)}
+                                    className={`p - 4 rounded - xl border - 2 transition - all hover: shadow - md cursor - pointer ${area.color === 'red' ? 'border-red-200 bg-red-50/50' :
+                                            area.color === 'yellow' ? 'border-yellow-200 bg-yellow-50/50' :
+                                                'border-green-200 bg-green-50/50'
+                                        } `}
                                 >
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-4">
-                                            <div className={`w-3 h-3 rounded-full ${area.color === 'red' ? 'bg-red-500' :
-                                                area.color === 'yellow' ? 'bg-yellow-500' :
-                                                    'bg-green-500'
-                                                }`} />
+                                            <div className={`w - 3 h - 3 rounded - full ${area.color === 'red' ? 'bg-red-500' :
+                                                    area.color === 'yellow' ? 'bg-yellow-500' :
+                                                        'bg-green-500'
+                                                } `} />
                                             <div>
                                                 <p className="font-medium text-gray-900">{area.areaName}</p>
                                                 <p className="text-sm text-gray-500">{area.sectorName}</p>
@@ -287,7 +291,7 @@ const QSScoreDashboard: React.FC = () => {
                                         <div className="flex items-center gap-4">
                                             {getRiskBadge(area.color)}
                                             <div className="text-right">
-                                                <p className={`text-2xl font-bold ${getScoreColor(area.score)}`}>
+                                                <p className={`text - 2xl font - bold ${getScoreColor(area.score)} `}>
                                                     {area.score}
                                                 </p>
                                                 <p className="text-xs text-gray-500">pontos</p>
