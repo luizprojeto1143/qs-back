@@ -124,6 +124,48 @@ const calculateAreaScore = async (areaId: string, companyId: string) => {
     };
 };
 
+// Helper para calcular e salvar score da empresa
+const calculateInternalCompanyScore = async (companyId: string) => {
+    const areas = await prisma.area.findMany({
+        where: { sector: { companyId } },
+        include: { sector: true }
+    });
+
+    const scores = [];
+    for (const area of areas) {
+        const scoreData = await calculateAreaScore(area.id, companyId);
+        // Salvar/Atualizar score da área (opcional, mas bom para manter histórico/cache)
+        await prisma.qSScore.create({
+            data: {
+                companyId,
+                areaId: area.id,
+                ...scoreData,
+            }
+        });
+        scores.push(scoreData.score);
+    }
+
+    // Calcular média
+    const avgScore = scores.length > 0
+        ? Math.floor(scores.reduce((sum, s) => sum + s, 0) / scores.length)
+        : 0;
+
+    const classification = getClassification(avgScore);
+
+    // Salvar score geral
+    const newScore = await prisma.qSScore.create({
+        data: {
+            companyId,
+            score: avgScore,
+            classification,
+            factors: JSON.stringify({ areasAnalisadas: areas.length }),
+            trend: 'ESTAVEL',
+        }
+    });
+
+    return newScore;
+};
+
 export const qsScoreController = {
     // Obter score da empresa completo para Dashboard
     async getCompanyScore(req: Request, res: Response) {
@@ -145,13 +187,9 @@ export const qsScoreController = {
                 orderBy: { calculatedAt: 'desc' }
             });
 
-            // Se não existir, calcular
+            // Se não existir, calcular agora
             if (!currentScore) {
-                // ... (lógica de cálculo inicial existente)
-                // Para simplificar, vou chamar a lógica de cálculo
-                // Mas idealmente isso deveria ser um serviço separado
-                // Vou manter simples: se não tiver, retorna 500 (neutro)
-                currentScore = { score: 0, classification: 'CRITICO', calculatedAt: new Date() } as any;
+                currentScore = await calculateInternalCompanyScore(companyId);
             }
 
             // 2. Buscar Histórico (últimos 6 meses)
@@ -373,43 +411,11 @@ export const qsScoreController = {
         try {
             const { companyId } = req.params;
 
-            const areas = await prisma.area.findMany({
-                where: { sector: { companyId } },
-                include: { sector: true }
-            });
-
-            const scores = [];
-            for (const area of areas) {
-                const scoreData = await calculateAreaScore(area.id, companyId);
-                const score = await prisma.qSScore.create({
-                    data: {
-                        companyId,
-                        areaId: area.id,
-                        ...scoreData,
-                    }
-                });
-                scores.push({ areaId: area.id, areaName: area.name, score: score.score });
-            }
-
-            // Calcular e salvar score geral
-            const avgScore = scores.length > 0
-                ? Math.floor(scores.reduce((sum, s) => sum + s.score, 0) / scores.length)
-                : 0;
-
-            await prisma.qSScore.create({
-                data: {
-                    companyId,
-                    score: avgScore,
-                    classification: getClassification(avgScore),
-                    factors: JSON.stringify({ areasAnalisadas: areas.length }),
-                    trend: 'ESTAVEL',
-                }
-            });
+            const newScore = await calculateInternalCompanyScore(companyId);
 
             res.json({
                 message: 'Scores recalculados com sucesso',
-                companyScore: avgScore,
-                areaScores: scores,
+                companyScore: newScore.score,
             });
         } catch (error) {
             console.error('Error recalculating scores:', error);
