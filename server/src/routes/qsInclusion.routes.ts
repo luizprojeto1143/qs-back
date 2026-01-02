@@ -1,0 +1,56 @@
+import { Router } from 'express';
+import { qsScoreController } from '../controllers/qsScoreController';
+import { systemSettingsController } from '../controllers/systemSettingsController';
+import { complaintController } from '../controllers/complaintController';
+import { workScheduleController, dayOffController } from '../controllers/workScheduleController';
+import { authenticateToken, requireRole } from '../middleware/authMiddleware';
+
+const router = Router();
+
+// Todas as rotas requerem autenticação
+router.use(authenticateToken);
+
+// ============================================
+// QS SCORE
+// ============================================
+router.get('/qs-score/company/:companyId', requireRole(['MASTER', 'RH']), qsScoreController.getCompanyScore);
+router.get('/qs-score/area/:areaId', requireRole(['MASTER', 'RH']), qsScoreController.getAreaScore);
+router.get('/qs-score/risk-map/:companyId', requireRole(['MASTER', 'RH']), qsScoreController.getRiskMap);
+router.post('/qs-score/simulate', requireRole(['MASTER']), qsScoreController.simulateImpact);
+router.post('/qs-score/recalculate/:companyId', requireRole(['MASTER']), qsScoreController.recalculateCompanyScores);
+
+// ============================================
+// SYSTEM SETTINGS (Toggle de funcionalidades)
+// ============================================
+router.get('/settings/:companyId', requireRole(['MASTER', 'RH']), systemSettingsController.getSettings);
+router.put('/settings/:companyId', requireRole(['MASTER']), systemSettingsController.updateSettings);
+router.patch('/settings/:companyId/toggle/:feature', requireRole(['MASTER']), systemSettingsController.toggleFeature);
+
+// ============================================
+// DENÚNCIAS
+// ============================================
+router.post('/complaints', complaintController.create);
+router.get('/complaints/:companyId', requireRole(['MASTER']), complaintController.list);
+router.get('/complaint/:id', requireRole(['MASTER']), complaintController.get);
+router.patch('/complaint/:id/translate', requireRole(['MASTER']), complaintController.translate);
+router.patch('/complaint/:id/validate', requireRole(['MASTER']), complaintController.validate);
+router.patch('/complaint/:id/forward', requireRole(['MASTER']), complaintController.forwardToRH);
+router.patch('/complaint/:id/discard', requireRole(['MASTER']), complaintController.discard);
+router.patch('/complaint/:id/resolve', requireRole(['MASTER', 'RH']), complaintController.resolve);
+
+// ============================================
+// ESCALA DE TRABALHO
+// ============================================
+router.get('/work-schedule/:collaboratorId', workScheduleController.get);
+router.put('/work-schedule/:collaboratorId', requireRole(['MASTER', 'RH']), workScheduleController.upsert);
+router.get('/work-schedules/company/:companyId', requireRole(['MASTER', 'RH']), workScheduleController.listByCompany);
+router.get('/work-schedule/:collaboratorId/days-off', workScheduleController.getNextDaysOff);
+
+// ============================================
+// FOLGAS
+// ============================================
+router.post('/days-off', requireRole(['MASTER', 'RH']), dayOffController.create);
+router.get('/days-off/collaborator/:collaboratorId', dayOffController.listByCollaborator);
+router.delete('/days-off/:id', requireRole(['MASTER', 'RH']), dayOffController.delete);
+
+export default router;

@@ -48,6 +48,14 @@ model Company {
   auditLogs     AuditLog[]
   learningTrails LearningTrail[]
   termsAcceptances UserTermsAcceptance[]
+  
+  // QS Inclusão v2.0 - Novas relações
+  qsScores         QSScore[]
+  complaints       Complaint[]
+  mediations       Mediation[]
+  smartAlerts      SmartAlert[]
+  systemSettings   SystemSettings?
+  decisionHistory  DecisionHistory[]
 }
 
 model Sector {
@@ -68,6 +76,12 @@ model Area {
   pendingItems  PendingItem[]
   visits        Visit[]
   users         User[]
+  
+  // QS Inclusão v2.0 - Novas relações
+  qsScores      QSScore[]
+  complaints    Complaint[]
+  mediations    Mediation[]
+  smartAlerts   SmartAlert[]
 }
 
 model User {
@@ -104,6 +118,14 @@ model User {
   auditLogs     AuditLog[]
   quizAttempts  UserQuizAttempt[]
   termsAcceptances UserTermsAcceptance[]
+  
+  // QS Inclusão v2.0 - Novas relações
+  complaintsReported    Complaint[]     @relation("ComplaintReporter")
+  complaintsValidated   Complaint[]     @relation("ComplaintValidator")
+  mediationsCreated     Mediation[]     @relation("MediationCreator")
+  alertsValidated       SmartAlert[]    @relation("AlertValidator")
+  dayOffsApproved       DayOff[]        @relation("DayOffApprover")
+  decisionsHistory      DecisionHistory[] @relation("DecisionMaker")
 
   @@index([companyId])
 }
@@ -154,6 +176,10 @@ model CollaboratorProfile {
   pendingItems   PendingItem[]
   schedules      Schedule[] @relation("CollaboratorSchedules")
   visitNotes     VisitNote[]
+  
+  // QS Inclusão v2.0 - Novas relações
+  workSchedule   WorkSchedule?
+  daysOff        DayOff[]
 }
 
 model Visit {
@@ -606,3 +632,186 @@ model UserAnswer {
   optionId    String
   option      Option   @relation(fields: [optionId], references: [id])
 }
+
+// ============================================
+// QS INCLUSÃO v2.0 - NOVOS MÓDULOS
+// ============================================
+
+// QS Score de Inclusão (0-1000)
+model QSScore {
+  id              String   @id @default(uuid())
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id])
+  areaId          String?
+  area            Area?    @relation(fields: [areaId], references: [id])
+  score           Int      // 0-1000
+  classification  String   // EXCELENTE, BOM, ATENCAO, RISCO, CRITICO
+  factors         String   // JSON com fatores do cálculo
+  breakdown       String?  // JSON com detalhamento (inclusão, acessibilidade, conflitos, gestão, educação)
+  trend           String?  // MELHORANDO, ESTAVEL, PIORANDO
+  calculatedAt    DateTime @default(now())
+  
+  @@index([companyId])
+  @@index([areaId])
+}
+
+// Denúncias (inclui vídeo LIBRAS)
+model Complaint {
+  id              String   @id @default(uuid())
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id])
+  areaId          String?
+  area            Area?    @relation(fields: [areaId], references: [id])
+  reporterId      String?
+  reporter        User?    @relation("ComplaintReporter", fields: [reporterId], references: [id])
+  type            String   // VIDEO_LIBRAS, TEXTO, ANONIMO
+  videoUrl        String?
+  content         String?
+  translation     String?  // Tradução feita pela QS
+  category        String?  // ASSEDIO, DISCRIMINACAO, ACESSIBILIDADE, COMUNICACAO, OUTROS
+  severity        String   @default("MEDIO") // BAIXO, MEDIO, ALTO, CRITICO
+  status          String   @default("PENDENTE") // PENDENTE, EM_ANALISE, VALIDADO, ENCAMINHADO_RH, RESOLVIDO, DESCARTADO
+  confidentiality String   @default("CONFIDENCIAL") // CONFIDENCIAL, RESTRITO, COMPARTILHAVEL
+  validatedAt     DateTime?
+  validatedById   String?
+  validatedBy     User?    @relation("ComplaintValidator", fields: [validatedById], references: [id])
+  sentToRHAt      DateTime?
+  resolvedAt      DateTime?
+  resolution      String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([companyId])
+  @@index([status])
+}
+
+// Mediações
+model Mediation {
+  id              String   @id @default(uuid())
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id])
+  areaId          String?
+  area            Area?    @relation(fields: [areaId], references: [id])
+  date            DateTime
+  theme           String
+  description     String?
+  participants    String   // JSON com participantes e nível de sigilo
+  result          String   // ACORDO, ENCAMINHAMENTO, PENDENTE, SEM_ACORDO
+  resultDetails   String?
+  notes           String?
+  attachments     String?  // JSON com URLs de anexos
+  confidentiality String   @default("RESTRITO")
+  createdById     String
+  createdBy       User     @relation("MediationCreator", fields: [createdById], references: [id])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([companyId])
+}
+
+// Alertas Inteligentes (gerados pela IA)
+model SmartAlert {
+  id              String   @id @default(uuid())
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id])
+  areaId          String?
+  area            Area?    @relation(fields: [areaId], references: [id])
+  type            String   // RISCO, PADRAO, SILENCIO, MELHORIA, REINCIDENCIA, PRAZO
+  title           String
+  description     String
+  aiAnalysis      String?  // JSON com análise detalhada da IA
+  recommendation  String?  // Recomendação da IA
+  severity        String   @default("INFO") // INFO, WARNING, CRITICAL
+  status          String   @default("PENDENTE") // PENDENTE, VALIDADO, ENVIADO_RH, DESCARTADO
+  validatedAt     DateTime?
+  validatedById   String?
+  validatedBy     User?    @relation("AlertValidator", fields: [validatedById], references: [id])
+  sentToRHAt      DateTime?
+  rhNotes         String?  // Notas enviadas junto ao RH
+  createdAt       DateTime @default(now())
+  
+  @@index([companyId])
+  @@index([status])
+  @@index([severity])
+}
+
+// Escala de Trabalho (expandido)
+model WorkSchedule {
+  id              String   @id @default(uuid())
+  collaboratorId  String   @unique
+  collaborator    CollaboratorProfile @relation(fields: [collaboratorId], references: [id])
+  type            String   // 5X2, 6X1, 12X36, 4X3, PERSONALIZADO
+  workDays        String   // JSON array [0,1,2,3,4] (dom=0, seg=1...)
+  startTime       String?  // "08:00"
+  endTime         String?  // "17:00"
+  breakStart      String?  // "12:00"
+  breakEnd        String?  // "13:00"
+  restDays        String   // JSON array [5,6]
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// Folgas e Ausências
+model DayOff {
+  id              String   @id @default(uuid())
+  collaboratorId  String
+  collaborator    CollaboratorProfile @relation(fields: [collaboratorId], references: [id])
+  date            DateTime
+  endDate         DateTime? // Para períodos (férias)
+  type            String   // FOLGA, FERIAS, LICENCA, FERIADO, ATESTADO, COMPENSACAO
+  reason          String?
+  approved        Boolean  @default(true)
+  approvedById    String?
+  approvedBy      User?    @relation("DayOffApprover", fields: [approvedById], references: [id])
+  createdAt       DateTime @default(now())
+  
+  @@index([collaboratorId])
+  @@index([date])
+}
+
+// Configurações do Sistema (toggle de funcionalidades)
+model SystemSettings {
+  id              String   @id @default(uuid())
+  companyId       String   @unique
+  company         Company  @relation(fields: [companyId], references: [id])
+  
+  // Toggles de funcionalidades
+  qsScoreEnabled        Boolean @default(false)
+  riskMapEnabled        Boolean @default(false)
+  aiAlertsEnabled       Boolean @default(false)
+  complaintsEnabled     Boolean @default(false)
+  mediationsEnabled     Boolean @default(false)
+  workScheduleEnabled   Boolean @default(false)
+  
+  // Configurações de visibilidade
+  rhCanSeeQSScore       Boolean @default(false)
+  rhCanSeeRiskMap       Boolean @default(false)
+  rhCanSeeAlerts        Boolean @default(false)
+  
+  // Configurações de IA
+  openAIEnabled         Boolean @default(false)
+  autoAnalysisInterval  Int     @default(7) // dias
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// Histórico de Decisões (auditoria jurídica)
+model DecisionHistory {
+  id              String   @id @default(uuid())
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id])
+  entityType      String   // COMPLAINT, MEDIATION, ALERT, SCORE
+  entityId        String
+  action          String   // ENCAMINHADO_RH, NAO_ENCAMINHADO, VALIDADO, DESCARTADO
+  reason          String
+  details         String?  // JSON com detalhes
+  decidedById     String
+  decidedBy       User     @relation("DecisionMaker", fields: [decidedById], references: [id])
+  decidedAt       DateTime @default(now())
+  
+  @@index([companyId])
+  @@index([entityType])
+}
+

@@ -6,6 +6,7 @@ import { rateLimiter } from './middleware/rateLimiter';
 import authRoutes from './routes/auth.routes';
 import companyRoutes from './routes/company.routes';
 import universityRoutes from './routes/university.routes';
+import qsInclusionRoutes from './routes/qsInclusion.routes';
 
 // Import Controllers for remaining inline routes
 import * as collaboratorController from './controllers/collaboratorController';
@@ -33,6 +34,7 @@ const router = Router();
 router.use('/auth', authRoutes);
 router.use('/', companyRoutes); // Mounts /companies, /sectors, /areas, /structure, /public/areas
 router.use('/', universityRoutes); // Mounts /courses, etc.
+router.use('/', qsInclusionRoutes); // Mounts /qs-score, /settings, /complaints, /work-schedule, /days-off
 
 // Protected Routes Middleware (for inline routes)
 router.use(authenticateToken);
