@@ -204,7 +204,12 @@ export const generateReport = async (req: Request, res: Response) => {
 
                 const sectorVisits = await prisma.visit.findMany({
                     where: { areaId: { in: sectorAreas } },
-                    include: { area: true },
+                    include: {
+                        area: true,
+                        master: { select: { name: true } },
+                        generatedPendencies: true,
+                        notes: { include: { collaborator: { include: { user: { select: { name: true } } } } } }
+                    },
                     orderBy: { date: 'desc' }
                 });
                 data = { sector, visits: sectorVisits };
@@ -212,34 +217,36 @@ export const generateReport = async (req: Request, res: Response) => {
 
             case 'LEADERSHIP_REPORT':
                 // Real implementation for Leadership Report
-                // Aggregates leadership evaluation scores from visits
                 const leadershipVisits = await prisma.visit.findMany({
                     where: { companyId },
-                    select: { avaliacaoLideranca: true, date: true }
+                    select: {
+                        avaliacaoLideranca: true,
+                        date: true,
+                        area: { include: { sector: true } }
+                    }
                 });
 
-                let leadershipScores: number[] = [];
+                const groupedData: any = {};
+
                 leadershipVisits.forEach(v => {
+                    const sectorName = v.area?.sector?.name || 'Sem Setor';
+                    const areaName = v.area?.name || 'Sem Área';
+
+                    if (!groupedData[sectorName]) groupedData[sectorName] = {};
+                    if (!groupedData[sectorName][areaName]) groupedData[sectorName][areaName] = [];
+
                     try {
                         const ratings = v.avaliacaoLideranca ? JSON.parse(v.avaliacaoLideranca) : {};
                         const values = Object.values(ratings).map((val: any) => Number(val)).filter(val => !isNaN(val));
-                        leadershipScores.push(...values);
+                        const avg = values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0;
+                        if (avg > 0) groupedData[sectorName][areaName].push({ id: v.date, score: avg });
                     } catch (e) { }
                 });
-
-                const avgLeadershipScore = leadershipScores.length > 0
-                    ? (leadershipScores.reduce((a, b) => a + b, 0) / leadershipScores.length).toFixed(1)
-                    : "0.0";
 
                 data = {
                     type,
                     generatedAt: new Date(),
-                    summary: `Análise de Liderança baseada em ${leadershipVisits.length} visitas.`,
-                    metrics: [
-                        { label: "Total de Avaliações", value: leadershipScores.length },
-                        { label: "Média Geral de Liderança", value: avgLeadershipScore }
-                    ],
-                    details: "Relatório consolidado de desempenho da liderança."
+                    groupedData
                 };
                 break;
 
@@ -275,11 +282,11 @@ export const generateReport = async (req: Request, res: Response) => {
                     type,
                     generatedAt: new Date(),
                     summary: "Resumo Executivo Geral da Empresa.",
-                    metrics: [
-                        { label: "Total de Visitas", value: totalExecVisits },
-                        { label: "Total de Pendências", value: totalExecPendencies },
-                        { label: "Taxa de Resolução", value: `${execResolutionRate}%` }
-                    ],
+                    metrics: {
+                        totalVisits: totalExecVisits,
+                        resolutionRate: execResolutionRate,
+                        satisfaction: "N/A" // Placeholder for now as we don't have satisfaction metric yet
+                    },
                     details: "Visão geral estratégica dos indicadores de desempenho."
                 };
                 break;
