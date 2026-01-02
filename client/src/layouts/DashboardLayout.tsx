@@ -16,7 +16,12 @@ import {
     Sun,
     Shield,
     Target,
-    GraduationCap
+    GraduationCap,
+    BarChart3,
+    Brain,
+    MessageSquare,
+    CalendarDays,
+    Cog
 } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { Bell } from 'lucide-react';
@@ -150,6 +155,17 @@ const DashboardLayout = () => {
         { icon: GraduationCap, label: 'Universidade', path: '/dashboard/university' },
         { icon: Target, label: 'PDI', path: '/dashboard/pdi' },
         { icon: FileText, label: 'Relatórios', path: '/dashboard/reports' },
+    ];
+
+    const qsScoreItems = [
+        { icon: BarChart3, label: 'QS Score', path: '/dashboard/qs-score' },
+        { icon: Brain, label: 'IA Analítica', path: '/dashboard/ai-insights' },
+        { icon: MessageSquare, label: 'Denúncias', path: '/dashboard/complaints' },
+        { icon: CalendarDays, label: 'Escalas', path: '/dashboard/work-schedules' },
+        { icon: Cog, label: 'Config. Módulos', path: '/dashboard/system-settings' },
+    ];
+
+    const settingsItems = [
         { icon: Settings, label: 'Configurações', path: '/dashboard/settings' },
         { icon: Shield, label: 'Acessos', path: '/dashboard/users' },
     ];
@@ -179,6 +195,38 @@ const DashboardLayout = () => {
                         path="/dashboard/libras"
                         active={location.pathname === '/dashboard/libras'}
                     />
+
+                    {/* QS Score v2.0 */}
+                    <div className="pt-4 mt-4 border-t border-gray-700">
+                        <p className="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                            QS Score v2.0
+                        </p>
+                        {qsScoreItems.map((item) => (
+                            <SidebarItem
+                                key={item.path}
+                                icon={item.icon}
+                                label={item.label}
+                                path={item.path}
+                                active={location.pathname === item.path}
+                            />
+                        ))}
+                    </div>
+
+                    {/* Configurações */}
+                    <div className="pt-4 mt-4 border-t border-gray-700">
+                        <p className="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                            Sistema
+                        </p>
+                        {settingsItems.map((item) => (
+                            <SidebarItem
+                                key={item.path}
+                                icon={item.icon}
+                                label={item.label}
+                                path={item.path}
+                                active={location.pathname === item.path}
+                            />
+                        ))}
+                    </div>
 
                     <button
                         onClick={toggleTheme}
