@@ -42,7 +42,7 @@ const CompanyHistory = lazy(() => import('./pages/CompanyHistory'));
 const PDIManagement = lazy(() => import('./pages/PDIManagement'));
 const UniversityManagement = lazy(() => import('./pages/master/UniversityManagement'));
 const QSScoreDashboard = lazy(() => import('./pages/master/QSScoreDashboard'));
-const AIInsights = lazy(() => import('./pages/master/AIInsights'));
+const AIInsightsDashboard = lazy(() => import('./pages/master/AIInsightsDashboard'));
 const SystemSettingsPage = lazy(() => import('./pages/master/SystemSettings'));
 const ComplaintsCentral = lazy(() => import('./pages/master/ComplaintsCentral'));
 const WorkScheduleManager = lazy(() => import('./pages/master/WorkScheduleManager'));
@@ -100,12 +100,12 @@ function App() {
                 <Route path="qrcode" element={<QRCodeGenerator />} />
                 <Route path="specialists" element={<SpecialistSettings />} />
                 <Route path="history" element={<CompanyHistory />} />
-                <Route path="university" element={<UniversityManagement />} />
                 <Route path="pdi" element={<PDIManagement />} />
 
-                {/* QS Inclusão v2.0 Routes */}
+                {/* Master Modules */}
+                <Route path="university" element={<UniversityManagement />} />
                 <Route path="qs-score" element={<QSScoreDashboard />} />
-                <Route path="ai-insights" element={<AIInsights />} />
+                <Route path="ai-insights" element={<AIInsightsDashboard />} />
                 <Route path="system-settings" element={<SystemSettingsPage />} />
                 <Route path="complaints" element={<ComplaintsCentral />} />
                 <Route path="work-schedules" element={<WorkScheduleManager />} />

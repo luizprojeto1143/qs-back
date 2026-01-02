@@ -139,116 +139,34 @@ const QSScoreDashboard: React.FC = () => {
                     </h1>
                     <p className="text-gray-500 mt-1">Monitore o nível de inclusão da empresa</p>
                 </div>
-                <button
-                    onClick={handleRecalculate}
-                    disabled={recalculating}
-                    className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50"
-                >
-                    <RefreshCw className={`w-4 h-4 ${recalculating ? 'animate-spin' : ''}`} />
-                    Recalcular Scores
-                </button>
-            </div>
-
-            {/* Score Principal */}
-            {scoreData && (
-                <div className={`p-8 rounded-3xl border-2 ${getScoreBgColor(scoreData.score)} transition-all`}>
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Score Geral da Empresa</p>
-                            <div className="flex items-baseline gap-4 mt-2">
-                                <span className={`text-6xl font-bold ${getScoreColor(scoreData.score)}`}>
-                                    {scoreData.score}
-                                </span>
-                                <span className="text-2xl text-gray-400">/1000</span>
-                            </div>
-                            <p className={`text-lg font-medium mt-2 ${getScoreColor(scoreData.score)}`}>
-                                {scoreData.classification}
-                            </p>
-                        </div>
-                        <div className="text-right">
-                            {scoreData.trend === 'MELHORANDO' && (
-                                <div className="flex items-center gap-2 text-green-600">
-                                    <TrendingUp className="w-8 h-8" />
-                                    <span className="text-lg font-medium">Melhorando</span>
-                                </div>
-                            )}
-                            {scoreData.trend === 'PIORANDO' && (
-                                <div className="flex items-center gap-2 text-red-600">
-                                    <TrendingDown className="w-8 h-8" />
-                                    <span className="text-lg font-medium">Piorando</span>
-                                </h2>
-                    </div>
-
-                        <div className="space-y-3">
-                            {riskMap.areas
-                                .sort((a, b) => a.score - b.score) // Piores primeiro
-                                .map((area) => (
-                                    <div
-                                        key={area.areaId}
-                                        className={`p-4 rounded-xl border-2 transition-all hover:shadow-md cursor-pointer ${area.color === 'red' ? 'border-red-200 bg-red-50/50' :
-                                            area.color === 'yellow' ? 'border-yellow-200 bg-yellow-50/50' :
-                                                'border-green-200 bg-green-50/50'
-                                            }`}
-                                    >
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-4">
-                                                <div className={`w-3 h-3 rounded-full ${area.color === 'red' ? 'bg-red-500' :
-                                                    area.color === 'yellow' ? 'bg-yellow-500' :
-                                                        'bg-green-500'
-                                                    }`} />
-                                                <div>
-                                                    <p className="font-medium text-gray-900">{area.areaName}</p>
-                                                    <p className="text-sm text-gray-500">{area.sectorName}</p>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center gap-4">
-                                                {getRiskBadge(area.color)}
-                                                <div className="text-right">
-                                                    <p className={`text-2xl font-bold ${getScoreColor(area.score)}`}>
-                                                        {area.score}
-                                                    </p>
-                                                    <p className="text-xs text-gray-500">pontos</p>
-                                                </div>
-                                                <ArrowRight className="w-5 h-5 text-gray-400" />
-                                            </div>
-                                        </div>
-
-                                        {/* Fatores */}
-                                        {area.factors && (
-                                            <div className="mt-3 pt-3 border-t border-gray-200 flex gap-4 text-xs text-gray-600">
-                                                <span>Pendências: {area.factors.pendenciasAbertas || 0}</span>
-                                                <span>Visitas: {area.factors.visitasRecentes || 0}</span>
-                                                <span>Colaboradores: {area.factors.colaboradores || 0}</span>
-                                            </div>
-                                        )}
-                                    </div>
                                 ))}
-                        </div>
-                    </div>
-            )}
+            </div>
+        </div>
+    )
+}
 
-                    {/* Call to Action para IA */}
-                    <div className="card bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                                <div className="p-3 bg-white/10 rounded-xl">
-                                    <Brain className="w-8 h-8" />
-                                </div>
-                                <div>
-                                    <h3 className="text-lg font-semibold">Análise Inteligente</h3>
-                                    <p className="text-blue-100">Use a IA para identificar padrões e prioridades</p>
-                                </div>
-                            </div>
-                            <a
-                                href="/dashboard/ai-insights"
-                                className="px-6 py-3 bg-white text-blue-600 rounded-xl font-medium hover:bg-blue-50 transition-colors"
-                            >
-                                Ver Insights de IA
-                            </a>
-                        </div>
-                    </div>
-                </div>
+{/* Call to Action para IA */ }
+<div className="card bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+    <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+            <div className="p-3 bg-white/10 rounded-xl">
+                <Brain className="w-8 h-8" />
+            </div>
+            <div>
+                <h3 className="text-lg font-semibold">Análise Inteligente</h3>
+                <p className="text-blue-100">Use a IA para identificar padrões e prioridades</p>
+            </div>
+        </div>
+        <a
+            href="/dashboard/ai-insights"
+            className="px-6 py-3 bg-white text-blue-600 rounded-xl font-medium hover:bg-blue-50 transition-colors"
+        >
+            Ver Insights de IA
+        </a>
+    </div>
+</div>
+                </div >
             );
 };
 
-            export default QSScoreDashboard;
+export default QSScoreDashboard;
