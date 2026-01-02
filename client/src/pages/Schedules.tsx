@@ -81,8 +81,10 @@ const Schedules = () => {
             queryClient.invalidateQueries({ queryKey: ['schedules'] });
             toast.success('Status atualizado com sucesso!');
         },
-        onError: () => {
-            toast.error('Erro ao atualizar status.');
+        onError: (error: any) => {
+            console.error('Error updating status:', error);
+            const msg = error.response?.data?.error || 'Erro ao atualizar status.';
+            toast.error(msg);
         }
     });
 
@@ -197,14 +199,14 @@ const Schedules = () => {
             ) : (
                 <div className="grid gap-4">
                     {filteredSchedules.map((schedule: any) => (
-                        <div key={schedule.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
-                            <div className="flex items-center space-x-4">
-                                <div className="p-3 bg-blue-50 rounded-lg">
+                        <div key={schedule.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div className="flex items-start space-x-4">
+                                <div className="p-3 bg-blue-50 rounded-lg flex-shrink-0">
                                     <CalendarIcon className="h-6 w-6 text-blue-600" />
                                 </div>
                                 <div>
                                     <h3 className="font-medium text-gray-900">{schedule.reason || 'Agendamento'}</h3>
-                                    <div className="flex items-center space-x-4 text-sm text-gray-500 mt-1">
+                                    <div className="flex flex-col md:flex-row md:items-center md:space-x-4 text-sm text-gray-500 mt-1 gap-1 md:gap-0">
                                         <span className="flex items-center">
                                             <CalendarIcon className="h-3 w-3 mr-1" />
                                             {new Date(schedule.date).toLocaleDateString()}
@@ -222,7 +224,7 @@ const Schedules = () => {
                                     </div>
                                 </div>
                             </div>
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center justify-end space-x-2 w-full md:w-auto mt-2 md:mt-0">
                                 {schedule.status === 'PENDENTE' && (
                                     <>
                                         <button

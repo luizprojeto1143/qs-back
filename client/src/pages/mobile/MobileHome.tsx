@@ -201,7 +201,14 @@ const MobileHome = () => {
                             <div className="relative">
                                 {selectedPost.imageUrl && (
                                     <div className="h-56 w-full">
-                                        <img src={selectedPost.imageUrl} alt={selectedPost.title} className="w-full h-full object-cover" />
+                                        <img
+                                            src={selectedPost.imageUrl}
+                                            alt={selectedPost.title}
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => {
+                                                e.currentTarget.src = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=60';
+                                            }}
+                                        />
                                     </div>
                                 )}
                                 <button

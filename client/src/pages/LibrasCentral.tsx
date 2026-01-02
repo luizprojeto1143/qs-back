@@ -34,7 +34,7 @@ const LibrasCentral = () => {
             try {
                 const user = JSON.parse(userStr);
                 if (user.name) setUserName(user.name);
-                if (user.role === 'MASTER' || user.role === 'RH') setIsMaster(true);
+                if (user.role === 'MASTER') setIsMaster(true);
             } catch (e) {
                 console.error('Error parsing user', e);
             }

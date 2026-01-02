@@ -108,52 +108,54 @@ const ReportViewer = () => {
                                 </div>
                             </div>
 
-                            <table className="w-full text-sm text-left">
-                                <thead className="bg-gray-100">
-                                    <tr>
-                                        <th className="p-2">Data Abertura</th>
-                                        <th className="p-2">Categoria</th>
-                                        <th className="p-2">Status</th>
-                                        <th className="p-2">Tratativa / Resolução</th>
-                                        <th className="p-2">Tempo de Resolução</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {reportData.complaints?.map((c: any) => {
-                                        const resolutionTime = c.resolvedAt
-                                            ? Math.ceil((new Date(c.resolvedAt).getTime() - new Date(c.createdAt).getTime()) / (1000 * 3600 * 24))
-                                            : '-';
-
-                                        return (
-                                            <tr key={c.id} className="border-b">
-                                                <td className="p-2">{new Date(c.createdAt).toLocaleDateString()}</td>
-                                                <td className="p-2">{c.category || 'Geral'}</td>
-                                                <td className="p-2">
-                                                    <span className={`px-2 py-1 rounded-full text-xs font-bold ${c.status === 'RESOLVIDO' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                                                        }`}>
-                                                        {c.status.replace('_', ' ')}
-                                                    </span>
-                                                </td>
-                                                <td className="p-2">
-                                                    {c.resolution ? (
-                                                        <div className="max-w-xs whitespace-pre-wrap text-xs">{c.resolution}</div>
-                                                    ) : (
-                                                        <span className="text-gray-400 italic">Pendente</span>
-                                                    )}
-                                                </td>
-                                                <td className="p-2 text-center">
-                                                    {resolutionTime !== '-' ? `${resolutionTime} dias` : '-'}
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                    {(!reportData.complaints || reportData.complaints.length === 0) && (
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm text-left">
+                                    <thead className="bg-gray-100">
                                         <tr>
-                                            <td colSpan={5} className="p-4 text-center text-gray-500 italic">Nenhum relato no período.</td>
+                                            <th className="p-2">Data Abertura</th>
+                                            <th className="p-2">Categoria</th>
+                                            <th className="p-2">Status</th>
+                                            <th className="p-2">Tratativa / Resolução</th>
+                                            <th className="p-2">Tempo de Resolução</th>
                                         </tr>
-                                    )}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        {reportData.complaints?.map((c: any) => {
+                                            const resolutionTime = c.resolvedAt
+                                                ? Math.ceil((new Date(c.resolvedAt).getTime() - new Date(c.createdAt).getTime()) / (1000 * 3600 * 24))
+                                                : '-';
+
+                                            return (
+                                                <tr key={c.id} className="border-b">
+                                                    <td className="p-2">{new Date(c.createdAt).toLocaleDateString()}</td>
+                                                    <td className="p-2">{c.category || 'Geral'}</td>
+                                                    <td className="p-2">
+                                                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${c.status === 'RESOLVIDO' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                                                            }`}>
+                                                            {c.status.replace('_', ' ')}
+                                                        </span>
+                                                    </td>
+                                                    <td className="p-2">
+                                                        {c.resolution ? (
+                                                            <div className="max-w-xs whitespace-pre-wrap text-xs">{c.resolution}</div>
+                                                        ) : (
+                                                            <span className="text-gray-400 italic">Pendente</span>
+                                                        )}
+                                                    </td>
+                                                    <td className="p-2 text-center">
+                                                        {resolutionTime !== '-' ? `${resolutionTime} dias` : '-'}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                        {(!reportData.complaints || reportData.complaints.length === 0) && (
+                                            <tr>
+                                                <td colSpan={5} className="p-4 text-center text-gray-500 italic">Nenhum relato no período.</td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 );
@@ -161,7 +163,7 @@ const ReportViewer = () => {
             case 'PENDENCIES_REPORT':
                 return (
                     <div className="space-y-6">
-                        <h3 className="text-xl font-bold mb-4">Lista de Pendências</h3>
+                        <h3 className="text-xl font-bold mb-4">Relatório de Pendências</h3>
                         <table className="w-full text-sm text-left border-collapse">
                             <thead className="bg-gray-100">
                                 <tr>
@@ -218,6 +220,9 @@ const ReportViewer = () => {
                 );
 
             case 'EXECUTIVE_SUMMARY':
+                const userExec = JSON.parse(localStorage.getItem('user') || '{}');
+                const canEditExecutive = userExec.role === 'MASTER';
+
                 return (
                     <div className="space-y-8">
                         <div className="bg-blue-50 p-6 rounded-xl border border-blue-100">
@@ -249,9 +254,10 @@ const ReportViewer = () => {
                                     Oportunidades de Melhoria
                                 </h3>
                                 <textarea
-                                    className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent min-h-[100px] print:border-none print:p-0 print:resize-none"
-                                    placeholder="Descreva as oportunidades identificadas..."
+                                    className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent min-h-[100px] print:border-none print:p-0 print:resize-none disabled:bg-gray-50 disabled:text-gray-500"
+                                    placeholder={canEditExecutive ? "Descreva as oportunidades identificadas..." : "Aguardando preenchimento pelo Master."}
                                     defaultValue={reportData.opportunities}
+                                    disabled={!canEditExecutive}
                                 />
                             </div>
 
@@ -259,15 +265,17 @@ const ReportViewer = () => {
                                 <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                                     <h3 className="text-lg font-bold text-gray-900 mb-4">Tratativa</h3>
                                     <textarea
-                                        className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent min-h-[100px] print:border-none print:p-0 print:resize-none"
-                                        placeholder="Ações propostas..."
+                                        className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent min-h-[100px] print:border-none print:p-0 print:resize-none disabled:bg-gray-50 disabled:text-gray-500"
+                                        placeholder={canEditExecutive ? "Ações propostas..." : "Aguardando preenchimento."}
+                                        disabled={!canEditExecutive}
                                     />
                                 </div>
                                 <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                                     <h3 className="text-lg font-bold text-gray-900 mb-4">Justificativa</h3>
                                     <textarea
-                                        className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent min-h-[100px] print:border-none print:p-0 print:resize-none"
-                                        placeholder="Por que essa tratativa foi escolhida?"
+                                        className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent min-h-[100px] print:border-none print:p-0 print:resize-none disabled:bg-gray-50 disabled:text-gray-500"
+                                        placeholder={canEditExecutive ? "Por que essa tratativa foi escolhida?" : "Aguardando preenchimento."}
+                                        disabled={!canEditExecutive}
                                     />
                                 </div>
                             </div>
@@ -276,16 +284,18 @@ const ReportViewer = () => {
                                 <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                                     <h3 className="text-lg font-bold text-gray-900 mb-4">Situação Atual</h3>
                                     <textarea
-                                        className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent min-h-[100px] print:border-none print:p-0 print:resize-none"
-                                        placeholder="Status atual..."
+                                        className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent min-h-[100px] print:border-none print:p-0 print:resize-none disabled:bg-gray-50 disabled:text-gray-500"
+                                        placeholder={canEditExecutive ? "Status atual..." : "Aguardando atualização."}
+                                        disabled={!canEditExecutive}
                                     />
                                 </div>
                                 <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                                     <h3 className="text-lg font-bold text-gray-900 mb-4">Prazo de Execução</h3>
                                     <input
                                         type="text"
-                                        className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent print:border-none print:p-0"
-                                        placeholder="Ex: 30 dias, Até Dezembro/2024..."
+                                        className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent print:border-none print:p-0 disabled:bg-gray-50 disabled:text-gray-500"
+                                        placeholder={canEditExecutive ? "Ex: 30 dias, Até Dezembro/2024..." : "Aguardando definição."}
+                                        disabled={!canEditExecutive}
                                     />
                                 </div>
                             </div>
@@ -592,35 +602,37 @@ const ReportViewer = () => {
                         {/* Pendencies */}
                         <div>
                             <h3 className="text-xl font-bold mb-4 border-b pb-2">Pendências Relacionadas</h3>
-                            <table className="w-full text-sm text-left border-collapse">
-                                <thead className="bg-gray-100">
-                                    <tr>
-                                        <th className="p-3 border">Data</th>
-                                        <th className="p-3 border">Descrição</th>
-                                        <th className="p-3 border">Prioridade</th>
-                                        <th className="p-3 border">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {reportData.pendencies?.map((p: any) => (
-                                        <tr key={p.id} className="border-b">
-                                            <td className="p-3 border">{new Date(p.createdAt).toLocaleDateString()}</td>
-                                            <td className="p-3 border">{p.description}</td>
-                                            <td className={`p-3 border font-bold ${p.priority === 'ALTA' ? 'text-red-600' : 'text-yellow-600'}`}>{p.priority}</td>
-                                            <td className="p-3 border">
-                                                <span className={`px-2 py-1 rounded text-xs font-bold ${p.status === 'RESOLVIDA' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                                    {p.status}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                    {(!reportData.pendencies || reportData.pendencies.length === 0) && (
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm text-left border-collapse">
+                                    <thead className="bg-gray-100">
                                         <tr>
-                                            <td colSpan={4} className="p-4 text-center text-gray-500 italic">Nenhuma pendência registrada.</td>
+                                            <th className="p-3 border">Data</th>
+                                            <th className="p-3 border">Descrição</th>
+                                            <th className="p-3 border">Prioridade</th>
+                                            <th className="p-3 border">Status</th>
                                         </tr>
-                                    )}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        {reportData.pendencies?.map((p: any) => (
+                                            <tr key={p.id} className="border-b">
+                                                <td className="p-3 border">{new Date(p.createdAt).toLocaleDateString()}</td>
+                                                <td className="p-3 border">{p.description}</td>
+                                                <td className={`p-3 border font-bold ${p.priority === 'ALTA' ? 'text-red-600' : 'text-yellow-600'}`}>{p.priority}</td>
+                                                <td className="p-3 border">
+                                                    <span className={`px-2 py-1 rounded text-xs font-bold ${p.status === 'RESOLVIDA' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                                        {p.status}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        {(!reportData.pendencies || reportData.pendencies.length === 0) && (
+                                            <tr>
+                                                <td colSpan={4} className="p-4 text-center text-gray-500 italic">Nenhuma pendência registrada.</td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 );
@@ -708,32 +720,34 @@ const ReportViewer = () => {
                             <div>
                                 <h3 className="text-xl font-bold mb-4 border-b pb-2 mt-8">Pendências Geradas</h3>
                                 <div className="overflow-x-auto">
-                                    <table className="w-full text-sm text-left border-collapse">
-                                        <thead className="bg-gray-100">
-                                            <tr>
-                                                <th className="p-3 border">Descrição</th>
-                                                <th className="p-3 border">Responsável</th>
-                                                <th className="p-3 border">Prioridade</th>
-                                                <th className="p-3 border">Status</th>
-                                                <th className="p-3 border">Prazo</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {reportData.generatedPendencies.map((p: any) => (
-                                                <tr key={p.id} className="border-b">
-                                                    <td className="p-3 border">{p.description}</td>
-                                                    <td className="p-3 border">{p.responsible}</td>
-                                                    <td className={`p-3 border font-bold ${p.priority === 'ALTA' ? 'text-red-600' : p.priority === 'MEDIA' ? 'text-yellow-600' : 'text-blue-600'}`}>{p.priority}</td>
-                                                    <td className="p-3 border">
-                                                        <span className={`px-2 py-1 rounded text-xs font-bold ${p.status === 'RESOLVIDA' || p.status === 'CONCLUIDA' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                                            {p.status}
-                                                        </span>
-                                                    </td>
-                                                    <td className="p-3 border">{p.deadline ? new Date(p.deadline).toLocaleDateString() : '-'}</td>
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-sm text-left border-collapse">
+                                            <thead className="bg-gray-100">
+                                                <tr>
+                                                    <th className="p-3 border">Descrição</th>
+                                                    <th className="p-3 border">Responsável</th>
+                                                    <th className="p-3 border">Prioridade</th>
+                                                    <th className="p-3 border">Status</th>
+                                                    <th className="p-3 border">Prazo</th>
                                                 </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
+                                            </thead>
+                                            <tbody>
+                                                {reportData.generatedPendencies.map((p: any) => (
+                                                    <tr key={p.id} className="border-b">
+                                                        <td className="p-3 border">{p.description}</td>
+                                                        <td className="p-3 border">{p.responsible}</td>
+                                                        <td className={`p-3 border font-bold ${p.priority === 'ALTA' ? 'text-red-600' : p.priority === 'MEDIA' ? 'text-yellow-600' : 'text-blue-600'}`}>{p.priority}</td>
+                                                        <td className="p-3 border">
+                                                            <span className={`px-2 py-1 rounded text-xs font-bold ${p.status === 'RESOLVIDA' || p.status === 'CONCLUIDA' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                                                {p.status}
+                                                            </span>
+                                                        </td>
+                                                        <td className="p-3 border">{p.deadline ? new Date(p.deadline).toLocaleDateString() : '-'}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
                         )}

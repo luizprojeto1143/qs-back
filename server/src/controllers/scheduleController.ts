@@ -197,6 +197,7 @@ export const updateScheduleStatus = async (req: Request, res: Response) => {
 
         res.json(updatedSchedule);
     } catch (error) {
+        console.error('Error updating schedule status:', error);
         res.status(500).json({ error: 'Error updating schedule status' });
     }
 };

@@ -139,6 +139,9 @@ const CourseCatalog = () => {
                     <img
                         src={featuredCourse.coverUrl || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=60'}
                         className="w-full h-64 md:h-80 object-cover group-hover:scale-105 transition-transform duration-700"
+                        onError={(e) => {
+                            e.currentTarget.src = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=60';
+                        }}
                     />
                     <div className="absolute bottom-0 left-0 p-6 md:p-10 z-20 max-w-2xl">
                         <span className="inline-block px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-full mb-3">
@@ -195,7 +198,13 @@ const CourseCatalog = () => {
                             {/* Card Image */}
                             <div className="relative h-48 rounded-2xl overflow-hidden mb-4">
                                 {course.coverUrl ? (
-                                    <img src={course.coverUrl} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                    <img
+                                        src={course.coverUrl}
+                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                        onError={(e) => {
+                                            e.currentTarget.src = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=60';
+                                        }}
+                                    />
                                 ) : (
                                     <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 flex items-center justify-center">
                                         <BookOpen className="h-10 w-10 text-gray-400" />
