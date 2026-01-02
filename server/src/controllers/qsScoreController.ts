@@ -189,7 +189,13 @@ export const qsScoreController = {
 
             // Se não existir, calcular agora
             if (!currentScore) {
-                currentScore = await calculateInternalCompanyScore(companyId);
+                try {
+                    currentScore = await calculateInternalCompanyScore(companyId);
+                } catch (calcError) {
+                    console.error('Error calculating initial score:', calcError);
+                    // Fallback para evitar crash da página
+                    currentScore = { score: 0, classification: 'CRITICO', calculatedAt: new Date() } as any;
+                }
             }
 
             // 2. Buscar Histórico (últimos 6 meses)
@@ -239,7 +245,7 @@ export const qsScoreController = {
             const criticalAreasCount = areasRisk.filter(a => a.classification === 'CRITICO' || a.classification === 'RISCO').length;
 
             res.json({
-                currentScore: currentScore?.score || 0,
+                score: currentScore?.score || 0,
                 classification: currentScore?.classification || 'CRITICO',
                 calculatedAt: currentScore?.calculatedAt,
                 history: formattedHistory,
