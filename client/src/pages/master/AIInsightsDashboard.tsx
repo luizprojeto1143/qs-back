@@ -15,7 +15,7 @@ const AIInsightsDashboard = () => {
         setLoading(true);
         try {
             const response = await api.post('/ai/analyze', {}, {
-                headers: { 'x-company-id': selectedCompanyId }
+                'x-company-id': selectedCompanyId
             });
             setAnalysis(response.data.ai);
         } catch (error) {
