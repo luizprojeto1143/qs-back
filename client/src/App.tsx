@@ -41,6 +41,9 @@ const SpecialistSettings = lazy(() => import('./pages/settings/SpecialistSetting
 const CompanyHistory = lazy(() => import('./pages/CompanyHistory'));
 const PDIManagement = lazy(() => import('./pages/PDIManagement'));
 const UniversityManagement = lazy(() => import('./pages/master/UniversityManagement'));
+const QSScoreDashboard = lazy(() => import('./pages/master/QSScoreDashboard'));
+const AIInsights = lazy(() => import('./pages/master/AIInsights'));
+const SystemSettingsPage = lazy(() => import('./pages/master/SystemSettings'));
 const CourseCatalog = lazy(() => import('./pages/university/CourseCatalog'));
 const CoursePlayer = lazy(() => import('./pages/university/CoursePlayer'));
 const QuizPlayer = lazy(() => import('./pages/university/QuizPlayer'));
@@ -97,6 +100,11 @@ function App() {
                 <Route path="history" element={<CompanyHistory />} />
                 <Route path="university" element={<UniversityManagement />} />
                 <Route path="pdi" element={<PDIManagement />} />
+
+                {/* QS Inclusão v2.0 Routes */}
+                <Route path="qs-score" element={<QSScoreDashboard />} />
+                <Route path="ai-insights" element={<AIInsights />} />
+                <Route path="system-settings" element={<SystemSettingsPage />} />
               </Route>
 
               <Route path="/register/collaborator" element={<CollaboratorRegistration />} />

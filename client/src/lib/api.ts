@@ -130,5 +130,21 @@ export const api = {
             headers: getHeaders(),
         });
         return handleResponse(response);
+    },
+
+    patch: async (endpoint: string, body: unknown, customHeaders: Record<string, string> = {}) => {
+        const headers = getHeaders() as Record<string, string>;
+
+        const isFormData = body instanceof FormData;
+        if (isFormData) {
+            delete headers['Content-Type'];
+        }
+
+        const response = await fetchWithRetry(`${BASE_URL}${endpoint}`, {
+            method: 'PATCH',
+            headers: { ...headers, ...customHeaders },
+            body: isFormData ? body : JSON.stringify(body),
+        });
+        return handleResponse(response);
     }
 };
