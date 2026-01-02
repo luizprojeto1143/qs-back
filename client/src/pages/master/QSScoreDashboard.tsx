@@ -165,9 +165,15 @@ const QSScoreDashboard: React.FC = () => {
                                 </span>
                                 <span className="text-2xl text-gray-400">/1000</span>
                             </div>
-                            <p className={`text-lg font-medium mt-2 ${getScoreColor(scoreData.score)}`}>
-                                {scoreData.classification}
-                            </p>
+                            <div className="flex items-center gap-3 mt-2">
+                                <p className={`text-lg font-medium ${getScoreColor(scoreData.score)}`}>
+                                    {scoreData.classification}
+                                </p>
+                                <div className="flex items-center gap-1.5 px-3 py-1 bg-white/60 rounded-full border border-gray-200 text-sm font-medium text-gray-600 shadow-sm backdrop-blur-sm">
+                                    <Target className="w-4 h-4 text-blue-600" />
+                                    <span>Meta Mensal: 800</span>
+                                </div>
+                            </div>
                         </div>
                         <div className="text-right">
                             {scoreData.trend === 'MELHORANDO' && (
