@@ -31,7 +31,8 @@ async function main() {
         port: 3001,
         path: '/api/auth/login',
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        // This will be done after I view the file content.
+        // Placeholder for now.-Type': 'application/json' }
     }, { email: 'master@qs.com', password: '123456' });
 
     if (!loginData.token) {

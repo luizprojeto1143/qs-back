@@ -41,13 +41,7 @@ interface Collaborator {
     }
 }
 
-const SCHEDULE_TYPES = [
-    { value: '5X2', label: '5x2 (Seg-Sex)' },
-    { value: '6X1', label: '6x1 (Dom folga)' },
-    { value: '12X36', label: '12x36' },
-    { value: '4X3', label: '4x3' },
-    { value: 'PERSONALIZADO', label: 'Personalizado' },
-];
+
 
 const DAYOFF_TYPES = [
     { value: 'FOLGA', label: 'Folga' },
@@ -66,6 +60,9 @@ const WorkScheduleManager: React.FC = () => {
     const [daysOff, setDaysOff] = useState<DayOff[]>([]);
     const [activeTab, setActiveTab] = useState<'schedules' | 'daysoff'>('schedules');
 
+    // Dynamic Shift Types
+    const [shiftTypes, setShiftTypes] = useState<{ id: string, name: string, type: string, workDays: string, startTime: string, endTime: string }[]>([]);
+
     // Form states
     const [showDayOffForm, setShowDayOffForm] = useState(false);
     const [showScheduleForm, setShowScheduleForm] = useState(false);
@@ -83,7 +80,7 @@ const WorkScheduleManager: React.FC = () => {
     const [availableCollaborators, setAvailableCollaborators] = useState<Collaborator[]>([]);
     const [scheduleForm, setScheduleForm] = useState({
         collaboratorId: '', // Profile ID
-        type: '5X2',
+        type: '5X2', // Default fallback
         workDays: [1, 2, 3, 4, 5],
         startTime: '08:00',
         endTime: '17:00',
@@ -97,8 +94,18 @@ const WorkScheduleManager: React.FC = () => {
     useEffect(() => {
         if (selectedCompanyId) {
             loadSchedules();
+            loadShiftTypes();
         }
     }, [selectedCompanyId]);
+
+    const loadShiftTypes = async () => {
+        try {
+            const res = await api.get('/settings/shifts');
+            setShiftTypes(res.data);
+        } catch (error) {
+            console.error('Error loading shift types', error);
+        }
+    };
 
     const loadSchedules = async () => {
         if (!selectedCompanyId) return;
@@ -345,11 +352,32 @@ const WorkScheduleManager: React.FC = () => {
                                     <select
                                         className="input-field w-full"
                                         value={scheduleForm.type}
-                                        onChange={(e) => setScheduleForm(prev => ({ ...prev, type: e.target.value }))}
+                                        onChange={(e) => {
+                                            const selectedName = e.target.value;
+                                            const shift = shiftTypes.find(s => s.name === selectedName);
+
+                                            setScheduleForm(prev => ({
+                                                ...prev,
+                                                type: selectedName,
+                                                // Auto-fill details if available
+                                                startTime: shift?.startTime || prev.startTime,
+                                                endTime: shift?.endTime || prev.endTime,
+                                                workDays: shift?.workDays ? JSON.parse(shift.workDays) : prev.workDays
+                                            }));
+                                        }}
                                     >
-                                        {SCHEDULE_TYPES.map(t => (
-                                            <option key={t.value} value={t.value}>{t.label}</option>
+                                        <option value="">Selecione...</option>
+                                        {shiftTypes.map(t => (
+                                            <option key={t.id} value={t.name}>{t.name}</option>
                                         ))}
+                                        {/* Fallback for legacy constants if no types loaded */}
+                                        {shiftTypes.length === 0 && (
+                                            <>
+                                                <option value="5X2">5x2 (Padrão)</option>
+                                                <option value="6X1">6x1</option>
+                                                <option value="12X36">12x36</option>
+                                            </>
+                                        )}
                                     </select>
                                 </div>
 
