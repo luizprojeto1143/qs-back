@@ -3,6 +3,7 @@ import { qsScoreController } from '../controllers/qsScoreController';
 import { systemSettingsController } from '../controllers/systemSettingsController';
 import { complaintController } from '../controllers/complaintController';
 import { workScheduleController, dayOffController } from '../controllers/workScheduleController';
+import { aiController } from '../controllers/aiController';
 import { authenticateToken, requireRole } from '../middleware/authMiddleware';
 
 const router = Router();
@@ -39,6 +40,16 @@ router.patch('/complaint/:id/discard', requireRole(['MASTER']), complaintControl
 router.patch('/complaint/:id/resolve', requireRole(['MASTER', 'RH']), complaintController.resolve);
 
 // ============================================
+// IA ANALÍTICA
+// ============================================
+router.post('/ai/analyze-area/:areaId', requireRole(['MASTER']), aiController.analyzeArea);
+router.get('/ai/alerts/:companyId', requireRole(['MASTER', 'RH']), aiController.getAlerts);
+router.patch('/ai/alert/:id/validate', requireRole(['MASTER']), aiController.validateAlert);
+router.patch('/ai/alert/:id/send-rh', requireRole(['MASTER']), aiController.sendAlertToRH);
+router.get('/ai/priorities/:companyId', requireRole(['MASTER']), aiController.getPriorities);
+router.get('/ai/summary/:companyId', requireRole(['MASTER', 'RH']), aiController.getExecutiveSummary);
+
+// ============================================
 // ESCALA DE TRABALHO
 // ============================================
 router.get('/work-schedule/:collaboratorId', workScheduleController.get);
@@ -54,3 +65,4 @@ router.get('/days-off/collaborator/:collaboratorId', dayOffController.listByColl
 router.delete('/days-off/:id', requireRole(['MASTER', 'RH']), dayOffController.delete);
 
 export default router;
+
