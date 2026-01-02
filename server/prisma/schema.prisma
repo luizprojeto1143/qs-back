@@ -178,6 +178,8 @@ model CollaboratorProfile {
   ethnicity      String?  // BRANCA, PRETA, PARDA, AMARELA, INDIGENA, NAO_DECLARADO
   birthDate      DateTime?
   admissionDate  DateTime?
+  terminationDate DateTime?
+  isActive       Boolean  @default(true)
   
   visits         Visit[] @relation("CollaboratorVisits")
   pendingItems   PendingItem[]

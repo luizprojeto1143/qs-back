@@ -87,5 +87,50 @@ export const indicatorsController = {
             console.error('Error getting diversity census:', error);
             res.status(500).json({ error: 'Erro ao obter censo de diversidade' });
         }
+    },
+
+    // Obter Taxa de Retenção de PCDs
+    async getPcdRetention(req: Request, res: Response) {
+        try {
+            const { companyId } = req.params;
+            const user = (req as any).user;
+
+            if (user.role !== 'MASTER' && user.role !== 'RH') {
+                return res.status(403).json({ error: 'Sem permissão' });
+            }
+
+            // Buscar todos os colaboradores PCDs (Ativos e Inativos)
+            const pcds = await prisma.collaboratorProfile.findMany({
+                where: {
+                    area: { sector: { companyId } },
+                    disabilityType: { not: 'NENHUMA' } // Assumindo que 'NENHUMA' indica sem deficiência
+                },
+                select: {
+                    id: true,
+                    isActive: true,
+                    admissionDate: true,
+                    terminationDate: true
+                }
+            });
+
+            const totalPcds = pcds.length;
+            const activePcds = pcds.filter(p => p.isActive).length;
+            const terminatedPcds = totalPcds - activePcds;
+
+            // Taxa de Retenção Simplificada: (Ativos / Total já contratados) * 100
+            // Ou (Ativos / (Ativos + Desligados)) * 100
+            const retentionRate = totalPcds > 0 ? (activePcds / totalPcds) * 100 : 0;
+
+            res.json({
+                totalPcds,
+                activePcds,
+                terminatedPcds,
+                retentionRate: Number(retentionRate.toFixed(1))
+            });
+
+        } catch (error) {
+            console.error('Error getting PCD retention:', error);
+            res.status(500).json({ error: 'Erro ao obter taxa de retenção' });
+        }
     }
 };

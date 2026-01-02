@@ -60,6 +60,7 @@ router.get('/decisions/:entityType/:entityId', requireRole(['MASTER', 'RH']), de
 // INDICADORES INTERNOS (CENSO)
 // ============================================
 router.get('/metrics/diversity/:companyId', requireRole(['MASTER', 'RH']), indicatorsController.getDiversityCensus);
+router.get('/metrics/retention/:companyId', requireRole(['MASTER', 'RH']), indicatorsController.getPcdRetention);
 
 // ============================================
 // IA ANALÍTICA

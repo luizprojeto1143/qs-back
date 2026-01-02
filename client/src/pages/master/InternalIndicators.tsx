@@ -28,6 +28,7 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'
 const InternalIndicators = () => {
     const { selectedCompanyId } = useCompany();
     const [data, setData] = useState<any>(null);
+    const [retention, setRetention] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -35,8 +36,12 @@ const InternalIndicators = () => {
             if (!selectedCompanyId) return;
             setLoading(true);
             try {
-                const res = await api.get(`/metrics/diversity/${selectedCompanyId}`);
-                setData(res.data);
+                const [censusRes, retentionRes] = await Promise.all([
+                    api.get(`/metrics/diversity/${selectedCompanyId}`),
+                    api.get(`/metrics/retention/${selectedCompanyId}`)
+                ]);
+                setData(censusRes.data);
+                setRetention(retentionRes.data);
             } catch (error) {
                 console.error('Error loading census:', error);
                 toast.error('Erro ao carregar dados do censo');
@@ -85,6 +90,19 @@ const InternalIndicators = () => {
                     <div>
                         <p className="text-2xl font-bold text-gray-900">95%</p>
                         <p className="text-xs text-gray-500 uppercase tracking-wide">Taxa de Resposta</p>
+                    </div>
+                </div>
+
+                <div className="card flex items-center gap-4 bg-gradient-to-br from-blue-50 to-white border-blue-100">
+                    <div className="p-3 bg-blue-100 rounded-xl text-blue-600">
+                        <Users className="w-6 h-6" />
+                    </div>
+                    <div>
+                        <p className="text-2xl font-bold text-gray-900">{retention?.retentionRate || 0}%</p>
+                        <p className="text-xs text-gray-500 uppercase tracking-wide">Retenção de PCDs</p>
+                        <span className="text-xs text-gray-400">
+                            {retention?.activePcds || 0} ativos / {retention?.totalPcds || 0} total
+                        </span>
                     </div>
                 </div>
             </div>
