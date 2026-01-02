@@ -271,11 +271,11 @@ const QSScoreDashboard: React.FC = () => {
                             .map((area) => (
                                 <div
                                     key={area.areaId}
-                                    onClick={() => navigate(`/ dashboard / pendencies ? areaId = ${area.areaId} `)}
-                                    className={`p - 4 rounded - xl border - 2 transition - all hover: shadow - md cursor - pointer ${area.color === 'red' ? 'border-red-200 bg-red-50/50' :
+                                    onClick={() => area.areaId && navigate(`/dashboard/pendencies?areaId=${area.areaId}`)}
+                                    className={`p-4 rounded-xl border-2 transition-all hover:shadow-md ${area.areaId ? 'cursor-pointer' : ''} ${area.color === 'red' ? 'border-red-200 bg-red-50/50' :
                                         area.color === 'yellow' ? 'border-yellow-200 bg-yellow-50/50' :
                                             'border-green-200 bg-green-50/50'
-                                        } `}
+                                        }`}
                                 >
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-4">

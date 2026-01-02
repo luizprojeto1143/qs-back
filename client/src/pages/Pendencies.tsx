@@ -131,10 +131,10 @@ const Pendencies = () => {
         }
     };
 
-    const filteredPendencies = pendencies.filter(p => {
+    const filteredPendencies = (Array.isArray(pendencies) ? pendencies : []).filter(p => {
         const matchesStatus = !filters.status || p.status === filters.status;
         const matchesPriority = !filters.priority || p.priority === filters.priority;
-        const matchesResponsible = !filters.responsible || p.responsible.toLowerCase().includes(filters.responsible.toLowerCase());
+        const matchesResponsible = !filters.responsible || (p.responsible && p.responsible.toLowerCase().includes(filters.responsible.toLowerCase()));
         const matchesArea = !filters.areaId || p.areaId === filters.areaId;
         return matchesStatus && matchesPriority && matchesResponsible && matchesArea;
     });
