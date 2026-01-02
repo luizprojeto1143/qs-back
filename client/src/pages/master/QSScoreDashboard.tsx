@@ -148,24 +148,24 @@ const QSScoreDashboard: React.FC = () => {
                     disabled={recalculating}
                     className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50"
                 >
-                    <RefreshCw className={`w - 4 h - 4 ${recalculating ? 'animate-spin' : ''} `} />
+                    <RefreshCw className={`w-4 h-4 ${recalculating ? 'animate-spin' : ''}`} />
                     Recalcular Scores
                 </button>
             </div>
 
             {/* Score Principal */}
             {scoreData && (
-                <div className={`p - 8 rounded - 3xl border - 2 ${getScoreBgColor(scoreData.score)} transition - all`}>
+                <div className={`p-8 rounded-3xl border-2 ${getScoreBgColor(scoreData.score)} transition-all`}>
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Score Geral da Empresa</p>
                             <div className="flex items-baseline gap-4 mt-2">
-                                <span className={`text - 6xl font - bold ${getScoreColor(scoreData.score)} `}>
+                                <span className={`text-6xl font-bold ${getScoreColor(scoreData.score)}`}>
                                     {scoreData.score}
                                 </span>
                                 <span className="text-2xl text-gray-400">/1000</span>
                             </div>
-                            <p className={`text - lg font - medium mt - 2 ${getScoreColor(scoreData.score)} `}>
+                            <p className={`text-lg font-medium mt-2 ${getScoreColor(scoreData.score)}`}>
                                 {scoreData.classification}
                             </p>
                         </div>
@@ -196,7 +196,7 @@ const QSScoreDashboard: React.FC = () => {
                         <div className="h-4 bg-white/50 rounded-full overflow-hidden">
                             <div
                                 className="h-full bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 transition-all duration-1000"
-                                style={{ width: `${scoreData.score / 10}% ` }}
+                                style={{ width: `${scoreData.score / 10}%` }}
                             />
                         </div>
                         <div className="flex justify-between mt-2 text-xs text-gray-500">
