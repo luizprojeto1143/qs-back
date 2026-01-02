@@ -59,10 +59,7 @@ const Login = () => {
 
                 <div className="relative z-10">
                     <div className="flex items-center gap-3">
-                        <div className="p-3 bg-white/10 backdrop-blur-sm rounded-2xl">
-                            <Sparkles className="w-8 h-8 text-white" />
-                        </div>
-                        <span className="text-white text-2xl font-bold">QS Inclusão</span>
+                        <img src="/logo.png" alt="QS Inclusão" className="h-12 w-auto" />
                     </div>
                 </div>
 
@@ -76,19 +73,39 @@ const Login = () => {
                         Gerencie colaboradores, visitas técnicas, pendências e muito mais em uma única plataforma intuitiva.
                     </p>
 
-                    {/* Stats */}
-                    <div className="flex gap-8 pt-8">
-                        <div>
-                            <div className="text-3xl font-bold text-white">98%</div>
-                            <div className="text-blue-200 text-sm">Satisfação</div>
+                    {/* Features */}
+                    <div className="space-y-4 pt-6">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
+                                <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <span className="text-white font-medium">Gestão completa de visitas técnicas</span>
                         </div>
-                        <div>
-                            <div className="text-3xl font-bold text-white">500+</div>
-                            <div className="text-blue-200 text-sm">Empresas</div>
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
+                                <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                            </div>
+                            <span className="text-white font-medium">Acompanhamento de colaboradores PCD</span>
                         </div>
-                        <div>
-                            <div className="text-3xl font-bold text-white">10k+</div>
-                            <div className="text-blue-200 text-sm">Colaboradores</div>
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
+                                <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                </svg>
+                            </div>
+                            <span className="text-white font-medium">Central de Libras com videochamadas</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
+                                <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                </svg>
+                            </div>
+                            <span className="text-white font-medium">Universidade Corporativa integrada</span>
                         </div>
                     </div>
                 </div>
