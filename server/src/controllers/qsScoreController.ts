@@ -25,7 +25,9 @@ const calculateAreaScore = async (areaId: string, companyId: string) => {
         resolvedItems,
         visits,
         collaborators,
-        complaints
+        complaints,
+        totalComplaintsCount,
+        leadershipPendingItems
     ] = await Promise.all([
         prisma.pendingItem.count({
             where: { areaId, status: { in: ['PENDING', 'IN_PROGRESS'] } }
@@ -46,6 +48,19 @@ const calculateAreaScore = async (areaId: string, companyId: string) => {
                 createdAt: { gte: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000) } // Últimos 90 dias
             },
             select: { createdAt: true, resolvedAt: true }
+        }),
+        prisma.complaint.count({
+            where: {
+                areaId,
+                createdAt: { gte: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000) }
+            }
+        }),
+        prisma.pendingItem.count({
+            where: {
+                areaId,
+                status: { in: ['PENDING', 'IN_PROGRESS'] },
+                responsible: { contains: 'Lider', mode: 'insensitive' } // Filtra responsáveis que contenham "Lider"
+            }
         })
     ]);
 
@@ -62,10 +77,12 @@ const calculateAreaScore = async (areaId: string, companyId: string) => {
     // Fatores do cálculo
     const factors = {
         pendenciasAbertas: pendingItems,
+        pendenciasLideranca: leadershipPendingItems,
         pendenciasResolvidas: resolvedItems,
         visitasRecentes: visits.length,
         colaboradores: collaborators,
-        resolucaoDenunciasDias: avgResolutionDays.toFixed(1)
+        resolucaoDenunciasDias: avgResolutionDays.toFixed(1),
+        totalDenuncias: totalComplaintsCount
     };
 
     // Algoritmo de pontuação (0-1000)
@@ -92,6 +109,13 @@ const calculateAreaScore = async (areaId: string, companyId: string) => {
     // Aumentei o teto de perda: pode perder até 500 pontos
     score -= Math.min(500, pendingItems * 50);
 
+    // PENALIDADE EXTRA: Pendências da Liderança
+    // "Quanto mais pendência pra liderança tiver, mais ponto se perde"
+    // Removemos mais 30 pontos por pendência exclusiva da liderança
+    if (leadershipPendingItems > 0) {
+        score -= Math.min(300, leadershipPendingItems * 30);
+    }
+
     // 2. Frequência de Visitas (Peso: 250)
     score += Math.min(250, visits.length * 25);
 
@@ -102,23 +126,35 @@ const calculateAreaScore = async (areaId: string, companyId: string) => {
     }
 
     // 3. Gestão de Denúncias (Peso: 200)
-    if (avgResolutionDays > 0) {
-        if (avgResolutionDays <= 7) score += 200; // Excelente
-        else if (avgResolutionDays <= 15) score += 50; // Aceitável (reduzi os pontos)
-        else {
-            score -= 100; // Lento: Já começa punindo
-        }
+    // Lógica pedida: "Se tiver muita denúncia perde, se tiver pouca também"
 
-        // PENALIDADE CRÍTICA: Demora excessiva
-        if (avgResolutionDays > 30) score -= 300; // Inaceitável
-    } else {
-        // Sem denúncias: Estado ideal, mas reduzi o bônus "grátis"
-        // Só ganha se tiver evidência de cultura positiva (visitas)
-        if (visits.length > 0) {
-            score += 150;
+    // Volume ideal hipotético: entre 1 a 5 denúncias (significa que o canal funciona e não há o caos).
+    // Pouca denúncia (0): Pode ser silenciamento.
+    // Muita denúncia (> 5): Pode ser ambiente tóxico.
+
+    if (totalComplaintsCount === 0) {
+        // Pouca denúncia (0)
+        // Só ganha bônus se tiver muita visita (auditoria presente confirmando que está tudo bem)
+        if (visits.length >= 3) {
+            score += 100; // Canal vazio validado por visitas
         } else {
-            score += 50; // Sem denúncias mas sem visitas? Suspeito. Ganha menos.
+            score -= 50; // Canal vazio sem visitas = Silenciamento/Risco
         }
+    } else if (totalComplaintsCount > 5) {
+        // Muita denúncia (> 5 em 90 dias para uma área)
+        score -= 100; // Penalidade por alto volume de conflitos
+    } else {
+        // Volume saudável (1-5)
+        score += 100; // Canal ativo e controlado
+    }
+
+    // Resolução (Velocidade)
+    if (avgResolutionDays > 0) {
+        if (avgResolutionDays <= 7) score += 100; // Excelente (reduzi um pouco pois já dei pts pelo volume)
+        else if (avgResolutionDays <= 15) score += 50;
+        else score -= 100;
+
+        if (avgResolutionDays > 30) score -= 300;
     }
 
     // 4. Qualidade / Avaliações (Peso: 200)
