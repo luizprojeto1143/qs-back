@@ -38,6 +38,7 @@ const SidebarItem = ({ icon: Icon, label, path, active, onClick }: any) => {
 };
 
 import { useCompany } from '../contexts/CompanyContext';
+import { InstallButton } from '../components/InstallButton';
 
 const RHLayout = () => {
     const location = useLocation();
@@ -100,7 +101,11 @@ const RHLayout = () => {
                     )}
                 </nav>
 
-                <div className="p-4 border-t border-gray-800">
+                <div className="p-4 border-t border-gray-800 space-y-2">
+                    <InstallButton
+                        className="w-full px-4 py-3 text-emerald-400 hover:bg-white/10 hover:text-emerald-300 rounded-xl font-medium"
+                        label="Baixar App"
+                    />
                     <button
                         onClick={handleLogout}
                         className="w-full flex items-center space-x-3 px-4 py-3 text-gray-400 hover:bg-white/10 hover:text-white rounded-xl transition-colors"
@@ -147,6 +152,10 @@ const RHLayout = () => {
                             />
                         )}
 
+                        <InstallButton
+                            className="w-full px-4 py-3 text-emerald-400 hover:bg-white/10 hover:text-emerald-300 rounded-xl font-medium"
+                            label="Baixar App"
+                        />
                         <button
                             onClick={handleLogout}
                             className="w-full flex items-center space-x-3 px-4 py-3 text-gray-400 hover:bg-white/10 hover:text-white rounded-xl transition-colors"

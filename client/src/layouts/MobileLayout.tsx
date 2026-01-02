@@ -6,6 +6,7 @@ import { Video } from 'lucide-react';
 import { useLibrasAvailability } from '../hooks/useLibrasAvailability';
 
 import { useCompany } from '../contexts/CompanyContext';
+import { InstallButton } from '../components/InstallButton';
 
 const MobileLayout = () => {
     const navigate = useNavigate();
@@ -133,7 +134,11 @@ const MobileLayout = () => {
                             </nav>
                         </div>
 
-                        <div className="p-4 border-t border-gray-100">
+                        <div className="p-4 border-t border-gray-100 space-y-2">
+                            <InstallButton
+                                className="w-full px-4 py-3 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-xl font-medium"
+                                label="Baixar App"
+                            />
                             <button
                                 onClick={handleLogout}
                                 className="w-full flex items-center justify-center space-x-2 px-4 py-3 text-red-600 hover:bg-red-50 rounded-xl transition-colors font-medium"

@@ -308,6 +308,38 @@ const DashboardLayout = () => {
                             onClick={() => setIsMobileMenuOpen(false)}
                         />
 
+                        <div className="pt-2 mt-2 border-t border-gray-700">
+                            <p className="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                                QS Score v2.0
+                            </p>
+                            {qsScoreItems.map((item) => (
+                                <SidebarItem
+                                    key={item.path}
+                                    icon={item.icon}
+                                    label={item.label}
+                                    path={item.path}
+                                    active={location.pathname === item.path}
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                />
+                            ))}
+                        </div>
+
+                        <div className="pt-2 mt-2 border-t border-gray-700">
+                            <p className="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                                Sistema
+                            </p>
+                            {settingsItems.map((item) => (
+                                <SidebarItem
+                                    key={item.path}
+                                    icon={item.icon}
+                                    label={item.label}
+                                    path={item.path}
+                                    active={location.pathname === item.path}
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                />
+                            ))}
+                        </div>
+
                         <button
                             type="button"
                             onClick={handleLogout}
