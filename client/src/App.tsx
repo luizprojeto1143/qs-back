@@ -39,6 +39,8 @@ const InclusionDiagnosisEditor = lazy(() => import('./pages/InclusionDiagnosisEd
 const FeedCategories = lazy(() => import('./pages/settings/FeedCategories'));
 const TermsOfUse = lazy(() => import('./pages/settings/TermsOfUse'));
 const Availability = lazy(() => import('./pages/settings/Availability'));
+const ShiftsList = lazy(() => import('./pages/settings/ShiftsList'));
+const PDIManagement = lazy(() => import('./pages/PDIManagement'));
 const UsersList = lazy(() => import('./pages/settings/UsersList').then(module => ({ default: module.UsersList }))); // Handle named export
 const QRCodeGenerator = lazy(() => import('./pages/settings/QRCodeGenerator'));
 const CollaboratorRegistration = lazy(() => import('./pages/public/CollaboratorRegistration'));
