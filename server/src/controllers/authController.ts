@@ -89,9 +89,19 @@ export const login = async (req: Request, res: Response) => {
                 avatar: user.avatar,
             },
         });
-    } catch (error) {
-        console.error('Login error:', error);
-        res.status(500).json({ error: 'Internal server error' });
+    } catch (error: any) {
+        console.error('=== LOGIN ERROR DETAILS ===');
+        console.error('Error name:', error?.name);
+        console.error('Error message:', error?.message);
+        console.error('Error code:', error?.code);
+        console.error('Full error:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
+        console.error('Stack trace:', error?.stack);
+        console.error('=== END LOGIN ERROR ===');
+        res.status(500).json({
+            error: 'Internal server error',
+            // Include error details in development
+            details: process.env.NODE_ENV !== 'production' ? error?.message : undefined
+        });
     }
 };
 

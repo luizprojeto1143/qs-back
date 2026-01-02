@@ -39,8 +39,38 @@ app.use(compression()); // Gzip Compression
 
 // ...
 
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'UP', timestamp: new Date(), version: '10.15' });
+app.get('/health', async (req, res) => {
+  try {
+    // Test database connection
+    const prisma = (await import('./prisma')).default;
+    const userCount = await prisma.user.count();
+    res.status(200).json({
+      status: 'UP',
+      timestamp: new Date(),
+      version: '10.16',
+      database: 'CONNECTED',
+      userCount: userCount,
+      env: {
+        hasJwtSecret: !!process.env.JWT_SECRET,
+        hasDbUrl: !!process.env.DATABASE_URL,
+        nodeEnv: process.env.NODE_ENV
+      }
+    });
+  } catch (error: any) {
+    console.error('Health check error:', error);
+    res.status(500).json({
+      status: 'DOWN',
+      timestamp: new Date(),
+      version: '10.16',
+      database: 'DISCONNECTED',
+      error: error?.message,
+      env: {
+        hasJwtSecret: !!process.env.JWT_SECRET,
+        hasDbUrl: !!process.env.DATABASE_URL,
+        nodeEnv: process.env.NODE_ENV
+      }
+    });
+  }
 });
 
 app.get('/', (req, res) => {
@@ -48,5 +78,5 @@ app.get('/', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT} (v10.15 - High Performance)`);
+  console.log(`Server is running on port ${PORT} (v10.16 - Debug Logging)`);
 });
