@@ -25,6 +25,7 @@ import * as pdiController from './controllers/pdiController';
 import * as userController from './controllers/userController';
 import * as uploadController from './controllers/uploadController';
 import * as notificationController from './controllers/notificationController';
+import * as aiController from './controllers/aiController';
 import { createRoom } from './controllers/dailyController';
 import { createQuiz, addQuestion, getQuiz, submitQuiz, deleteQuiz, deleteQuestion, getQuizEditor } from './controllers/quizController';
 
@@ -159,5 +160,10 @@ router.post('/quizzes/questions', requireRole(['MASTER', 'RH']), addQuestion);
 router.delete('/quizzes/questions/:id', requireRole(['MASTER', 'RH']), deleteQuestion);
 router.get('/quizzes/:id', getQuiz);
 router.post('/quizzes/:id/submit', submitQuiz);
+
+
+// AI Analysis Routes
+router.post('/ai/analyze', requireRole(['MASTER', 'RH']), aiController.analyzePatterns);
+router.get('/ai/alerts', requireRole(['MASTER', 'RH']), aiController.getSmartAlerts);
 
 export default router;
