@@ -48,7 +48,7 @@ const calculateAreaScore = async (areaId: string, companyId: string) => {
     };
 
     // Algoritmo de pontuação (0-1000)
-    let score = 500; // Base
+    let score = 0; // Base
 
     // Pendências resolvidas aumentam score
     const resolutionRate = resolvedItems / Math.max(1, pendingItems + resolvedItems);
@@ -120,7 +120,7 @@ export const qsScoreController = {
                 // Para simplificar, vou chamar a lógica de cálculo
                 // Mas idealmente isso deveria ser um serviço separado
                 // Vou manter simples: se não tiver, retorna 500 (neutro)
-                currentScore = { score: 500, classification: 'MODERADO', calculatedAt: new Date() } as any;
+                currentScore = { score: 0, classification: 'CRITICO', calculatedAt: new Date() } as any;
             }
 
             // 2. Buscar Histórico (últimos 6 meses)
@@ -161,8 +161,8 @@ export const qsScoreController = {
                 return {
                     id: area.id,
                     name: area.name,
-                    score: score?.score || 500,
-                    classification: score?.classification || 'MODERADO'
+                    score: score?.score || 0,
+                    classification: score?.classification || 'CRITICO'
                 };
             }));
 
@@ -170,8 +170,8 @@ export const qsScoreController = {
             const criticalAreasCount = areasRisk.filter(a => a.classification === 'CRITICO' || a.classification === 'RISCO').length;
 
             res.json({
-                currentScore: currentScore?.score || 500,
-                classification: currentScore?.classification || 'MODERADO',
+                currentScore: currentScore?.score || 0,
+                classification: currentScore?.classification || 'CRITICO',
                 calculatedAt: currentScore?.calculatedAt,
                 history: formattedHistory,
                 areas: areasRisk,
@@ -363,7 +363,7 @@ export const qsScoreController = {
             // Calcular e salvar score geral
             const avgScore = scores.length > 0
                 ? Math.floor(scores.reduce((sum, s) => sum + s.score, 0) / scores.length)
-                : 500;
+                : 0;
 
             await prisma.qSScore.create({
                 data: {
