@@ -45,6 +45,7 @@ const QSScoreDashboard = lazy(() => import('./pages/master/QSScoreDashboard'));
 const AIInsightsDashboard = lazy(() => import('./pages/master/AIInsightsDashboard'));
 const SystemSettingsPage = lazy(() => import('./pages/master/SystemSettings'));
 const ComplaintsCentral = lazy(() => import('./pages/master/ComplaintsCentral'));
+const MediationCentral = lazy(() => import('./pages/master/MediationCentral'));
 const WorkScheduleManager = lazy(() => import('./pages/master/WorkScheduleManager'));
 const CourseCatalog = lazy(() => import('./pages/university/CourseCatalog'));
 const CoursePlayer = lazy(() => import('./pages/university/CoursePlayer'));
@@ -108,6 +109,7 @@ function App() {
                 <Route path="ai-insights" element={<AIInsightsDashboard />} />
                 <Route path="system-settings" element={<SystemSettingsPage />} />
                 <Route path="complaints" element={<ComplaintsCentral />} />
+                <Route path="mediations" element={<MediationCentral />} />
                 <Route path="work-schedules" element={<WorkScheduleManager />} />
               </Route>
 

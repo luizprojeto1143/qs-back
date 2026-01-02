@@ -2,8 +2,10 @@ import { Router } from 'express';
 import { qsScoreController } from '../controllers/qsScoreController';
 import { systemSettingsController } from '../controllers/systemSettingsController';
 import { complaintController } from '../controllers/complaintController';
+import { mediationController } from '../controllers/mediationController';
 import { workScheduleController, dayOffController } from '../controllers/workScheduleController';
 import { aiController } from '../controllers/aiController';
+import { decisionController } from '../controllers/decisionController';
 import { authenticateToken, requireRole } from '../middleware/authMiddleware';
 
 const router = Router();
@@ -38,6 +40,20 @@ router.patch('/complaint/:id/validate', requireRole(['MASTER']), complaintContro
 router.patch('/complaint/:id/forward', requireRole(['MASTER']), complaintController.forwardToRH);
 router.patch('/complaint/:id/discard', requireRole(['MASTER']), complaintController.discard);
 router.patch('/complaint/:id/resolve', requireRole(['MASTER', 'RH']), complaintController.resolve);
+
+// ============================================
+// MEDIAÇÃO
+// ============================================
+router.post('/mediations', requireRole(['MASTER', 'RH']), mediationController.create);
+router.get('/mediations/:companyId', requireRole(['MASTER', 'RH']), mediationController.list);
+router.get('/mediation/:id', requireRole(['MASTER', 'RH']), mediationController.get);
+router.put('/mediation/:id', requireRole(['MASTER', 'RH']), mediationController.update);
+router.patch('/mediation/:id/conclude', requireRole(['MASTER', 'RH']), mediationController.conclude);
+
+// ============================================
+// HISTÓRICO DE DECISÕES
+// ============================================
+router.get('/decisions/:entityType/:entityId', requireRole(['MASTER', 'RH']), decisionController.getHistory);
 
 // ============================================
 // IA ANALÍTICA
