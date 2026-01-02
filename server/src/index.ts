@@ -77,6 +77,35 @@ app.get('/', (req, res) => {
   res.send('QS Inclusão API is running');
 });
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT} (v10.16 - Debug Logging)`);
+import { createServer } from 'http';
+import { Server } from 'socket.io';
+
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+  cors: {
+    origin: true,
+    credentials: true
+  }
 });
+
+// Tornar o io acessível globalmente (opcional, ou exportar)
+(global as any).io = io;
+
+io.on('connection', (socket) => {
+  console.log(`Socket connected: ${socket.id}`);
+
+  socket.on('join_company', (companyId) => {
+    socket.join(`company:${companyId}`);
+    console.log(`Socket ${socket.id} joined company:${companyId}`);
+  });
+
+  socket.on('disconnect', () => {
+    console.log(`Socket disconnected: ${socket.id}`);
+  });
+});
+
+httpServer.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT} (v10.17 - WebSocket Enabled)`);
+});
+
+export { io };

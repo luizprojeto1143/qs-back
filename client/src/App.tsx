@@ -61,89 +61,98 @@ const PageLoader = () => (
   </div>
 );
 
+import { AuthProvider } from './contexts/AuthContext';
+import { SocketProvider } from './contexts/SocketContext';
+
+// ... imports
+
 function App() {
-  console.log('QS System Version: Frontend Polish (v10.16)');
+  console.log('QS System Version: Enterprise (v11.0)');
   return (
-    <CompanyProvider>
-      <Toaster position="top-right" richColors />
-      <ErrorBoundary>
-        <Router>
-          <TermsEnforcer />
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/" element={<Navigate to="/login" replace />} />
+    <AuthProvider>
+      <CompanyProvider>
+        <SocketProvider>
+          <Toaster position="top-right" richColors />
+          <ErrorBoundary>
+            <Router>
+              <TermsEnforcer />
+              <Suspense fallback={<PageLoader />}>
+                <Routes>
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/" element={<Navigate to="/login" replace />} />
 
-              <Route path="/dashboard" element={<DashboardLayout />}>
-                <Route index element={<DashboardHome />} />
-                <Route path="visits" element={<VisitHistory />} />
-                <Route path="visits/new" element={<VisitRecording />} />
-                <Route path="pendencies" element={<Pendencies />} />
-                <Route path="collaborators" element={<CollaboratorsList />} />
+                  <Route path="/dashboard" element={<DashboardLayout />}>
+                    <Route index element={<DashboardHome />} />
+                    <Route path="visits" element={<VisitHistory />} />
+                    <Route path="visits/new" element={<VisitRecording />} />
+                    <Route path="pendencies" element={<Pendencies />} />
+                    <Route path="collaborators" element={<CollaboratorsList />} />
 
-                <Route path="feed" element={<Feed />} />
-                <Route path="schedules" element={<Schedules />} />
-                <Route path="reports" element={<Reports />} />
-                <Route path="report-viewer" element={<ReportViewer />} />
-                <Route path="inclusion-diagnosis" element={<InclusionDiagnosisEditor />} />
-                <Route path="settings" element={<Settings />} />
-                <Route path="libras" element={<LibrasCentral />} />
+                    <Route path="feed" element={<Feed />} />
+                    <Route path="schedules" element={<Schedules />} />
+                    <Route path="reports" element={<Reports />} />
+                    <Route path="report-viewer" element={<ReportViewer />} />
+                    <Route path="inclusion-diagnosis" element={<InclusionDiagnosisEditor />} />
+                    <Route path="settings" element={<Settings />} />
+                    <Route path="libras" element={<LibrasCentral />} />
 
-                {/* Settings Routes */}
-                <Route path="companies" element={<CompaniesList />} />
-                <Route path="sectors" element={<SectorsList />} />
-                <Route path="areas" element={<AreasList />} />
-                <Route path="terms" element={<TermsOfUse />} />
-                <Route path="feed-categories" element={<FeedCategories />} />
-                <Route path="shifts" element={<ShiftsList />} />
-                <Route path="availability" element={<Availability />} />
-                <Route path="libras-availability" element={<LibrasAvailability />} />
-                <Route path="users" element={<UsersList />} />
-                <Route path="qrcode" element={<QRCodeGenerator />} />
-                <Route path="specialists" element={<SpecialistSettings />} />
-                <Route path="history" element={<CompanyHistory />} />
-                <Route path="pdi" element={<PDIManagement />} />
+                    {/* Settings Routes */}
+                    <Route path="companies" element={<CompaniesList />} />
+                    <Route path="sectors" element={<SectorsList />} />
+                    <Route path="areas" element={<AreasList />} />
+                    <Route path="terms" element={<TermsOfUse />} />
+                    <Route path="feed-categories" element={<FeedCategories />} />
+                    <Route path="shifts" element={<ShiftsList />} />
+                    <Route path="availability" element={<Availability />} />
+                    <Route path="libras-availability" element={<LibrasAvailability />} />
+                    <Route path="users" element={<UsersList />} />
+                    <Route path="qrcode" element={<QRCodeGenerator />} />
+                    <Route path="specialists" element={<SpecialistSettings />} />
+                    <Route path="history" element={<CompanyHistory />} />
+                    <Route path="pdi" element={<PDIManagement />} />
 
-                {/* Master Modules */}
-                <Route path="university" element={<UniversityManagement />} />
-                <Route path="qs-score" element={<QSScoreDashboard />} />
-                <Route path="ai-insights" element={<AIInsightsDashboard />} />
-                <Route path="system-settings" element={<SystemSettingsPage />} />
-                <Route path="complaints" element={<ComplaintsCentral />} />
-                <Route path="mediations" element={<MediationCentral />} />
-                <Route path="indicators" element={<InternalIndicators />} />
-                <Route path="work-schedules" element={<WorkScheduleManager />} />
-              </Route>
+                    {/* Master Modules */}
+                    <Route path="university" element={<UniversityManagement />} />
+                    <Route path="qs-score" element={<QSScoreDashboard />} />
+                    <Route path="ai-insights" element={<AIInsightsDashboard />} />
+                    <Route path="system-settings" element={<SystemSettingsPage />} />
+                    <Route path="complaints" element={<ComplaintsCentral />} />
+                    <Route path="mediations" element={<MediationCentral />} />
+                    <Route path="indicators" element={<InternalIndicators />} />
+                    <Route path="work-schedules" element={<WorkScheduleManager />} />
+                  </Route>
 
-              <Route path="/register/collaborator" element={<CollaboratorRegistration />} />
+                  <Route path="/register/collaborator" element={<CollaboratorRegistration />} />
 
-              {/* RH Routes */}
-              <Route path="/rh" element={<RHLayout />}>
-                <Route index element={<RHDashboard />} />
-                <Route path="collaborators" element={<CollaboratorsList />} />
-                <Route path="reports" element={<Reports />} />
-                <Route path="history" element={<VisitHistory />} />
-                <Route path="schedules" element={<Schedules />} />
-                <Route path="libras" element={<LibrasCentral />} />
-                <Route path="university-reports" element={<UniversityReports />} />
-              </Route>
-              {/* Mobile App Routes */}
-              <Route path="/app" element={<MobileLayout />}>
-                <Route index element={<MobileHome />} />
-                <Route path="schedule" element={<MobileSchedule />} />
-                <Route path="request" element={<MobileSchedule />} />
-                <Route path="profile" element={<MobileProfile />} />
-                <Route path="libras" element={<LibrasCentral />} />
-                <Route path="university" element={<CourseCatalog />} />
-                <Route path="university/course/:id" element={<CoursePlayer />} />
-                <Route path="university/quiz/:id" element={<QuizPlayer />} />
-                <Route path="university/certificates" element={<Certificates />} />
-              </Route>
-            </Routes>
-          </Suspense>
-        </Router>
-      </ErrorBoundary>
-    </CompanyProvider>
+                  {/* RH Routes */}
+                  <Route path="/rh" element={<RHLayout />}>
+                    <Route index element={<RHDashboard />} />
+                    <Route path="collaborators" element={<CollaboratorsList />} />
+                    <Route path="reports" element={<Reports />} />
+                    <Route path="history" element={<VisitHistory />} />
+                    <Route path="schedules" element={<Schedules />} />
+                    <Route path="libras" element={<LibrasCentral />} />
+                    <Route path="university-reports" element={<UniversityReports />} />
+                  </Route>
+                  {/* Mobile App Routes */}
+                  <Route path="/app" element={<MobileLayout />}>
+                    <Route index element={<MobileHome />} />
+                    <Route path="schedule" element={<MobileSchedule />} />
+                    <Route path="request" element={<MobileSchedule />} />
+                    <Route path="profile" element={<MobileProfile />} />
+                    <Route path="libras" element={<LibrasCentral />} />
+                    <Route path="university" element={<CourseCatalog />} />
+                    <Route path="university/course/:id" element={<CoursePlayer />} />
+                    <Route path="university/quiz/:id" element={<QuizPlayer />} />
+                    <Route path="university/certificates" element={<Certificates />} />
+                  </Route>
+                </Routes>
+              </Suspense>
+            </Router>
+          </ErrorBoundary>
+        </SocketProvider>
+      </CompanyProvider>
+    </AuthProvider>
   );
 }
 

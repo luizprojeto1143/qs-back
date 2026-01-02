@@ -70,6 +70,14 @@ export const workScheduleController = {
                 }
             });
 
+            // Update Collaborator Profile with Next Rest Day if provided
+            if (req.body.nextRestDay) {
+                await prisma.collaboratorProfile.update({
+                    where: { id: collaboratorId },
+                    data: { nextRestDay: new Date(req.body.nextRestDay) }
+                });
+            }
+
             res.json(schedule);
         } catch (error) {
             console.error('Error upserting schedule:', error);

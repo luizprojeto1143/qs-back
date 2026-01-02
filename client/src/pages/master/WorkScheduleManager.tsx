@@ -90,6 +90,7 @@ const WorkScheduleManager: React.FC = () => {
         breakStart: '12:00',
         breakEnd: '13:00',
         restDays: [0, 6],
+        nextRestDay: '',
         notes: ''
     });
 
@@ -372,6 +373,18 @@ const WorkScheduleManager: React.FC = () => {
                                         />
                                     </div>
                                 </div>
+
+                                {/* Next Rest Day Input */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Próxima Folga (Opcional)</label>
+                                    <input
+                                        type="date"
+                                        className="input-field w-full"
+                                        value={scheduleForm.nextRestDay}
+                                        onChange={(e) => setScheduleForm(prev => ({ ...prev, nextRestDay: e.target.value }))}
+                                    />
+                                    <p className="text-xs text-gray-500 mt-1">Defina a data da próxima folga para escalas rotativas.</p>
+                                </div>
                             </div>
 
                             {/* Dias de Trabalho - Checkboxes */}
@@ -393,8 +406,8 @@ const WorkScheduleManager: React.FC = () => {
                                                     });
                                                 }}
                                                 className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${isSelected
-                                                        ? 'bg-green-600 text-white'
-                                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                                    ? 'bg-green-600 text-white'
+                                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                                     }`}
                                             >
                                                 {day}
