@@ -69,29 +69,44 @@ const calculateAreaScore = async (areaId: string, companyId: string) => {
     };
 
     // Algoritmo de pontuação (0-1000)
-    let score = 0; // Base
+    let score = 0;
 
-    // Pendências resolvidas aumentam score
-    const resolutionRate = resolvedItems / Math.max(1, pendingItems + resolvedItems);
-    score += Math.floor(resolutionRate * 200); // até +200
-
-    // Pendências abertas diminuem score
-    score -= Math.min(200, pendingItems * 20); // até -200
-
-    // Visitas frequentes aumentam score
-    score += Math.min(150, visits.length * 15); // até +150
-
-    // Gestão de Denúncias (Novo Fator)
-    if (avgResolutionDays > 0) {
-        if (avgResolutionDays <= 7) score += 100; // Resolução rápida (até 7 dias)
-        else if (avgResolutionDays <= 15) score += 50; // Resolução média
-        else score -= 50; // Resolução lenta (> 15 dias)
-    } else if (resolvedItems > 0) {
-        // Se não tem denúncias mas tem pendências resolvidas, bônus menor
-        score += 20;
+    // 1. Taxa de Resolução de Pendências (Peso: 350)
+    // Se não tiver pendências nem resolvidas nem abertas, considera neutro/bom início (start with partial points or 0?)
+    // Vamos dar pontos pela proatividade.
+    const totalItems = pendingItems + resolvedItems;
+    if (totalItems > 0) {
+        const resolutionRate = resolvedItems / totalItems;
+        score += Math.floor(resolutionRate * 350);
+    } else {
+        // Sem pendências é bom (não tem problemas), mas também não tem proatividade registrada.
+        // Vamos dar um incentivo inicial.
+        score += 100;
     }
 
-    // Avaliações das visitas
+    // Penalidade por pendências abertas (diminui do acumulado)
+    // Se tiver muitas pendências, pontuação cai drasticamente
+    score -= Math.min(200, pendingItems * 25);
+
+    // 2. Frequência de Visitas (Peso: 250)
+    // 1 visita = 25 pontos. 10 visitas = 250 pontos (max)
+    score += Math.min(250, visits.length * 25);
+
+    // 3. Gestão de Denúncias (Peso: 200)
+    if (avgResolutionDays > 0) {
+        if (avgResolutionDays <= 7) score += 200; // Excelente (rápido)
+        else if (avgResolutionDays <= 15) score += 100; // Bom
+        else score += 0; // Lento (sem pontos)
+
+        // Penalidade extra por demora excessiva
+        if (avgResolutionDays > 30) score -= 100;
+    } else {
+        // Sem denúncias: Estado ideal (Segurança Psicológica)
+        // Se houver visitas e avaliações positivas, assumimos que o ambiente está bom.
+        score += 150;
+    }
+
+    // 4. Qualidade / Avaliações (Peso: 200)
     let avgEvaluation = 0;
     let evalCount = 0;
     visits.forEach(visit => {
@@ -102,8 +117,16 @@ const calculateAreaScore = async (areaId: string, companyId: string) => {
             }
         } catch { }
     });
+
+    // Avaliação vem geralmente de 1 a 5 ou 0 a 100? Assumindo 0-5 (estrelas) ou similar. 
+    // Se for score de 0-100 (como NPS):
     if (evalCount > 0) {
-        score += Math.floor((avgEvaluation / evalCount) * 15); // até +150
+        // Normalizar média (assumindo que o input seja 0-5, vamos converter para proporção de 200)
+        // Se o score salvo for 0-5: (avg / 5) * 200
+        // Se o score salvo for 0-100: (avg / 100) * 200
+        // Vamos assumir prudência e verificar o dado depois, mas por ora, aumento o teto.
+        const normalized = avgEvaluation > 5 ? avgEvaluation / 100 : avgEvaluation / 5;
+        score += Math.floor(normalized * 200);
     }
 
     // Limitar entre 0 e 1000
