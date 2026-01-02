@@ -25,9 +25,10 @@ const calculateAreaScore = async (areaId: string, companyId: string) => {
         resolvedItems,
         visits,
         collaborators,
-        complaints,
+        resolvedComplaints, // Renomeado para evitar confusão (apenas resolvidos para cálculo de tempo)
         totalComplaintsCount,
-        leadershipPendingItems
+        leadershipPendingItems,
+        latestComplaint
     ] = await Promise.all([
         prisma.pendingItem.count({
             where: { areaId, status: { in: ['PENDING', 'IN_PROGRESS'] } }
@@ -61,17 +62,23 @@ const calculateAreaScore = async (areaId: string, companyId: string) => {
                 status: { in: ['PENDING', 'IN_PROGRESS'] },
                 responsible: { contains: 'Lider', mode: 'insensitive' } // Filtra responsáveis que contenham "Lider"
             }
+        }),
+        // Buscar a última denúncia para calcular o "tempo de silêncio"
+        prisma.complaint.findFirst({
+            where: { areaId },
+            orderBy: { createdAt: 'desc' },
+            select: { createdAt: true }
         })
     ]);
 
-    // Calcular tempo médio de resolução (em dias)
+    // Calcular tempo médio de resolução (em dias) SOMENTE para os resolvidos
     let avgResolutionDays = 0;
-    if (complaints && complaints.length > 0) {
-        const totalDays = complaints.reduce((sum: number, c: any) => {
+    if (resolvedComplaints && resolvedComplaints.length > 0) {
+        const totalDays = resolvedComplaints.reduce((sum: number, c: any) => {
             const diffTime = new Date(c.resolvedAt).getTime() - new Date(c.createdAt).getTime();
             return sum + (diffTime / (1000 * 3600 * 24));
         }, 0);
-        avgResolutionDays = totalDays / complaints.length;
+        avgResolutionDays = totalDays / resolvedComplaints.length;
     }
 
     // Fatores do cálculo
@@ -82,7 +89,8 @@ const calculateAreaScore = async (areaId: string, companyId: string) => {
         visitasRecentes: visits.length,
         colaboradores: collaborators,
         resolucaoDenunciasDias: avgResolutionDays.toFixed(1),
-        totalDenuncias: totalComplaintsCount
+        totalDenuncias: totalComplaintsCount,
+        ultimaDenuncia: latestComplaint?.createdAt
     };
 
     // Algoritmo de pontuação (0-1000)
@@ -100,7 +108,7 @@ const calculateAreaScore = async (areaId: string, companyId: string) => {
             score -= 100;
         }
     } else {
-        resolutionRate = 1; // Se não tem pendências, consideramos 100% de eficiência hipotética para o breakdown? Ou 0? 
+        resolutionRate = 1; // Se não tem pendências, consideramos 100% de eficiência hipotética para o breakdown? Ou 0?
         // Vamos deixar 0 ou 1, mas como score += 50, não impacta tanto no score.
         // Para visualização de gestão, 1 (100%) pode parecer estranho se não fez nada.
         // Vamos manter 0 se totalItems == 0, mas tratar no breakdown se necessário.
@@ -135,21 +143,37 @@ const calculateAreaScore = async (areaId: string, companyId: string) => {
     // Pouca denúncia (0): Pode ser silenciamento.
     // Muita denúncia (> 5): Pode ser ambiente tóxico.
 
-    if (totalComplaintsCount === 0) {
-        // Pouca denúncia (0)
-        // Só ganha bônus se tiver muita visita (auditoria presente confirmando que está tudo bem)
-        if (visits.length >= 3) {
-            score += 100; // Canal vazio validado por visitas
-        } else {
-            score -= 50; // Canal vazio sem visitas = Silenciamento/Risco
-        }
-    } else if (totalComplaintsCount > 5) {
-        // Muita denúncia (> 5 em 90 dias para uma área)
-        score -= 100; // Penalidade por alto volume de conflitos
+    // PENALIDADE DE SILÊNCIO (Solicitação Específica):
+    // "Se não tiver denúncia perde 100 pontos por semana"
+    const now = new Date();
+    let weeksSilence = 0;
+
+    if (latestComplaint) {
+        const diffTime = Math.abs(now.getTime() - new Date(latestComplaint.createdAt).getTime());
+        weeksSilence = Math.floor(diffTime / (1000 * 3600 * 24 * 7));
     } else {
-        // Volume saudável (1-5)
-        score += 100; // Canal ativo e controlado
+        // Se nunca teve denúncia, consideramos como se fosse desde o início do período analisado (ou penalidade máxima)
+        // Para não zerar de cara empresas novas, vamos limitar a 12 semanas (aprox 90 dias)
+        // Mas se quer "agressivo", vamos colocar 12 semanas padrão se não tiver histórico.
+        weeksSilence = 12;
     }
+
+    if (weeksSilence > 0) {
+        score -= (weeksSilence * 100); // Perde 100 pontos por semana de silêncio
+    }
+
+
+    // CONTINUAÇÃO: Volume e Velocidade (ajustar para não punir duplamente se já puniu por silêncio?)
+    // Se weeksSilence > 0, já perdeu muito ponto.
+    // Mas se teve denúncia recente, avalia o volume.
+
+    if (totalComplaintsCount > 5) {
+        score -= 100; // Penalidade por alto volume de conflitos
+    } else if (totalComplaintsCount > 0) {
+        // Volume saudável (1-5) e recente
+        score += 100;
+    }
+    // Se total == 0, já caiu na regra do silêncio acima, não precisa punir de novo aqui com "-50".
 
     // Resolução (Velocidade)
     if (avgResolutionDays > 0) {
