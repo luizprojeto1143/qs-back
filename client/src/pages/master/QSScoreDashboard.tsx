@@ -83,8 +83,8 @@ const QSScoreDashboard: React.FC = () => {
         setLoading(true);
         try {
             const [scoreRes, riskRes] = await Promise.all([
-                api.get(`/ qs - score / company / ${selectedCompanyId} `),
-                api.get(`/ qs - score / risk - map / ${selectedCompanyId} `),
+                api.get(`/qs-score/company/${selectedCompanyId}`),
+                api.get(`/qs-score/risk-map/${selectedCompanyId}`),
             ]);
             setScoreData(scoreRes.data);
             setRiskMap(riskRes.data);
@@ -104,7 +104,7 @@ const QSScoreDashboard: React.FC = () => {
         if (!selectedCompanyId) return;
         setRecalculating(true);
         try {
-            await api.post(`/ qs - score / recalculate / ${selectedCompanyId} `, {});
+            await api.post(`/qs-score/recalculate/${selectedCompanyId}`, {});
             toast.success('Scores recalculados com sucesso!');
             loadData();
         } catch (error) {
@@ -273,15 +273,15 @@ const QSScoreDashboard: React.FC = () => {
                                     key={area.areaId}
                                     onClick={() => navigate(`/ dashboard / pendencies ? areaId = ${area.areaId} `)}
                                     className={`p - 4 rounded - xl border - 2 transition - all hover: shadow - md cursor - pointer ${area.color === 'red' ? 'border-red-200 bg-red-50/50' :
-                                            area.color === 'yellow' ? 'border-yellow-200 bg-yellow-50/50' :
-                                                'border-green-200 bg-green-50/50'
+                                        area.color === 'yellow' ? 'border-yellow-200 bg-yellow-50/50' :
+                                            'border-green-200 bg-green-50/50'
                                         } `}
                                 >
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-4">
                                             <div className={`w - 3 h - 3 rounded - full ${area.color === 'red' ? 'bg-red-500' :
-                                                    area.color === 'yellow' ? 'bg-yellow-500' :
-                                                        'bg-green-500'
+                                                area.color === 'yellow' ? 'bg-yellow-500' :
+                                                    'bg-green-500'
                                                 } `} />
                                             <div>
                                                 <p className="font-medium text-gray-900">{area.areaName}</p>
