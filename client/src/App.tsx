@@ -25,7 +25,6 @@ const MobileSchedule = lazy(() => import('./pages/mobile/MobileSchedule'));
 const MobileProfile = lazy(() => import('./pages/mobile/MobileProfile'));
 const MobileTeam = lazy(() => import('./pages/mobile/MobileTeam'));
 const MobileApprovals = lazy(() => import('./pages/mobile/MobileApprovals'));
-const MobileApprovals = lazy(() => import('./pages/mobile/MobileApprovals'));
 const MobileRequestDayOff = lazy(() => import('./pages/mobile/MobileRequestDayOff'));
 const MobileComplaints = lazy(() => import('./pages/mobile/MobileComplaints'));
 
