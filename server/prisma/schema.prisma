@@ -173,6 +173,12 @@ model CollaboratorProfile {
   disabilityType String
   needsDescription String?
   
+  // Dados Demográficos (Censo)
+  gender         String?  // MASCULINO, FEMININO, OUTRO, NAO_DECLARADO
+  ethnicity      String?  // BRANCA, PRETA, PARDA, AMARELA, INDIGENA, NAO_DECLARADO
+  birthDate      DateTime?
+  admissionDate  DateTime?
+  
   visits         Visit[] @relation("CollaboratorVisits")
   pendingItems   PendingItem[]
   schedules      Schedule[] @relation("CollaboratorSchedules")

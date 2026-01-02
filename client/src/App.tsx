@@ -46,6 +46,7 @@ const AIInsightsDashboard = lazy(() => import('./pages/master/AIInsightsDashboar
 const SystemSettingsPage = lazy(() => import('./pages/master/SystemSettings'));
 const ComplaintsCentral = lazy(() => import('./pages/master/ComplaintsCentral'));
 const MediationCentral = lazy(() => import('./pages/master/MediationCentral'));
+const InternalIndicators = lazy(() => import('./pages/master/InternalIndicators'));
 const WorkScheduleManager = lazy(() => import('./pages/master/WorkScheduleManager'));
 const CourseCatalog = lazy(() => import('./pages/university/CourseCatalog'));
 const CoursePlayer = lazy(() => import('./pages/university/CoursePlayer'));
@@ -110,6 +111,7 @@ function App() {
                 <Route path="system-settings" element={<SystemSettingsPage />} />
                 <Route path="complaints" element={<ComplaintsCentral />} />
                 <Route path="mediations" element={<MediationCentral />} />
+                <Route path="indicators" element={<InternalIndicators />} />
                 <Route path="work-schedules" element={<WorkScheduleManager />} />
               </Route>
 

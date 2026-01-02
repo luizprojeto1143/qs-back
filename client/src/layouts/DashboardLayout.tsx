@@ -22,7 +22,8 @@ import {
     MessageSquare,
     CalendarDays,
     Cog,
-    Scale
+    Scale,
+    PieChart
 } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { Bell } from 'lucide-react';
@@ -163,6 +164,7 @@ const DashboardLayout = () => {
         { icon: Brain, label: 'IA Analítica', path: '/dashboard/ai-insights' },
         { icon: MessageSquare, label: 'Denúncias', path: '/dashboard/complaints' },
         { icon: Scale, label: 'Mediação', path: '/dashboard/mediations' },
+        { icon: PieChart, label: 'Censo & Indicadores', path: '/dashboard/indicators' },
         { icon: CalendarDays, label: 'Escalas', path: '/dashboard/work-schedules' },
         { icon: Cog, label: 'Config. Módulos', path: '/dashboard/system-settings' },
     ];

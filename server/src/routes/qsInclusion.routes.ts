@@ -6,6 +6,7 @@ import { mediationController } from '../controllers/mediationController';
 import { workScheduleController, dayOffController } from '../controllers/workScheduleController';
 import { aiController } from '../controllers/aiController';
 import { decisionController } from '../controllers/decisionController';
+import { indicatorsController } from '../controllers/indicatorsController';
 import { authenticateToken, requireRole } from '../middleware/authMiddleware';
 
 const router = Router();
@@ -54,6 +55,11 @@ router.patch('/mediation/:id/conclude', requireRole(['MASTER', 'RH']), mediation
 // HISTÓRICO DE DECISÕES
 // ============================================
 router.get('/decisions/:entityType/:entityId', requireRole(['MASTER', 'RH']), decisionController.getHistory);
+
+// ============================================
+// INDICADORES INTERNOS (CENSO)
+// ============================================
+router.get('/metrics/diversity/:companyId', requireRole(['MASTER', 'RH']), indicatorsController.getDiversityCensus);
 
 // ============================================
 // IA ANALÍTICA
