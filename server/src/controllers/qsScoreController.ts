@@ -72,38 +72,53 @@ const calculateAreaScore = async (areaId: string, companyId: string) => {
     let score = 0;
 
     // 1. Taxa de Resolução de Pendências (Peso: 350)
-    // Se não tiver pendências nem resolvidas nem abertas, considera neutro/bom início (start with partial points or 0?)
-    // Vamos dar pontos pela proatividade.
     const totalItems = pendingItems + resolvedItems;
     if (totalItems > 0) {
         const resolutionRate = resolvedItems / totalItems;
         score += Math.floor(resolutionRate * 350);
+
+        // PENALIDADE: Se resolver menos de 40%, perde pontos (sinal de ineficiência)
+        if (resolutionRate < 0.4) {
+            score -= 100;
+        }
     } else {
-        // Sem pendências é bom (não tem problemas), mas também não tem proatividade registrada.
-        // Vamos dar um incentivo inicial.
-        score += 100;
+        // Sem histórico de pendências, começa neutro mas sem bônus de proatividade
+        // Reduzi o incentivo inicial para forçar a criação de pendências/resoluções
+        score += 50;
     }
 
-    // Penalidade por pendências abertas (diminui do acumulado)
-    // Se tiver muitas pendências, pontuação cai drasticamente
-    score -= Math.min(200, pendingItems * 25);
+    // PENALIDADE PESADA: Pendências abertas
+    // Aumentei o peso: cada pendência tira 50 pontos (antes 25)
+    // Aumentei o teto de perda: pode perder até 500 pontos
+    score -= Math.min(500, pendingItems * 50);
 
     // 2. Frequência de Visitas (Peso: 250)
-    // 1 visita = 25 pontos. 10 visitas = 250 pontos (max)
     score += Math.min(250, visits.length * 25);
+
+    // PENALIDADE: Ausência de Visitas (Abandono)
+    // Se não teve visita nos últimos 90 dias (visits.length === 0), perde pontos
+    if (visits.length === 0) {
+        score -= 200; // "O cliente precisa ver que precisa de mim"
+    }
 
     // 3. Gestão de Denúncias (Peso: 200)
     if (avgResolutionDays > 0) {
-        if (avgResolutionDays <= 7) score += 200; // Excelente (rápido)
-        else if (avgResolutionDays <= 15) score += 100; // Bom
-        else score += 0; // Lento (sem pontos)
+        if (avgResolutionDays <= 7) score += 200; // Excelente
+        else if (avgResolutionDays <= 15) score += 50; // Aceitável (reduzi os pontos)
+        else {
+            score -= 100; // Lento: Já começa punindo
+        }
 
-        // Penalidade extra por demora excessiva
-        if (avgResolutionDays > 30) score -= 100;
+        // PENALIDADE CRÍTICA: Demora excessiva
+        if (avgResolutionDays > 30) score -= 300; // Inaceitável
     } else {
-        // Sem denúncias: Estado ideal (Segurança Psicológica)
-        // Se houver visitas e avaliações positivas, assumimos que o ambiente está bom.
-        score += 150;
+        // Sem denúncias: Estado ideal, mas reduzi o bônus "grátis"
+        // Só ganha se tiver evidência de cultura positiva (visitas)
+        if (visits.length > 0) {
+            score += 150;
+        } else {
+            score += 50; // Sem denúncias mas sem visitas? Suspeito. Ganha menos.
+        }
     }
 
     // 4. Qualidade / Avaliações (Peso: 200)
@@ -118,18 +133,19 @@ const calculateAreaScore = async (areaId: string, companyId: string) => {
         } catch { }
     });
 
-    // Avaliação vem geralmente de 1 a 5 ou 0 a 100? Assumindo 0-5 (estrelas) ou similar. 
-    // Se for score de 0-100 (como NPS):
     if (evalCount > 0) {
-        // Normalizar média (assumindo que o input seja 0-5, vamos converter para proporção de 200)
-        // Se o score salvo for 0-5: (avg / 5) * 200
-        // Se o score salvo for 0-100: (avg / 100) * 200
-        // Vamos assumir prudência e verificar o dado depois, mas por ora, aumento o teto.
         const normalized = avgEvaluation > 5 ? avgEvaluation / 100 : avgEvaluation / 5;
         score += Math.floor(normalized * 200);
+
+        // PENALIDADE: Avaliações ruins
+        if (normalized < 0.5) {
+            score -= 100; // Baixa qualidade percebida
+        }
     }
 
     // Limitar entre 0 e 1000
+    // O Math.max(0) impede score negativo, o que é bom para UI, 
+    // mas internamente o cálculo agora puxa muito mais para baixo.
     score = Math.max(0, Math.min(1000, score));
 
     return {
