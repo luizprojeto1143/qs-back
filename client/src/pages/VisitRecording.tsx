@@ -19,6 +19,18 @@ const VisitRecording = () => {
     const [individualNotes, setIndividualNotes] = useState<{ collaboratorId: string; content: string }[]>([]);
     const [loading, setLoading] = useState(false);
 
+    // Block RH access completely
+    useEffect(() => {
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+            const user = JSON.parse(userStr);
+            if (user.role === 'RH') {
+                toast.error('Acesso não autorizado. Apenas consultoria pode registrar acompanhamentos.');
+                navigate('/rh/visits');
+            }
+        }
+    }, [navigate]);
+
     // Recording State
     const [isRecording, setIsRecording] = useState<string | null>(null); // 'lideranca' | 'colaborador' | null
     const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
@@ -401,7 +413,13 @@ const VisitRecording = () => {
                 }
 
                 toast.success('Acompanhamento salvo com sucesso!');
-                navigate('/dashboard');
+
+                // Determine redirect path based on user role
+                const userStr = localStorage.getItem('user');
+                const user = userStr ? JSON.parse(userStr) : {};
+                const basePath = user.role === 'RH' ? '/rh/visits' : '/dashboard';
+
+                navigate(basePath);
             } else {
                 toast.error('Erro ao salvar acompanhamento');
             }

@@ -452,8 +452,8 @@ const LibrasCentral = () => {
 
     // Collaborator View
     return (
-        <div className="h-[calc(100vh-64px)] bg-gray-900 flex flex-col">
-            <div className="bg-[#0A192F] px-6 py-4 flex items-center justify-between shadow-md z-10">
+        <div className="min-h-[80vh] flex flex-col bg-gray-900 rounded-xl overflow-hidden shadow-sm">
+            <div className="bg-[#0A192F] px-4 py-3 flex items-center justify-between shadow-md z-10">
                 <div className="flex items-center space-x-3">
                     <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
                         <Video className="h-5 w-5 text-white" />

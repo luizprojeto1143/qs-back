@@ -48,7 +48,7 @@ const MobileSchedule = () => {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 pb-24">
             <div>
                 <h1 className="text-2xl font-bold text-gray-900">Agendar Suporte</h1>
                 <p className="text-gray-500">Solicite acompanhamento presencial</p>
@@ -64,7 +64,7 @@ const MobileSchedule = () => {
                         <input
                             type="date"
                             required
-                            className="pl-10 input-field"
+                            className="pl-10 input-field w-full p-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                             value={selectedDate}
                             onChange={(e) => setSelectedDate(e.target.value)}
                         />
@@ -80,7 +80,7 @@ const MobileSchedule = () => {
                         <input
                             type="time"
                             required
-                            className="pl-10 input-field"
+                            className="pl-10 input-field w-full p-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                             value={selectedTime}
                             onChange={(e) => setSelectedTime(e.target.value)}
                         />
@@ -92,14 +92,14 @@ const MobileSchedule = () => {
                     <textarea
                         rows={4}
                         required
-                        className="input-field p-3"
+                        className="input-field w-full p-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                         placeholder="Descreva brevemente o motivo..."
                         value={reason}
                         onChange={(e) => setReason(e.target.value)}
                     />
                 </div>
 
-                <button type="submit" className="btn-primary w-full py-3 text-lg">
+                <button type="submit" className="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-blue-600/20 active:scale-95 transition-all">
                     Confirmar Solicitação
                 </button>
             </form>

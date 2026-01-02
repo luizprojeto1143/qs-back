@@ -119,6 +119,16 @@ const Schedules = () => {
         resource: s
     }));
 
+    const getBasePath = () => {
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+            const user = JSON.parse(userStr);
+            return user.role === 'RH' ? '/rh' : '/dashboard';
+        }
+        return '/dashboard';
+    };
+    const basePath = getBasePath();
+
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -217,7 +227,7 @@ const Schedules = () => {
                                     <>
                                         <button
                                             type="button"
-                                            onClick={() => navigate('/dashboard/visits', {
+                                            onClick={() => navigate(`${basePath}/visits`, {
                                                 state: {
                                                     scheduleId: schedule.id,
                                                     companyId: selectedCompanyId,

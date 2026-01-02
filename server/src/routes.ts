@@ -25,6 +25,7 @@ import * as pdiController from './controllers/pdiController';
 import * as userController from './controllers/userController';
 import * as uploadController from './controllers/uploadController';
 import * as notificationController from './controllers/notificationController';
+import * as workScheduleController from './controllers/workScheduleController';
 import * as aiController from './controllers/aiController';
 import { createRoom } from './controllers/dailyController';
 import { createQuiz, addQuestion, getQuiz, submitQuiz, deleteQuiz, deleteQuestion, getQuizEditor } from './controllers/quizController';
@@ -64,7 +65,7 @@ router.delete('/feed/:id', requireRole(['MASTER', 'RH']), feedController.deleteP
 
 // Visit Routes
 router.get('/visits', visitController.listVisits);
-router.post('/visits', requireRole(['MASTER', 'RH', 'LIDER']), visitController.createVisit);
+router.post('/visits', requireRole(['MASTER', 'LIDER']), visitController.createVisit);
 router.put('/visits/:id', requireRole(['MASTER', 'RH', 'LIDER']), visitController.updateVisit);
 router.get('/visits/:id', visitController.getVisit);
 
@@ -139,7 +140,15 @@ router.put('/pdis/:id', pdiController.updatePDI);
 router.delete('/pdis/:id', pdiController.deletePDI);
 
 // User Management (MASTER only)
-router.get('/users', requireRole(['MASTER']), userController.listUsers);
+// User Management
+router.get('/users', requireRole(['MASTER', 'RH', 'LIDER']), userController.listUsers);
+
+// Days Off Routes
+router.post('/days-off', workScheduleController.dayOffController.create);
+router.get('/days-off/pending', requireRole(['MASTER', 'RH', 'LIDER']), workScheduleController.dayOffController.listPending);
+router.post('/days-off/:id/review', requireRole(['MASTER', 'RH', 'LIDER']), workScheduleController.dayOffController.review);
+router.get('/collaborators/:collaboratorId/days-off', workScheduleController.dayOffController.listByCollaborator);
+router.delete('/days-off/:id', workScheduleController.dayOffController.delete);
 router.post('/users', requireRole(['MASTER']), userController.createUser);
 router.put('/users/:id', requireRole(['MASTER']), userController.updateUser);
 router.delete('/users/:id', requireRole(['MASTER']), userController.deleteUser);

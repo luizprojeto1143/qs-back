@@ -19,6 +19,7 @@ interface PDI {
     objective: string;
     skills: string;
     actions: string;
+    accessibilityNeeds?: string;
     status: 'DRAFT' | 'ACTIVE' | 'COMPLETED';
     createdAt: string;
 }
@@ -34,7 +35,9 @@ const PDIManagement = () => {
         userId: '',
         objective: '',
         skills: '',
-        actions: ''
+        skills: '',
+        actions: '',
+        accessibilityNeeds: ''
     });
 
     // Collaborators for selection
@@ -77,7 +80,8 @@ const PDIManagement = () => {
             await api.post('/pdis', formData);
             toast.success('PDI criado com sucesso!');
             setIsModalOpen(false);
-            setFormData({ userId: '', objective: '', skills: '', actions: '' });
+            setIsModalOpen(false);
+            setFormData({ userId: '', objective: '', skills: '', actions: '', accessibilityNeeds: '' });
             fetchPDIs();
         } catch (error) {
             toast.error('Erro ao criar PDI');
@@ -243,6 +247,23 @@ const PDIManagement = () => {
                                 />
                             </div>
 
+                            <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                                <label className="block text-sm font-bold text-blue-900 mb-2 flex items-center gap-2">
+                                    <Target className="h-4 w-4" />
+                                    Adaptações ou Tecnologia Assistiva Necessária?
+                                </label>
+                                <textarea
+                                    rows={2}
+                                    className="input-field bg-white"
+                                    placeholder="Ex: Leitor de tela, monitor maior, intérprete em reuniões..."
+                                    value={formData.accessibilityNeeds}
+                                    onChange={(e) => setFormData({ ...formData, accessibilityNeeds: e.target.value })}
+                                />
+                                <p className="text-xs text-blue-700 mt-1">
+                                    *Específico para garantir a acessibilidade do processo de desenvolvimento.
+                                </p>
+                            </div>
+
                             <div className="flex justify-end pt-4">
                                 <button type="submit" className="btn-primary flex items-center gap-2">
                                     <CheckCircle className="h-5 w-5" />
@@ -292,6 +313,15 @@ const PDIManagement = () => {
                                     <h3 className="text-lg font-bold text-gray-900 mb-2">Plano de Ação</h3>
                                     <p className="text-gray-700 whitespace-pre-wrap">{selectedPDI.actions}</p>
                                 </div>
+                                    <p className="text-gray-700 whitespace-pre-wrap">{selectedPDI.actions}</p>
+                                </div>
+
+                                {selectedPDI.accessibilityNeeds && (
+                                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                                        <h3 className="text-sm font-bold text-gray-500 uppercase mb-2">Necessidades de Acessibilidade</h3>
+                                        <p className="text-gray-900">{selectedPDI.accessibilityNeeds}</p>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="pt-12 mt-12 border-t border-gray-200 grid grid-cols-2 gap-20">
@@ -308,9 +338,9 @@ const PDIManagement = () => {
                             </div>
                         </div>
                     )}
-                </div>
             </div>
         </div>
+        </div >
     );
 };
 

@@ -188,17 +188,42 @@ export const dayOffController = {
             } = req.body;
             const user = (req as any).user;
 
+            // Determine effective collaborator ID (self or requested)
+            const targetCollaboratorId = user.role === 'COLABORADOR'
+                ? (await prisma.collaboratorProfile.findUnique({ where: { userId: user.userId } }))?.id
+                : collaboratorId;
+
+            if (!targetCollaboratorId) {
+                return res.status(400).json({ error: 'Perfil de colaborador não encontrado' });
+            }
+
+            const isAutoApproved = user.role !== 'COLABORADOR';
+
             const dayOff = await prisma.dayOff.create({
                 data: {
-                    collaboratorId,
+                    collaboratorId: targetCollaboratorId,
                     date: new Date(date),
                     endDate: endDate ? new Date(endDate) : null,
                     type,
                     reason,
-                    approved: true,
-                    approvedById: user.userId,
+                    approved: isAutoApproved,
+                    approvedById: isAutoApproved ? user.userId : null,
                 }
             });
+
+            // If not auto-approved, create a PendingItem for the Master/Leader dashboard
+            if (!isAutoApproved && user.companyId) {
+                await prisma.pendingItem.create({
+                    data: {
+                        description: `Solicitação de ${type} (${new Date(date).toLocaleDateString()}): ${reason}`,
+                        responsible: 'LIDERANÇA',
+                        priority: 'MEDIA',
+                        status: 'PENDENTE',
+                        companyId: user.companyId,
+                        collaboratorId: targetCollaboratorId,
+                    }
+                });
+            }
 
             res.status(201).json(dayOff);
         } catch (error) {
@@ -246,6 +271,98 @@ export const dayOffController = {
         } catch (error) {
             console.error('Error deleting day off:', error);
             res.status(500).json({ error: 'Erro ao remover folga' });
+        }
+    },
+    // List pending days off for company leaders
+    async listPending(req: Request, res: Response) {
+        try {
+            const user = (req as any).user;
+            if (!user.companyId || (user.role !== 'MASTER' && user.role !== 'LIDER' && user.role !== 'RH')) {
+                return res.status(403).json({ error: 'Unauthorized' });
+            }
+
+            const pending = await prisma.dayOff.findMany({
+                where: {
+                    approved: false,
+                    collaborator: {
+                        area: {
+                            sector: { companyId: user.companyId }
+                        }
+                    }
+                },
+                include: {
+                    collaborator: {
+                        include: {
+                            user: { select: { name: true, role: true } },
+                            area: { select: { name: true } }
+                        }
+                    }
+                },
+                orderBy: { date: 'asc' }
+            });
+
+            res.json(pending);
+        } catch (error) {
+            console.error('Error listing pending days off:', error);
+            res.status(500).json({ error: 'Error listing pending' });
+        }
+    },
+
+    // Approve/Reject Day Off
+    async review(req: Request, res: Response) {
+        try {
+            const { id } = req.params;
+            const { action } = req.body; // 'APPROVE' or 'REJECT'
+            const user = (req as any).user;
+
+            if (user.role !== 'MASTER' && user.role !== 'LIDER' && user.role !== 'RH') {
+                return res.status(403).json({ error: 'Unauthorized' });
+            }
+
+            // Get current day off details before update/delete
+            const existingDayOff = await prisma.dayOff.findUnique({ where: { id } });
+            if (!existingDayOff) return res.status(404).json({ error: 'Not found' });
+
+            // Try to find and resolve related PendingItem
+            // We search for a PENDING item for this collaborator with "Solicitação" in description
+            // This is a heuristic since we don't have a direct link ID.
+            if (existingDayOff.collaboratorId) {
+                const relatedPendency = await prisma.pendingItem.findFirst({
+                    where: {
+                        collaboratorId: existingDayOff.collaboratorId,
+                        status: 'PENDENTE',
+                        description: { contains: new Date(existingDayOff.date).toLocaleDateString() }
+                    }
+                });
+
+                if (relatedPendency) {
+                    await prisma.pendingItem.update({
+                        where: { id: relatedPendency.id },
+                        data: {
+                            status: action === 'APPROVE' ? 'RESOLVIDA' : 'CONCLUIDA', // Or just RESOLVIDA
+                            resolvedAt: new Date()
+                        }
+                    });
+                }
+            }
+
+            if (action === 'REJECT') {
+                await prisma.dayOff.delete({ where: { id } });
+                return res.json({ message: 'Rejected/Deleted' });
+            }
+
+            const dayOff = await prisma.dayOff.update({
+                where: { id },
+                data: {
+                    approved: true,
+                    approvedById: user.userId
+                }
+            });
+
+            res.json(dayOff);
+        } catch (error) {
+            console.error('Error reviewing day off:', error);
+            res.status(500).json({ error: 'Error processing review' });
         }
     },
 };

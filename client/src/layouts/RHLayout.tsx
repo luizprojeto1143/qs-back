@@ -10,7 +10,10 @@ import {
     X,
     Calendar,
     Video,
-    GraduationCap
+    GraduationCap,
+    AlertTriangle,
+    Activity,
+    Megaphone
 } from 'lucide-react';
 import { useLibrasAvailability } from '../hooks/useLibrasAvailability';
 
@@ -56,7 +59,10 @@ const RHLayout = () => {
     const menuItems = [
         { icon: LayoutDashboard, label: 'Visão Geral', path: '/rh' },
         { icon: Users, label: 'Colaboradores', path: '/rh/collaborators' },
-        { icon: ClipboardList, label: 'Histórico de Visitas', path: '/rh/history' },
+        { icon: ClipboardList, label: 'Histórico de Visitas', path: '/rh/visits' },
+        { icon: AlertTriangle, label: 'Pendências', path: '/rh/pendencies' },
+        ...(currentCompany?.systemSettings?.rhCanSeeQSScore ? [{ icon: Activity, label: 'Diagnóstico & Score', path: '/rh/inclusion' }] : []),
+        ...(currentCompany?.systemSettings?.complaintsEnabled ? [{ icon: Megaphone, label: 'Ouvidoria', path: '/rh/complaints' }] : []),
         { icon: FileText, label: 'Relatórios', path: '/rh/reports' },
         ...(isUniversityEnabled ? [{ icon: GraduationCap, label: 'Universidade', path: '/rh/university-reports' }] : []),
         { icon: Calendar, label: 'Agendamentos', path: '/rh/schedules' },

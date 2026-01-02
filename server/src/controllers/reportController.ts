@@ -60,7 +60,7 @@ export const generateReport = async (req: Request, res: Response) => {
                 const startDate = new Date(year, month, 1);
                 const endDate = new Date(year, month + 1, 0);
 
-                const [monthlyVisits, monthlyPendencies, activeCollaborators] = await Promise.all([
+                const [monthlyVisits, monthlyPendencies, activeCollaborators, monthlyComplaints] = await Promise.all([
                     prisma.visit.findMany({
                         where: {
                             companyId,
@@ -74,7 +74,14 @@ export const generateReport = async (req: Request, res: Response) => {
                             createdAt: { gte: startDate, lte: endDate }
                         }
                     }),
-                    prisma.user.count({ where: { companyId, role: 'COLABORADOR' } })
+                    prisma.user.count({ where: { companyId, role: 'COLABORADOR' } }),
+                    prisma.complaint.findMany({
+                        where: {
+                            companyId,
+                            createdAt: { gte: startDate, lte: endDate }
+                        },
+                        orderBy: { createdAt: 'desc' }
+                    })
                 ]);
 
                 data = {
@@ -82,10 +89,13 @@ export const generateReport = async (req: Request, res: Response) => {
                     stats: {
                         totalVisits: monthlyVisits.length,
                         totalPendencies: monthlyPendencies.length,
-                        activeCollaborators
+                        activeCollaborators,
+                        totalComplaints: monthlyComplaints.length,
+                        resolvedComplaints: monthlyComplaints.filter(c => c.status === 'RESOLVIDO').length
                     },
                     visits: monthlyVisits,
-                    pendencies: monthlyPendencies
+                    pendencies: monthlyPendencies,
+                    complaints: monthlyComplaints
                 };
                 break;
 

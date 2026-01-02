@@ -25,6 +25,7 @@ const calculateAreaScore = async (areaId: string, companyId: string) => {
         resolvedItems,
         visits,
         collaborators,
+        complaints
     ] = await Promise.all([
         prisma.pendingItem.count({
             where: { areaId, status: { in: ['PENDING', 'IN_PROGRESS'] } }
@@ -36,8 +37,27 @@ const calculateAreaScore = async (areaId: string, companyId: string) => {
             where: { areaId, createdAt: { gte: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000) } },
             select: { avaliacaoArea: true, avaliacaoLideranca: true, avaliacaoColaborador: true }
         }),
-        prisma.collaboratorProfile.count({ where: { areaId } })
+        prisma.collaboratorProfile.count({ where: { areaId } }),
+        prisma.complaint.findMany({
+            where: {
+                areaId,
+                status: 'RESOLVIDO',
+                resolvedAt: { not: null },
+                createdAt: { gte: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000) } // Últimos 90 dias
+            },
+            select: { createdAt: true, resolvedAt: true }
+        })
     ]);
+
+    // Calcular tempo médio de resolução (em dias)
+    let avgResolutionDays = 0;
+    if (complaints && complaints.length > 0) {
+        const totalDays = complaints.reduce((sum: number, c: any) => {
+            const diffTime = new Date(c.resolvedAt).getTime() - new Date(c.createdAt).getTime();
+            return sum + (diffTime / (1000 * 3600 * 24));
+        }, 0);
+        avgResolutionDays = totalDays / complaints.length;
+    }
 
     // Fatores do cálculo
     const factors = {
@@ -45,6 +65,7 @@ const calculateAreaScore = async (areaId: string, companyId: string) => {
         pendenciasResolvidas: resolvedItems,
         visitasRecentes: visits.length,
         colaboradores: collaborators,
+        resolucaoDenunciasDias: avgResolutionDays.toFixed(1)
     };
 
     // Algoritmo de pontuação (0-1000)
@@ -59,6 +80,16 @@ const calculateAreaScore = async (areaId: string, companyId: string) => {
 
     // Visitas frequentes aumentam score
     score += Math.min(150, visits.length * 15); // até +150
+
+    // Gestão de Denúncias (Novo Fator)
+    if (avgResolutionDays > 0) {
+        if (avgResolutionDays <= 7) score += 100; // Resolução rápida (até 7 dias)
+        else if (avgResolutionDays <= 15) score += 50; // Resolução média
+        else score -= 50; // Resolução lenta (> 15 dias)
+    } else if (resolvedItems > 0) {
+        // Se não tem denúncias mas tem pendências resolvidas, bônus menor
+        score += 20;
+    }
 
     // Avaliações das visitas
     let avgEvaluation = 0;

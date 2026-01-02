@@ -248,8 +248,8 @@ const ComplaintsCentral: React.FC = () => {
                         <div
                             key={complaint.id}
                             className={`p-5 rounded-xl border-2 transition-all cursor-pointer hover:shadow-md ${complaint.severity === 'CRITICO' ? 'border-red-200 bg-red-50/50' :
-                                    complaint.severity === 'ALTO' ? 'border-orange-200 bg-orange-50/50' :
-                                        'border-gray-200 bg-white'
+                                complaint.severity === 'ALTO' ? 'border-orange-200 bg-orange-50/50' :
+                                    'border-gray-200 bg-white'
                                 }`}
                             onClick={() => setSelectedComplaint(complaint)}
                         >
@@ -365,6 +365,22 @@ const ComplaintsCentral: React.FC = () => {
                                             </button>
                                         </div>
                                     )}
+                                </div>
+                            )}
+
+                            {/* Detalhes da Resolução (RH) */}
+                            {selectedComplaint.status === 'RESOLVIDO' && selectedComplaint.resolution && (
+                                <div className="bg-green-50 p-4 rounded-xl border border-green-100 animate-in fade-in slide-in-from-bottom-2">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <CheckCircle className="h-5 w-5 text-green-600" />
+                                        <h3 className="font-bold text-green-800">Resolução do RH</h3>
+                                    </div>
+                                    <p className="text-green-900 text-sm whitespace-pre-wrap">
+                                        {selectedComplaint.resolution}
+                                    </p>
+                                    <div className="mt-2 text-xs text-green-600 font-medium">
+                                        Resolvido em {new Date(selectedComplaint.updatedAt).toLocaleDateString()}
+                                    </div>
                                 </div>
                             )}
 

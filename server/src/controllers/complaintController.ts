@@ -47,19 +47,27 @@ export const complaintController = {
         }
     },
 
-    // Listar denúncias (apenas MASTER)
+    // Listar denúncias
     async list(req: Request, res: Response) {
         try {
             const { companyId } = req.params;
             const { status, severity } = req.query;
             const user = (req as any).user;
 
-            if (user.role !== 'MASTER') {
-                return res.status(403).json({ error: 'Apenas MASTER pode ver denúncias' });
+            if (user.role !== 'MASTER' && user.role !== 'RH') {
+                return res.status(403).json({ error: 'Apenas MASTER e RH podem ver denúncias' });
             }
 
             const where: any = { companyId };
-            if (status) where.status = status;
+
+            // Se for RH, só vê o que foi encaminhado ou resolvido (se tiver permissão)
+            if (user.role === 'RH') {
+                where.status = { in: ['ENCAMINHADO_RH', 'RESOLVIDO'] };
+            } else {
+                // Se for Master, filtros opcionais
+                if (status) where.status = status;
+            }
+
             if (severity) where.severity = severity;
 
             const complaints = await prisma.complaint.findMany({
@@ -85,10 +93,6 @@ export const complaintController = {
             const { id } = req.params;
             const user = (req as any).user;
 
-            if (user.role !== 'MASTER') {
-                return res.status(403).json({ error: 'Sem permissão' });
-            }
-
             const complaint = await prisma.complaint.findUnique({
                 where: { id },
                 include: {
@@ -100,6 +104,16 @@ export const complaintController = {
 
             if (!complaint) {
                 return res.status(404).json({ error: 'Denúncia não encontrada' });
+            }
+
+            // Permissão de Visualização
+            if (user.role === 'RH') {
+                // RH só vê se estiver encaminhado ou resolvido
+                if (!['ENCAMINHADO_RH', 'RESOLVIDO'].includes(complaint.status)) {
+                    return res.status(403).json({ error: 'Sem permissão para visualizar esta denúncia' });
+                }
+            } else if (user.role !== 'MASTER') {
+                return res.status(403).json({ error: 'Sem permissão' });
             }
 
             res.json(complaint);
@@ -265,6 +279,11 @@ export const complaintController = {
                 return res.status(403).json({ error: 'Sem permissão' });
             }
 
+            // Validar se tem resolução
+            if (!resolution || !resolution.trim()) {
+                return res.status(400).json({ error: 'A resolução é obrigatória para encerrar a denúncia.' });
+            }
+
             const complaint = await prisma.complaint.update({
                 where: { id },
                 data: {
@@ -281,7 +300,7 @@ export const complaintController = {
                     entityType: 'COMPLAINT',
                     entityId: id,
                     action: 'RESOLVIDO',
-                    reason: resolution || 'Denúncia resolvida',
+                    reason: resolution,
                     decidedById: user.userId,
                 }
             });

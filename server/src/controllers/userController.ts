@@ -9,10 +9,15 @@ export const listUsers = async (req: Request, res: Response) => {
         const user = (req as AuthRequest).user;
         if (!user) return res.status(401).json({ error: 'Unauthorized' });
 
-        // Only MASTER can list all users. 
-        // RH might list users from their company in the future, but for now let's stick to MASTER requirement.
+        const where: any = { active: true };
+
         if (user.role !== 'MASTER') {
-            return res.status(403).json({ error: 'Access denied' });
+            if (!user.companyId) return res.status(403).json({ error: 'Company context missing' });
+            where.companyId = user.companyId;
+            // Optionally filter by area for leaders?
+            if (user.role === 'LIDER' && user.areaId) {
+                where.areaId = user.areaId;
+            }
         }
 
         const page = Number(req.query.page) || 1;
@@ -21,9 +26,7 @@ export const listUsers = async (req: Request, res: Response) => {
 
         const [users, total] = await Promise.all([
             prisma.user.findMany({
-                where: {
-                    active: true
-                },
+                where,
                 select: {
                     id: true,
                     name: true,
@@ -34,13 +37,20 @@ export const listUsers = async (req: Request, res: Response) => {
                     areaId: true,
                     createdAt: true,
                     company: { select: { name: true } },
-                    area: { select: { name: true } }
+                    area: { select: { name: true } },
+                    collaboratorProfile: {
+                        select: {
+                            matricula: true,
+                            shift: true,
+                            nextRestDay: true
+                        }
+                    }
                 },
                 orderBy: { name: 'asc' },
                 take: limit,
                 skip
             }),
-            prisma.user.count({ where: { active: true } })
+            prisma.user.count({ where })
         ]);
 
         res.json({

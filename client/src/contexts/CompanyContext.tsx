@@ -7,6 +7,11 @@ interface Company {
     cnpj: string;
     logo?: string;
     universityEnabled?: boolean;
+    systemSettings?: {
+        rhCanSeeQSScore?: boolean;
+        rhCanSeeRiskMap?: boolean;
+        complaintsEnabled?: boolean;
+    };
 }
 
 interface CompanyContextType {

@@ -24,7 +24,16 @@ const MobileLayout = () => {
         navigate('/login');
     };
 
-    const navItems = [
+    // Get user role
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const isLeader = user.role === 'LIDER' || user.role === 'MASTER' || user.role === 'RH';
+
+    const navItems = isLeader ? [
+        { icon: Home, label: 'Início', path: '/app' },
+        { icon: User, label: 'Equipe', path: '/app/team', primary: true }, // Leader specific
+        { icon: Calendar, label: 'Folgas', path: '/app/approvals' },
+        { icon: User, label: 'Perfil', path: '/app/profile' },
+    ] : [
         { icon: Home, label: 'Início', path: '/app' },
         ...(isUniversityEnabled ? [{ icon: GraduationCap, label: 'Cursos', path: '/app/university' }] : []),
         { icon: PlusCircle, label: 'Solicitar', path: '/app/request', primary: true },

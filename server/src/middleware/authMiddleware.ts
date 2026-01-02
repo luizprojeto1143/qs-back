@@ -14,6 +14,7 @@ export interface AuthRequest extends Request {
         userId: string;
         role: string;
         companyId: string | null;
+        areaId?: string | null;
     };
 }
 
@@ -32,7 +33,7 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
         // This prevents access from banned/fired users with valid tokens
         const userStatus = await prisma.user.findUnique({
             where: { id: verified.userId },
-            select: { active: true, companyId: true, role: true }
+            select: { active: true, companyId: true, role: true, areaId: true }
         });
 
         if (!userStatus || !userStatus.active) {
@@ -54,6 +55,7 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
             // Ensure token companyId matches current DB state (in case user was moved)
             verified.companyId = userStatus.companyId;
             verified.role = userStatus.role; // Refresh role as well
+            verified.areaId = userStatus.areaId;
         }
 
         console.log('Auth Debug:', {

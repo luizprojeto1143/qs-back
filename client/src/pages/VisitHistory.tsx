@@ -68,6 +68,16 @@ const VisitHistory = () => {
         fetchVisits();
     }, []);
 
+    const getBasePath = () => {
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+            const user = JSON.parse(userStr);
+            return user.role === 'RH' ? '/rh' : '/dashboard';
+        }
+        return '/dashboard';
+    };
+    const basePath = getBasePath();
+
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -77,12 +87,15 @@ const VisitHistory = () => {
                 </div>
             </div>
             <div className="flex space-x-3">
-                <button
-                    onClick={() => navigate('/dashboard/visits/new')}
-                    className="bg-primary text-white px-4 py-2 rounded-xl hover:bg-primary-dark transition-colors flex items-center space-x-2 shadow-sm font-medium"
-                >
-                    <span>Novo Acompanhamento</span>
-                </button>
+                {/* Only Master/Specialist can create visits */}
+                {basePath !== '/rh' && (
+                    <button
+                        onClick={() => navigate(`${basePath}/visits/new`)}
+                        className="bg-primary text-white px-4 py-2 rounded-xl hover:bg-primary-dark transition-colors flex items-center space-x-2 shadow-sm font-medium"
+                    >
+                        <span>Novo Acompanhamento</span>
+                    </button>
+                )}
                 <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <input
@@ -141,7 +154,7 @@ const VisitHistory = () => {
                                         Concluído
                                     </span>
                                     <button
-                                        onClick={() => navigate('/dashboard/visits/new', { state: { visitId: visit.id, mode: 'edit' } })}
+                                        onClick={() => navigate(`${basePath}/visits/new`, { state: { visitId: visit.id, mode: 'edit' } })}
                                         className="ml-2 p-1 text-gray-400 hover:text-blue-500 inline-block align-middle"
                                         title="Editar"
                                     >

@@ -20,8 +20,17 @@ const Reports = lazy(() => import('./pages/Reports'));
 const VisitHistory = lazy(() => import('./pages/VisitHistory'));
 const MobileLayout = lazy(() => import('./layouts/MobileLayout'));
 const MobileHome = lazy(() => import('./pages/mobile/MobileHome'));
+const MobileWorkSchedule = lazy(() => import('./pages/mobile/MobileWorkSchedule'));
 const MobileSchedule = lazy(() => import('./pages/mobile/MobileSchedule'));
 const MobileProfile = lazy(() => import('./pages/mobile/MobileProfile'));
+const MobileTeam = lazy(() => import('./pages/mobile/MobileTeam'));
+const MobileApprovals = lazy(() => import('./pages/mobile/MobileApprovals'));
+const MobileApprovals = lazy(() => import('./pages/mobile/MobileApprovals'));
+const MobileRequestDayOff = lazy(() => import('./pages/mobile/MobileRequestDayOff'));
+const MobileComplaints = lazy(() => import('./pages/mobile/MobileComplaints'));
+
+const RHInclusion = lazy(() => import('./pages/RHInclusion'));
+const RHComplaints = lazy(() => import('./pages/RHComplaints'));
 const Schedules = lazy(() => import('./pages/Schedules'));
 const CompaniesList = lazy(() => import('./pages/settings/CompaniesList'));
 const SectorsList = lazy(() => import('./pages/settings/SectorsList'));
@@ -30,7 +39,6 @@ const ReportViewer = lazy(() => import('./pages/ReportViewer'));
 const InclusionDiagnosisEditor = lazy(() => import('./pages/InclusionDiagnosisEditor'));
 const FeedCategories = lazy(() => import('./pages/settings/FeedCategories'));
 const TermsOfUse = lazy(() => import('./pages/settings/TermsOfUse'));
-const ShiftsList = lazy(() => import('./pages/settings/ShiftsList'));
 const Availability = lazy(() => import('./pages/settings/Availability'));
 const UsersList = lazy(() => import('./pages/settings/UsersList').then(module => ({ default: module.UsersList }))); // Handle named export
 const QRCodeGenerator = lazy(() => import('./pages/settings/QRCodeGenerator'));
@@ -39,7 +47,6 @@ const LibrasAvailability = lazy(() => import('./pages/settings/LibrasAvailabilit
 const LibrasCentral = lazy(() => import('./pages/LibrasCentral'));
 const SpecialistSettings = lazy(() => import('./pages/settings/SpecialistSettings'));
 const CompanyHistory = lazy(() => import('./pages/CompanyHistory'));
-const PDIManagement = lazy(() => import('./pages/PDIManagement'));
 const UniversityManagement = lazy(() => import('./pages/master/UniversityManagement'));
 const QSScoreDashboard = lazy(() => import('./pages/master/QSScoreDashboard'));
 const AIInsightsDashboard = lazy(() => import('./pages/master/AIInsightsDashboard'));
@@ -129,22 +136,33 @@ function App() {
                     <Route index element={<RHDashboard />} />
                     <Route path="collaborators" element={<CollaboratorsList />} />
                     <Route path="reports" element={<Reports />} />
-                    <Route path="history" element={<VisitHistory />} />
+                    <Route path="visits" element={<VisitHistory />} />
+                    <Route path="visits/new" element={<VisitRecording />} />
                     <Route path="schedules" element={<Schedules />} />
                     <Route path="libras" element={<LibrasCentral />} />
                     <Route path="university-reports" element={<UniversityReports />} />
+                    <Route path="pendencies" element={<Pendencies />} />
+                    <Route path="inclusion" element={<RHInclusion />} />
+                    <Route path="complaints" element={<RHComplaints />} />
                   </Route>
                   {/* Mobile App Routes */}
                   <Route path="/app" element={<MobileLayout />}>
+                    {/* ... (in Routes) */}
                     <Route index element={<MobileHome />} />
-                    <Route path="schedule" element={<MobileSchedule />} />
+                    <Route path="schedule" element={<MobileWorkSchedule />} />
                     <Route path="request" element={<MobileSchedule />} />
+                    <Route path="dayoff" element={<MobileRequestDayOff />} />
+                    <Route path="team" element={<MobileTeam />} />
+                    <Route path="approvals" element={<MobileApprovals />} />
                     <Route path="profile" element={<MobileProfile />} />
                     <Route path="libras" element={<LibrasCentral />} />
                     <Route path="university" element={<CourseCatalog />} />
                     <Route path="university/course/:id" element={<CoursePlayer />} />
                     <Route path="university/quiz/:id" element={<QuizPlayer />} />
+                    <Route path="university/course/:id" element={<CoursePlayer />} />
+                    <Route path="university/quiz/:id" element={<QuizPlayer />} />
                     <Route path="university/certificates" element={<Certificates />} />
+                    <Route path="complaints" element={<MobileComplaints />} />
                   </Route>
                 </Routes>
               </Suspense>

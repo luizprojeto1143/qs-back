@@ -163,7 +163,15 @@ export const getProfile = async (req: Request, res: Response) => {
         const userId = (req as any).user.userId; // Middleware ensures user exists, but we'll fix type in routes
         const user = await prisma.user.findUnique({
             where: { id: userId },
-            include: { company: true }
+            include: {
+                company: true,
+                collaboratorProfile: {
+                    include: {
+                        workSchedule: true,
+                        area: true
+                    }
+                }
+            }
         });
 
         if (!user) {
