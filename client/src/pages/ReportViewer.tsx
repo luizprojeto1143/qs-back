@@ -286,14 +286,47 @@ const ReportViewer = () => {
                                     <thead className="bg-gray-100">
                                         <tr>
                                             <th className="p-2">Data</th>
-                                            <th className="p-2">Status</th>
+                                            <th className="p-2">Responsável</th>
+                                            <th className="p-2 w-1/2">Registro do Acompanhamento</th>
+                                            <th className="p-2 text-center">Pendências</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {reportData.visits.map((v: any) => (
-                                            <tr key={v.id} className="border-b">
-                                                <td className="p-2">{new Date(v.date).toLocaleDateString()}</td>
-                                                <td className="p-2">Realizada</td>
+                                            <tr key={v.id} className="border-b align-top">
+                                                <td className="p-2 whitespace-nowrap">{new Date(v.date).toLocaleDateString()}</td>
+                                                <td className="p-2 whitespace-nowrap">{v.master?.name || '-'}</td>
+                                                <td className="p-2">
+                                                    {v.observacoesMaster ? (
+                                                        <div className="whitespace-pre-wrap mb-2">{v.observacoesMaster}</div>
+                                                    ) : null}
+
+                                                    {v.notes && v.notes.length > 0 && (
+                                                        <div className="mt-1 bg-gray-50 p-2 rounded border border-gray-100">
+                                                            <p className="text-xs font-bold text-gray-500 mb-1">Notas Individuais:</p>
+                                                            <ul className="space-y-1">
+                                                                {v.notes.map((n: any, i: number) => (
+                                                                    <li key={i} className="text-xs text-gray-600">
+                                                                        <span className="font-semibold">{n.collaborator?.user?.name}:</span> {n.content}
+                                                                    </li>
+                                                                ))}
+                                                            </ul>
+                                                        </div>
+                                                    )}
+
+                                                    {!v.observacoesMaster && (!v.notes || v.notes.length === 0) && (
+                                                        <span className="text-gray-400 italic">Sem registros adicionais</span>
+                                                    )}
+                                                </td>
+                                                <td className="p-2 text-center">
+                                                    {v.generatedPendencies?.length > 0 ? (
+                                                        <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-bold">
+                                                            {v.generatedPendencies.length}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-gray-300">-</span>
+                                                    )}
+                                                </td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -442,6 +475,16 @@ const ReportViewer = () => {
                                                     {new Date(visit.date).toLocaleDateString()} às {new Date(visit.date).toLocaleTimeString()}
                                                 </span>
                                             </div>
+
+                                            {/* Context Badge if not direct participant */}
+                                            {!visit.collaborators?.some((c: any) => c.id === reportData.collaborator.id) && (
+                                                <div className="mb-4">
+                                                    <span className="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded inline-flex items-center gap-1">
+                                                        <AlertCircle className="w-3 h-3" />
+                                                        Vínculo: Nota ou Pendência
+                                                    </span>
+                                                </div>
+                                            )}
 
                                             {/* Visit Content */}
                                             <div className="space-y-4">

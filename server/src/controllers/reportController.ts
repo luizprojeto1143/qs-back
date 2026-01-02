@@ -138,11 +138,16 @@ export const generateReport = async (req: Request, res: Response) => {
                 const historyVisits = await prisma.visit.findMany({
                     where: {
                         companyId,
-                        collaborators: { some: { id: collaborator.id } }
+                        OR: [
+                            { collaborators: { some: { id: collaborator.id } } },
+                            { notes: { some: { collaboratorId: collaborator.id } } },
+                            { generatedPendencies: { some: { collaboratorId: collaborator.id } } }
+                        ]
                     },
                     orderBy: { date: 'desc' },
                     include: {
                         master: { select: { name: true } },
+                        collaborators: { select: { id: true } },
                         notes: {
                             where: { collaboratorId: collaborator.id }
                         }
@@ -160,7 +165,15 @@ export const generateReport = async (req: Request, res: Response) => {
             case 'AREA_REPORT':
                 if (filters?.areaId) {
                     const area = await prisma.area.findUnique({ where: { id: filters.areaId }, include: { sector: true } });
-                    const areaVisits = await prisma.visit.findMany({ where: { areaId: filters.areaId }, orderBy: { date: 'desc' } });
+                    const areaVisits = await prisma.visit.findMany({
+                        where: { areaId: filters.areaId },
+                        include: {
+                            master: { select: { name: true } },
+                            generatedPendencies: true,
+                            notes: { include: { collaborator: { include: { user: { select: { name: true } } } } } }
+                        },
+                        orderBy: { date: 'desc' }
+                    });
                     const areaPendencies = await prisma.pendingItem.findMany({ where: { areaId: filters.areaId } });
                     data = { area, visits: areaVisits, pendencies: areaPendencies };
                 } else {

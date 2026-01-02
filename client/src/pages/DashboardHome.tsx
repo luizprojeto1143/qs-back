@@ -8,8 +8,11 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { api } from '../lib/api';
 
-const StatCard = ({ icon: Icon, label, value, color }: any) => (
-    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center space-x-4">
+const StatCard = ({ icon: Icon, label, value, color, onClick }: any) => (
+    <div
+        onClick={onClick}
+        className={`bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center space-x-4 transition-all hover:shadow-md hover:scale-[1.02] cursor-pointer`}
+    >
         <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${color}`}>
             <Icon className="h-6 w-6 text-white" />
         </div>
@@ -105,10 +108,34 @@ const DashboardHome = () => {
                     </>
                 ) : (
                     <>
-                        <StatCard icon={Users} label="Colaboradores" value={stats.collaborators} color="bg-blue-500" />
-                        <StatCard icon={ClipboardList} label="Acompanhamentos" value={stats.visits} color="bg-green-500" />
-                        <StatCard icon={AlertTriangle} label="Pendências" value={stats.pendencies} color="bg-orange-500" />
-                        <StatCard icon={Calendar} label="Agendamentos" value={stats.schedules} color="bg-purple-500" />
+                        <StatCard
+                            icon={Users}
+                            label="Colaboradores"
+                            value={stats.collaborators}
+                            color="bg-blue-500"
+                            onClick={() => navigate('/dashboard/collaborators')}
+                        />
+                        <StatCard
+                            icon={ClipboardList}
+                            label="Acompanhamentos"
+                            value={stats.visits}
+                            color="bg-green-500"
+                            onClick={() => navigate('/dashboard/visits')}
+                        />
+                        <StatCard
+                            icon={AlertTriangle}
+                            label="Pendências"
+                            value={stats.pendencies}
+                            color="bg-orange-500"
+                            onClick={() => navigate('/dashboard/pendencies')}
+                        />
+                        <StatCard
+                            icon={Calendar}
+                            label="Agendamentos"
+                            value={stats.schedules}
+                            color="bg-purple-500"
+                            onClick={() => navigate('/dashboard/schedules')}
+                        />
                     </>
                 )}
             </div>
