@@ -142,6 +142,7 @@ export const registerCollaborator = async (req: Request, res: Response) => {
                     matricula,
                     areaId,
                     shift: shift || '1_TURNO',
+                    nextRestDay: validation.data.nextRestDay ? new Date(validation.data.nextRestDay) : null,
                     disabilityType: disabilityType || 'NENHUMA',
                     needsDescription: needsDescription || ''
                 }

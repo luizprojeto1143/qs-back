@@ -169,6 +169,7 @@ model CollaboratorProfile {
   area           Area     @relation(fields: [areaId], references: [id])
   
   shift          String   // 1_TURNO, 2_TURNO, 3_TURNO, ESCALA_12X36, PERSONALIZADO
+  nextRestDay    DateTime? // Data da próxima folga (para cálculo de escalas rotativas)
   disabilityType String
   needsDescription String?
   

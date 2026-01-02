@@ -21,6 +21,7 @@ export const registerCollaboratorSchema = z.object({
     areaId: z.string().uuid(),
     companyId: z.string().uuid(),
     shift: z.string().optional(),
+    nextRestDay: z.string().optional(),
     disabilityType: z.string().optional(),
     needsDescription: z.string().optional(),
     avatar: z.string().min(1, "Foto é obrigatória")

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { api } from '../../lib/api';
 import { toast } from 'sonner';
-import { User, Mail, Lock, Briefcase, Building2, CheckCircle, Clock, Accessibility } from 'lucide-react';
+import { User, Mail, Lock, Briefcase, Building2, CheckCircle, Clock, Accessibility, Calendar } from 'lucide-react';
 
 const CollaboratorRegistration = () => {
     const [searchParams] = useSearchParams();
@@ -23,6 +23,7 @@ const CollaboratorRegistration = () => {
         areaId: '',
         companyId: companyId || '',
         shift: '',
+        nextRestDay: '', // Para escalas rotativas
         disabilityType: 'NENHUMA',
         needsDescription: ''
     });
@@ -255,6 +256,24 @@ const CollaboratorRegistration = () => {
                                 </select>
                             </div>
                         </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Próxima Folga (Opcional) <span className="text-xs text-gray-500 font-normal">- Para escalas rotativas</span>
+                            </label>
+                            <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <Calendar className="h-5 w-5 text-gray-400" />
+                                </div>
+                                <input
+                                    type="date"
+                                    className="input-field pl-10"
+                                    value={formData.nextRestDay}
+                                    onChange={e => setFormData({ ...formData, nextRestDay: e.target.value })}
+                                />
+                            </div>
+                        </div>
+
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Deficiência</label>
                             <div className="relative">
