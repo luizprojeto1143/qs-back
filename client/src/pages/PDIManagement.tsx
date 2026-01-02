@@ -313,8 +313,7 @@ const PDIManagement = () => {
                                     <h3 className="text-lg font-bold text-gray-900 mb-2">Plano de Ação</h3>
                                     <p className="text-gray-700 whitespace-pre-wrap">{selectedPDI.actions}</p>
                                 </div>
-                                    <p className="text-gray-700 whitespace-pre-wrap">{selectedPDI.actions}</p>
-                                </div>
+
 
                                 {selectedPDI.accessibilityNeeds && (
                                     <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
@@ -338,8 +337,8 @@ const PDIManagement = () => {
                             </div>
                         </div>
                     )}
+                </div>
             </div>
-        </div>
         </div >
     );
 };
