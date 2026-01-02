@@ -29,6 +29,7 @@ const InternalIndicators = () => {
     const { selectedCompanyId } = useCompany();
     const [data, setData] = useState<any>(null);
     const [retention, setRetention] = useState<any>(null);
+    const [sectors, setSectors] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -36,12 +37,14 @@ const InternalIndicators = () => {
             if (!selectedCompanyId) return;
             setLoading(true);
             try {
-                const [censusRes, retentionRes] = await Promise.all([
+                const [censusRes, retentionRes, sectorsRes] = await Promise.all([
                     api.get(`/metrics/diversity/${selectedCompanyId}`),
-                    api.get(`/metrics/retention/${selectedCompanyId}`)
+                    api.get(`/metrics/retention/${selectedCompanyId}`),
+                    api.get(`/metrics/sectors/${selectedCompanyId}`)
                 ]);
                 setData(censusRes.data);
                 setRetention(retentionRes.data);
+                setSectors(sectorsRes.data);
             } catch (error) {
                 console.error('Error loading census:', error);
                 toast.error('Erro ao carregar dados do censo');
@@ -187,6 +190,31 @@ const InternalIndicators = () => {
                                 <YAxis />
                                 <Tooltip />
                                 <Bar dataKey="value" fill="#8884d8" name="Colaboradores" radius={[4, 4, 0, 0]} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+
+                {/* Comparativo Setorial */}
+                <div className="card col-span-1 lg:col-span-2 min-h-[400px]">
+                    <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+                        <BarChart3 className="w-5 h-5 text-gray-500" />
+                        Diversidade por Setor (Gênero)
+                    </h3>
+                    <div className="h-[300px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart
+                                data={sectors}
+                                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                            >
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                <XAxis dataKey="name" />
+                                <YAxis />
+                                <Tooltip />
+                                <Legend />
+                                <Bar dataKey="MASCULINO" stackId="a" fill="#0088FE" name="Masculino" />
+                                <Bar dataKey="FEMININO" stackId="a" fill="#FF8042" name="Feminino" />
+                                <Bar dataKey="OUTRO" stackId="a" fill="#00C49F" name="Outro" />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>

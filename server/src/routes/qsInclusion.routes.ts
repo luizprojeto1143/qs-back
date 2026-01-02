@@ -61,6 +61,7 @@ router.get('/decisions/:entityType/:entityId', requireRole(['MASTER', 'RH']), de
 // ============================================
 router.get('/metrics/diversity/:companyId', requireRole(['MASTER', 'RH']), indicatorsController.getDiversityCensus);
 router.get('/metrics/retention/:companyId', requireRole(['MASTER', 'RH']), indicatorsController.getPcdRetention);
+router.get('/metrics/sectors/:companyId', requireRole(['MASTER', 'RH']), indicatorsController.getSectorComparison);
 
 // ============================================
 // IA ANALÍTICA
