@@ -123,6 +123,7 @@ model User {
   complaintsReported    Complaint[]     @relation("ComplaintReporter")
   complaintsValidated   Complaint[]     @relation("ComplaintValidator")
   mediationsCreated     Mediation[]     @relation("MediationCreator")
+  mediationsLed         Mediation[]     @relation("MediationLeader")
   alertsValidated       SmartAlert[]    @relation("AlertValidator")
   dayOffsApproved       DayOff[]        @relation("DayOffApprover")
   decisionsHistory      DecisionHistory[] @relation("DecisionMaker")
@@ -712,6 +713,8 @@ model Mediation {
   company         Company  @relation(fields: [companyId], references: [id])
   areaId          String?
   area            Area?    @relation(fields: [areaId], references: [id])
+  leaderId        String?
+  leader          User?    @relation("MediationLeader", fields: [leaderId], references: [id])
   date            DateTime
   theme           String
   description     String?

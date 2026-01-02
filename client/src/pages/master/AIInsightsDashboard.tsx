@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { api } from '../../lib/api';
 import { useCompany } from '../../contexts/CompanyContext';
 import { Brain, Sparkles, AlertTriangle, ArrowRight, Loader } from 'lucide-react';
+import { toast } from 'sonner';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 
 const AIInsightsDashboard = () => {
@@ -18,9 +19,14 @@ const AIInsightsDashboard = () => {
                 'x-company-id': selectedCompanyId
             });
             setAnalysis(response.data.ai);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error analyzing data:', error);
-            alert('Falha ao gerar análise. Verifique se a chave da OpenAI está configurada.');
+            const msg = error.response?.data?.error || 'Falha ao conectar com o serviço de IA.';
+            if (msg.includes('API Key')) {
+                toast.error('Chave da OpenAI não configurada ou inválida.');
+            } else {
+                toast.error(`Erro na análise: ${msg}`);
+            }
         } finally {
             setLoading(false);
         }

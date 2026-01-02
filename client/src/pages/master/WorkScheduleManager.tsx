@@ -4,7 +4,7 @@ import { api } from '../../lib/api';
 import { toast } from 'sonner';
 import {
     Calendar, Clock, User, Plus, Trash2,
-    CalendarDays, Briefcase, Save, ChevronDown
+    CalendarDays, Briefcase, Save, ChevronDown, Check
 } from 'lucide-react';
 
 interface WorkSchedule {
@@ -17,6 +17,7 @@ interface WorkSchedule {
     breakEnd?: string;
     restDays: string;
     collaborator: {
+        id: string; // Profile ID
         user: { name: string };
         area: { name: string };
     };
@@ -29,6 +30,15 @@ interface DayOff {
     type: string;
     reason?: string;
     approvedBy?: { name: string };
+}
+
+interface Collaborator {
+    id: string; // User ID
+    name: string;
+    collaboratorProfile: {
+        id: string;
+        area: { name: string };
+    }
 }
 
 const SCHEDULE_TYPES = [
@@ -58,12 +68,29 @@ const WorkScheduleManager: React.FC = () => {
 
     // Form states
     const [showDayOffForm, setShowDayOffForm] = useState(false);
+    const [showScheduleForm, setShowScheduleForm] = useState(false);
+
+    // New Day Off
     const [newDayOff, setNewDayOff] = useState({
-        collaboratorId: '',
+        collaboratorId: '', // Should be Profile ID
         date: '',
         endDate: '',
         type: 'FOLGA',
         reason: '',
+    });
+
+    // New/Edit Schedule
+    const [availableCollaborators, setAvailableCollaborators] = useState<Collaborator[]>([]);
+    const [scheduleForm, setScheduleForm] = useState({
+        collaboratorId: '', // Profile ID
+        type: '5X2',
+        workDays: [1, 2, 3, 4, 5],
+        startTime: '08:00',
+        endTime: '17:00',
+        breakStart: '12:00',
+        breakEnd: '13:00',
+        restDays: [0, 6],
+        notes: ''
     });
 
     useEffect(() => {
@@ -85,20 +112,36 @@ const WorkScheduleManager: React.FC = () => {
         }
     };
 
-    const loadDaysOff = async (collaboratorId: string) => {
+    const loadCollaborators = async () => {
         try {
-            const res = await api.get(`/days-off/collaborator/${collaboratorId}`);
-            setDaysOff(res.data);
+            const res = await api.get('/collaborators');
+            setAvailableCollaborators(res.data.data);
         } catch (error) {
-            console.error('Error loading days off:', error);
+            console.error('Error loading collaborators:', error);
+            toast.error('Erro ao carregar colaboradores');
         }
     };
 
-    const handleSelectSchedule = (schedule: WorkSchedule) => {
-        setSelectedSchedule(schedule);
-        // Extract collaborator ID from the schedule object - we'll need to get it from the relation
-        // For now, just show the schedule details
-        setActiveTab('schedules');
+    const handleOpenScheduleForm = () => {
+        loadCollaborators();
+        setShowScheduleForm(true);
+    };
+
+    const handleCreateSchedule = async () => {
+        if (!scheduleForm.collaboratorId) {
+            toast.error('Selecione um colaborador');
+            return;
+        }
+
+        try {
+            await api.put(`/work-schedule/${scheduleForm.collaboratorId}`, scheduleForm);
+            toast.success('Escala salva com sucesso!');
+            setShowScheduleForm(false);
+            loadSchedules();
+        } catch (error) {
+            console.error(error);
+            toast.error('Erro ao salvar escala');
+        }
     };
 
     const handleCreateDayOff = async () => {
@@ -111,21 +154,8 @@ const WorkScheduleManager: React.FC = () => {
             toast.success('Folga registrada com sucesso!');
             setShowDayOffForm(false);
             setNewDayOff({ collaboratorId: '', date: '', endDate: '', type: 'FOLGA', reason: '' });
-            if (selectedSchedule) {
-                // Reload days off for current collaborator
-            }
         } catch (error) {
             toast.error('Erro ao registrar folga');
-        }
-    };
-
-    const handleDeleteDayOff = async (id: string) => {
-        try {
-            await api.delete(`/days-off/${id}`);
-            toast.success('Folga removida!');
-            setDaysOff(prev => prev.filter(d => d.id !== id));
-        } catch (error) {
-            toast.error('Erro ao remover folga');
         }
     };
 
@@ -139,28 +169,39 @@ const WorkScheduleManager: React.FC = () => {
         }
     };
 
-    if (loading) {
-        return (
-            <div className="p-8">
-                <div className="animate-pulse space-y-6">
-                    <div className="h-8 bg-gray-200 rounded w-1/3"></div>
-                    <div className="h-64 bg-gray-200 rounded-2xl"></div>
-                </div>
-            </div>
-        );
-    }
+    const handleSelectCollaborator = (profileId: string) => {
+        setScheduleForm(prev => ({ ...prev, collaboratorId: profileId }));
+    };
 
     return (
-        <div className="p-8 space-y-8 animate-fade-in">
+        <div className="p-8 space-y-8 animate-fade-in text-gray-800">
             {/* Header */}
-            <div>
-                <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-                    <div className="p-2 bg-gradient-to-br from-green-500 to-teal-600 rounded-xl text-white">
-                        <CalendarDays className="w-6 h-6" />
-                    </div>
-                    Escalas de Trabalho
-                </h1>
-                <p className="text-gray-500 mt-1">Gerencie escalas e folgas dos colaboradores</p>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                        <div className="p-2 bg-gradient-to-br from-green-500 to-teal-600 rounded-xl text-white">
+                            <CalendarDays className="w-6 h-6" />
+                        </div>
+                        Escalas de Trabalho
+                    </h1>
+                    <p className="text-gray-500 mt-1">Gerencie escalas e folgas dos colaboradores</p>
+                </div>
+                <div className="flex gap-2">
+                    <button
+                        onClick={() => setShowDayOffForm(true)}
+                        className="btn-secondary flex items-center gap-2"
+                    >
+                        <Calendar className="w-4 h-4" />
+                        Registrar Ausência
+                    </button>
+                    <button
+                        onClick={handleOpenScheduleForm}
+                        className="btn-primary flex items-center gap-2"
+                    >
+                        <Plus className="w-4 h-4" />
+                        Nova Escala
+                    </button>
+                </div>
             </div>
 
             {/* Stats */}
@@ -213,7 +254,7 @@ const WorkScheduleManager: React.FC = () => {
                             <CalendarDays className="w-8 h-8 text-gray-400" />
                         </div>
                         <h3 className="text-lg font-medium text-gray-900">Nenhuma escala cadastrada</h3>
-                        <p className="text-gray-500 mt-1">As escalas são cadastradas no perfil do colaborador</p>
+                        <p className="text-gray-500 mt-1">Utilize o botão "Nova Escala" para começar</p>
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
@@ -232,7 +273,6 @@ const WorkScheduleManager: React.FC = () => {
                                     <tr
                                         key={schedule.id}
                                         className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
-                                        onClick={() => handleSelectSchedule(schedule)}
                                     >
                                         <td className="py-4 px-4">
                                             <div className="flex items-center gap-3">
@@ -269,29 +309,151 @@ const WorkScheduleManager: React.FC = () => {
                 )}
             </div>
 
+            {/* Modal Nova Escala */}
+            {showScheduleForm && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-xl font-bold text-gray-900">Nova Escala de Trabalho</h2>
+                            <button onClick={() => setShowScheduleForm(false)} className="text-gray-400 hover:text-gray-600">
+                                <Trash2 className="w-5 h-5 opacity-0" /> {/* Spacer */}
+                            </button>
+                        </div>
+
+                        <div className="space-y-6">
+                            {/* Seleção de Colaborador */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Colaborador</label>
+                                <select
+                                    className="input-field w-full"
+                                    value={scheduleForm.collaboratorId}
+                                    onChange={(e) => handleSelectCollaborator(e.target.value)}
+                                >
+                                    <option value="">Selecione um colaborador...</option>
+                                    {availableCollaborators.map(c => (
+                                        <option key={c.id} value={c.collaboratorProfile?.id}>
+                                            {c.name} - {c.collaboratorProfile?.area?.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Escala</label>
+                                    <select
+                                        className="input-field w-full"
+                                        value={scheduleForm.type}
+                                        onChange={(e) => setScheduleForm(prev => ({ ...prev, type: e.target.value }))}
+                                    >
+                                        {SCHEDULE_TYPES.map(t => (
+                                            <option key={t.value} value={t.value}>{t.label}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Entrada</label>
+                                        <input
+                                            type="time"
+                                            className="input-field w-full"
+                                            value={scheduleForm.startTime}
+                                            onChange={(e) => setScheduleForm(prev => ({ ...prev, startTime: e.target.value }))}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Saída</label>
+                                        <input
+                                            type="time"
+                                            className="input-field w-full"
+                                            value={scheduleForm.endTime}
+                                            onChange={(e) => setScheduleForm(prev => ({ ...prev, endTime: e.target.value }))}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Dias de Trabalho - Checkboxes */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Dias de Trabalho</label>
+                                <div className="flex flex-wrap gap-2">
+                                    {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day, idx) => {
+                                        const isSelected = scheduleForm.workDays.includes(idx);
+                                        return (
+                                            <button
+                                                key={idx}
+                                                type="button"
+                                                onClick={() => {
+                                                    setScheduleForm(prev => {
+                                                        const newDays = isSelected
+                                                            ? prev.workDays.filter(d => d !== idx)
+                                                            : [...prev.workDays, idx];
+                                                        return { ...prev, workDays: newDays.sort() };
+                                                    });
+                                                }}
+                                                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${isSelected
+                                                        ? 'bg-green-600 text-white'
+                                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                                    }`}
+                                            >
+                                                {day}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-100">
+                                <button
+                                    onClick={() => setShowScheduleForm(false)}
+                                    className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={handleCreateSchedule}
+                                    className="flex items-center gap-2 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                                >
+                                    <Save className="w-4 h-4" />
+                                    Salvar Escala
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Formulário de Nova Folga */}
             {showDayOffForm && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-2xl max-w-md w-full p-6">
-                        <h2 className="text-xl font-bold text-gray-900 mb-6">Registrar Folga</h2>
+                        <h2 className="text-xl font-bold text-gray-900 mb-6">Registrar Ausência/Folga</h2>
 
                         <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Colaborador</label>
+                                <select
+                                    className="input-field w-full"
+                                    value={newDayOff.collaboratorId}
+                                    onChange={(e) => setNewDayOff(prev => ({ ...prev, collaboratorId: e.target.value }))}
+                                    onClick={() => availableCollaborators.length === 0 && loadCollaborators()}
+                                >
+                                    <option value="">Selecione...</option>
+                                    {availableCollaborators.map(c => (
+                                        <option key={c.id} value={c.collaboratorProfile?.id}>
+                                            {c.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Data</label>
                                 <input
                                     type="date"
                                     value={newDayOff.date}
                                     onChange={(e) => setNewDayOff(prev => ({ ...prev, date: e.target.value }))}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Data Final (opcional)</label>
-                                <input
-                                    type="date"
-                                    value={newDayOff.endDate}
-                                    onChange={(e) => setNewDayOff(prev => ({ ...prev, endDate: e.target.value }))}
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                                 />
                             </div>

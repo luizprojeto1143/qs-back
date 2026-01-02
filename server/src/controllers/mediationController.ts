@@ -14,7 +14,8 @@ export const mediationController = {
                 description,
                 participants, // JSON Array
                 confidentiality,
-                notes
+                notes,
+                leaderId
             } = req.body;
 
             // Verificar permissão
@@ -38,6 +39,8 @@ export const mediationController = {
                     confidentiality: confidentiality || 'RESTRITO',
                     notes,
                     createdById: user.userId,
+                    // @ts-ignore
+                    leaderId,
                 }
             });
 
@@ -75,7 +78,9 @@ export const mediationController = {
                 where,
                 include: {
                     area: { select: { name: true } },
-                    createdBy: { select: { name: true } }
+                    createdBy: { select: { name: true } },
+                    // @ts-ignore
+                    leader: { select: { name: true } }
                 },
                 orderBy: { date: 'desc' }
             });
@@ -106,7 +111,9 @@ export const mediationController = {
                 where: { id },
                 include: {
                     area: true,
-                    createdBy: { select: { id: true, name: true, role: true } }
+                    createdBy: { select: { id: true, name: true, role: true } },
+                    // @ts-ignore
+                    leader: { select: { id: true, name: true } }
                 }
             });
 
@@ -134,7 +141,9 @@ export const mediationController = {
                 description,
                 participants,
                 notes,
-                confidentiality
+                confidentiality,
+                leaderId,
+                areaId
             } = req.body;
 
             const user = (req as any).user;
@@ -150,7 +159,10 @@ export const mediationController = {
                     description,
                     participants: participants ? JSON.stringify(participants) : undefined,
                     notes,
-                    confidentiality
+                    confidentiality,
+                    // @ts-ignore
+                    leaderId: leaderId || undefined,
+                    areaId: areaId || undefined
                 }
             });
 

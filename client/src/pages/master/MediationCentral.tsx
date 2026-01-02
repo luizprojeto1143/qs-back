@@ -1,9 +1,8 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import DecisionTimeline from '../../components/qs/DecisionTimeline';
 import {
     Scale,
-    Filter,
     Plus,
     X,
     Search,
@@ -11,15 +10,29 @@ import {
     User,
     FileText,
     CheckCircle,
-    AlertTriangle,
-    Clock,
     Gavel,
     ChevronDown,
-    ChevronUp
+    ChevronUp,
+    Building2,
+    Users
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../lib/api';
 import { useCompany } from '../../contexts/CompanyContext';
+
+interface Collaborator {
+    id: string; // User ID
+    name: string;
+    role: string;
+    collaboratorProfile?: {
+        area: { id: string; name: string };
+    };
+}
+
+interface Area {
+    id: string;
+    name: string;
+}
 
 const MediationCentral = () => {
     const { selectedCompanyId } = useCompany();
@@ -29,6 +42,10 @@ const MediationCentral = () => {
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [expandedId, setExpandedId] = useState<string | null>(null);
+
+    // Data for selects
+    const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
+    const [areas, setAreas] = useState<Area[]>([]);
 
     // Filters
     const [filters, setFilters] = useState({
@@ -44,13 +61,12 @@ const MediationCentral = () => {
         date: new Date().toISOString().split('T')[0],
         theme: '',
         description: '',
-        participants: [] as string[],
+        participants: [] as any[], // Now storing objects
+        leaderId: '',
+        areaId: '',
         confidentiality: 'RESTRITO',
         notes: ''
     });
-
-    // Temp participant input
-    const [participantInput, setParticipantInput] = useState('');
 
     const loadMediations = async () => {
         if (!selectedCompanyId) return;
@@ -71,9 +87,50 @@ const MediationCentral = () => {
         }
     };
 
+    const loadResources = async () => {
+        if (!selectedCompanyId) return;
+        try {
+            const [collabRes, areaRes] = await Promise.all([
+                api.get('/collaborators'),
+                api.get(`/areas/company/${selectedCompanyId}`) // Assuming this endpoint exists, matching naming convention
+            ]).catch(async () => {
+                // Fallback if Promise.all fails 
+                const c = await api.get('/collaborators');
+                // Try to find areas endpoint if above fails? Or just ignore
+                return [c, { data: [] }];
+            });
+
+            // Adjust based on actual API response structure
+            setCollaborators(collabRes.data.data || collabRes.data);
+
+            // If areas endpoint fails, we extract areas from collaborators
+            if (!areaRes || !areaRes.data || areaRes.data.length === 0) {
+                const extractedAreas = new Map();
+                collabRes.data.data.forEach((c: any) => {
+                    if (c.collaboratorProfile?.area) {
+                        extractedAreas.set(c.collaboratorProfile.area.id, c.collaboratorProfile.area);
+                    }
+                });
+                setAreas(Array.from(extractedAreas.values()));
+            } else {
+                setAreas(areaRes.data);
+            }
+
+        } catch (error) {
+            console.error('Error loading resources:', error);
+        }
+    };
+
     useEffect(() => {
         loadMediations();
     }, [selectedCompanyId, filters.status, filters.startDate, filters.endDate]);
+
+    // Load resources when modal opens
+    useEffect(() => {
+        if (isModalOpen) {
+            loadResources();
+        }
+    }, [isModalOpen]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -121,26 +178,32 @@ const MediationCentral = () => {
             theme: '',
             description: '',
             participants: [],
+            leaderId: '',
+            areaId: '',
             confidentiality: 'RESTRITO',
             notes: ''
         });
-        setParticipantInput('');
     };
 
-    const addParticipant = () => {
-        if (participantInput.trim()) {
+    const addParticipant = (collaboratorId: string) => {
+        const collab = collaborators.find(c => c.id === collaboratorId);
+        if (collab && !formData.participants.find(p => p.id === collab.id)) {
             setFormData(prev => ({
                 ...prev,
-                participants: [...prev.participants, participantInput.trim()]
+                participants: [...prev.participants, {
+                    id: collab.id,
+                    name: collab.name,
+                    role: collab.role,
+                    area: collab.collaboratorProfile?.area?.name
+                }]
             }));
-            setParticipantInput('');
         }
     };
 
-    const removeParticipant = (index: number) => {
+    const removeParticipant = (id: string) => {
         setFormData(prev => ({
             ...prev,
-            participants: prev.participants.filter((_, i) => i !== index)
+            participants: prev.participants.filter(p => p.id !== id)
         }));
     };
 
@@ -150,7 +213,7 @@ const MediationCentral = () => {
     );
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 animate-fade-in text-gray-800">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
@@ -222,7 +285,7 @@ const MediationCentral = () => {
             ) : filteredList.length === 0 ? (
                 <div className="bg-white p-12 rounded-xl text-center border-2 border-dashed border-gray-200">
                     <Scale className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                    <h3 className="tex-lg font-medium text-gray-900">Nenhuma mediação encontrada</h3>
+                    <h3 className="text-lg font-medium text-gray-900">Nenhuma mediação encontrada</h3>
                     <p className="text-gray-500">Registre a primeira mediação para começar.</p>
                 </div>
             ) : (
@@ -254,9 +317,23 @@ const MediationCentral = () => {
                                             {new Date(item.date).toLocaleDateString()}
                                         </span>
                                         <span className="flex items-center gap-1">
-                                            <User className="w-4 h-4" />
-                                            {item.participants.length} Participantes
+                                            <Users className="w-4 h-4" />
+                                            {Array.isArray(item.participants)
+                                                ? item.participants.map((p: any) => p.name || p).join(', ')
+                                                : item.participants?.length || 0}
                                         </span>
+                                        {item.leader && (
+                                            <span className="flex items-center gap-1">
+                                                <User className="w-4 h-4" />
+                                                Líder: {item.leader.name}
+                                            </span>
+                                        )}
+                                        {item.area && (
+                                            <span className="flex items-center gap-1">
+                                                <Building2 className="w-4 h-4" />
+                                                {item.area.name}
+                                            </span>
+                                        )}
                                         <span className="flex items-center gap-1">
                                             <FileText className="w-4 h-4" />
                                             {item.confidentiality}
@@ -268,21 +345,21 @@ const MediationCentral = () => {
                                         <div className="flex gap-2 mt-2 pt-4 border-t border-gray-50">
                                             <button
                                                 onClick={() => handleConclude(item.id, 'ACORDO')}
-                                                className="btn-xs bg-green-50 text-green-700 hover:bg-green-100 border-none"
+                                                className="btn-xs bg-green-50 text-green-700 hover:bg-green-100 border-none px-3 py-1 rounded"
                                             >
                                                 <CheckCircle className="w-3 h-3 mr-1" />
-                                                Registrar Acordo
+                                                Acordo
                                             </button>
                                             <button
                                                 onClick={() => handleConclude(item.id, 'SEM_ACORDO')}
-                                                className="btn-xs bg-red-50 text-red-700 hover:bg-red-100 border-none"
+                                                className="btn-xs bg-red-50 text-red-700 hover:bg-red-100 border-none px-3 py-1 rounded"
                                             >
                                                 <X className="w-3 h-3 mr-1" />
                                                 Sem Acordo
                                             </button>
                                             <button
                                                 onClick={() => handleConclude(item.id, 'ENCAMINHAMENTO')}
-                                                className="btn-xs bg-blue-50 text-blue-700 hover:bg-blue-100 border-none"
+                                                className="btn-xs bg-blue-50 text-blue-700 hover:bg-blue-100 border-none px-3 py-1 rounded"
                                             >
                                                 <FileText className="w-3 h-3 mr-1" />
                                                 Encaminhar RH
@@ -291,20 +368,18 @@ const MediationCentral = () => {
                                     )}
 
                                     {/* Timeline Toggle */}
-                                    <button
-                                        onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
-                                        className="flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-800 mt-4 font-medium transition-colors"
-                                    >
-                                        {expandedId === item.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                                        {expandedId === item.id ? 'Ocultar Histórico' : 'Ver Histórico Jurídico'}
-                                    </button>
+                                    {item.id && (
+                                        <button
+                                            onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
+                                            className="flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-800 mt-4 font-medium transition-colors"
+                                        >
+                                            {expandedId === item.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                                            {expandedId === item.id ? 'Ocultar Histórico' : 'Ver Histórico Jurídico'}
+                                        </button>
+                                    )}
 
                                     {expandedId === item.id && (
-                                        <div className="mt-4 pt-4 border-t border-gray-100 animate-in fade-in slide-in-from-top-2 duration-200">
-                                            <h4 className="text-sm font-bold text-gray-900 mb-2 flex items-center gap-2">
-                                                <Clock className="w-4 h-4 text-gray-500" />
-                                                Linha do Tempo Jurídica
-                                            </h4>
+                                        <div className="mt-4 pt-4 border-t border-gray-100">
                                             <DecisionTimeline entityType="MEDIATION" entityId={item.id} />
                                         </div>
                                     )}
@@ -315,99 +390,161 @@ const MediationCentral = () => {
                 </div>
             )}
 
-            {/* Create/Edit Modal */}
+            {/* Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                        <div className="p-6 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white z-10">
-                            <h2 className="text-xl font-bold">{editingId ? 'Editar Mediação' : 'Nova Mediação'}</h2>
+                    <div className="bg-white rounded-2xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-xl font-bold text-gray-900">
+                                {editingId ? 'Editar Mediação' : 'Nova Mediação'}
+                            </h2>
                             <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
-                                <X className="w-6 h-6" />
+                                <X className="w-5 h-5" />
                             </button>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+                        <form onSubmit={handleSubmit} className="space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="label">Data</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Data</label>
                                     <input
-                                        type="date" required className="input-field"
+                                        type="date"
+                                        required
+                                        className="input-field w-full"
                                         value={formData.date}
                                         onChange={e => setFormData({ ...formData, date: e.target.value })}
                                     />
                                 </div>
                                 <div>
-                                    <label className="label">Confidencialidade</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Sigilo</label>
                                     <select
-                                        className="input-field"
+                                        className="input-field w-full"
                                         value={formData.confidentiality}
                                         onChange={e => setFormData({ ...formData, confidentiality: e.target.value })}
                                     >
-                                        <option value="RESTRITO">Restrito (RH/Master)</option>
-                                        <option value="CONFIDENCIAL">Confidencial (Apenas Master)</option>
-                                        <option value="COMPARTILHAVEL">Compartilhável (Liderança)</option>
+                                        <option value="RESTRITO">Restrito (RH/Líder)</option>
+                                        <option value="CONFIDENCIAL">Confidencial (Apenas RH)</option>
+                                        <option value="COMPARTILHAVEL">Compartilhável</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Área Envolvida</label>
+                                    <select
+                                        className="input-field w-full"
+                                        value={formData.areaId}
+                                        onChange={e => setFormData({ ...formData, areaId: e.target.value })}
+                                    >
+                                        <option value="">Selecione a área...</option>
+                                        {areas.map(area => (
+                                            <option key={area.id} value={area.id}>{area.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Liderança Responsável</label>
+                                    <select
+                                        className="input-field w-full"
+                                        value={formData.leaderId}
+                                        onChange={e => setFormData({ ...formData, leaderId: e.target.value })}
+                                    >
+                                        <option value="">Selecione o líder...</option>
+                                        {collaborators.filter(c => c.role === 'LIDER' || c.role === 'MASTER').map(c => (
+                                            <option key={c.id} value={c.id}>
+                                                {c.name}
+                                            </option>
+                                        ))}
                                     </select>
                                 </div>
                             </div>
 
                             <div>
-                                <label className="label">Tema do Conflito</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Tema Principal</label>
                                 <input
-                                    type="text" required className="input-field"
-                                    placeholder="Ex: Desentendimento sobre regime de escala"
+                                    type="text"
+                                    required
+                                    placeholder="Ex: Conflito de horários, Desentendimento..."
+                                    className="input-field w-full"
                                     value={formData.theme}
                                     onChange={e => setFormData({ ...formData, theme: e.target.value })}
                                 />
                             </div>
 
                             <div>
-                                <label className="label">Descrição Detalhada</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Descrição do Caso</label>
                                 <textarea
-                                    className="input-field" rows={4}
-                                    placeholder="Descreva o contexto e os pontos principais..."
+                                    required
+                                    rows={4}
+                                    className="input-field w-full resize-none"
                                     value={formData.description}
                                     onChange={e => setFormData({ ...formData, description: e.target.value })}
+                                    placeholder="Detalle o ocorrido..."
                                 />
                             </div>
 
                             <div>
-                                <label className="label">Participantes</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Participantes</label>
                                 <div className="flex gap-2 mb-2">
-                                    <input
-                                        type="text"
-                                        className="input-field"
-                                        placeholder="Nome do colaborador ou envolvido"
-                                        value={participantInput}
-                                        onChange={e => setParticipantInput(e.target.value)}
-                                        onKeyPress={e => e.key === 'Enter' && (e.preventDefault(), addParticipant())}
-                                    />
-                                    <button type="button" onClick={addParticipant} className="btn-secondary">Adicionar</button>
+                                    <select
+                                        className="input-field flex-1"
+                                        onChange={(e) => {
+                                            if (e.target.value) {
+                                                addParticipant(e.target.value);
+                                                e.target.value = '';
+                                            }
+                                        }}
+                                    >
+                                        <option value="">Adicionar participante...</option>
+                                        {collaborators.map(c => (
+                                            <option key={c.id} value={c.id}>
+                                                {c.name} - {c.collaboratorProfile?.area?.name}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
                                 <div className="flex flex-wrap gap-2">
-                                    {formData.participants.map((p, i) => (
-                                        <span key={i} className="bg-gray-100 px-3 py-1 rounded-full text-sm flex items-center gap-2">
-                                            {p}
-                                            <button type="button" onClick={() => removeParticipant(i)} className="text-gray-400 hover:text-red-500">
+                                    {formData.participants.map((p, idx) => (
+                                        <div key={idx} className="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full text-sm flex items-center gap-1">
+                                            <span>{p.name}</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => removeParticipant(p.id)}
+                                                className="hover:text-indigo-900"
+                                            >
                                                 <X className="w-3 h-3" />
                                             </button>
-                                        </span>
+                                        </div>
                                     ))}
                                 </div>
                             </div>
 
                             <div>
-                                <label className="label">Notas Internas</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Notas Internas (RH)</label>
                                 <textarea
-                                    className="input-field" rows={2}
-                                    placeholder="Anotações privadas para a equipe de mediação..."
+                                    rows={2}
+                                    className="input-field w-full resize-none"
                                     value={formData.notes}
                                     onChange={e => setFormData({ ...formData, notes: e.target.value })}
+                                    placeholder="Observações restritas ao RH..."
                                 />
                             </div>
 
-                            <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
-                                <button type="button" onClick={() => setIsModalOpen(false)} className="btn-secondary">Cancelar</button>
-                                <button type="submit" className="btn-primary">Salvar Registro</button>
+                            <div className="flex justify-end gap-3 pt-4 border-t">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsModalOpen(false)}
+                                    className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                                >
+                                    Salvar Registro
+                                </button>
                             </div>
                         </form>
                     </div>
