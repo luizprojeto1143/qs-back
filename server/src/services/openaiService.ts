@@ -8,6 +8,29 @@ const openai = new OpenAI({
 });
 
 export const analyzeInclusionData = async (data: any) => {
+    // 1. Mock Mode (Fallback)
+    if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'pending') {
+        console.warn('⚠️ OpenAI API Key missing or pending. Using MOCK data.');
+
+        // Wait 1.5s to simulate network request
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        return {
+            analysis: "⚠️ [MODO DEMONSTRAÇÃO] A empresa demonstra um compromisso inicial com a inclusão, refletido na estrutura de cargos. No entanto, observa-se uma concentração de denúncias relacionadas à comunicação não-verbal, sugerindo barreiras para colaboradores surdos. O Score atual de 780 indica uma maturidade média, com potencial de crescimento rápido mediante ações corretivas.",
+            riskLevel: "MEDIO",
+            priorityActions: [
+                "Implementar Workshop de LIBRAS para gestores (Crítico)",
+                "Revisar política de acessibilidade digital na intranet",
+                "Estabelecer comitê de diversidade para monitoramento mensal"
+            ],
+            positivePoints: [
+                "Alta retenção de talentos PCD nos últimos 12 meses",
+                "Canal de denúncias ativo e utilizado"
+            ],
+            recommendation: "Investir na cultura de pertencimento através de lideranças inclusivas é o próximo passo para elevar o Score acima de 850."
+        };
+    }
+
     try {
         const prompt = `
             Você é um especialista em Diversidade e Inclusão Corporativa.
@@ -46,9 +69,19 @@ export const analyzeInclusionData = async (data: any) => {
             return { error: 'Failed to parse AI analysis', raw: content };
         }
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error calling OpenAI:', error);
-        throw new Error('Failed to analyze data');
+
+        // Check for specific OpenAI error codes
+        if (error.status === 401) {
+            throw new Error('Erro de Autenticação: Chave de API inválida ou ausente no servidor.');
+        } else if (error.status === 429) {
+            throw new Error('Limite de Requisições Excedido (Quota). Verifique seu plano OpenAI.');
+        } else if (error.status === 500) {
+            throw new Error('Erro nos servidores da OpenAI. Tente novamente em alguns instantes.');
+        }
+
+        throw new Error(`Falha na análise: ${error.message || 'Erro desconhecido'}`);
     }
 };
 
