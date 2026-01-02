@@ -17,7 +17,12 @@ import {
     YAxis,
     Tooltip,
     Legend,
-    CartesianGrid
+    CartesianGrid,
+    Radar,
+    RadarChart,
+    PolarGrid,
+    PolarAngleAxis,
+    PolarRadiusAxis
 } from 'recharts';
 import { api } from '../../lib/api';
 import { useCompany } from '../../contexts/CompanyContext';
@@ -30,6 +35,7 @@ const InternalIndicators = () => {
     const [data, setData] = useState<any>(null);
     const [retention, setRetention] = useState<any>(null);
     const [sectors, setSectors] = useState<any[]>([]);
+    const [radarData, setRadarData] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -37,14 +43,16 @@ const InternalIndicators = () => {
             if (!selectedCompanyId) return;
             setLoading(true);
             try {
-                const [censusRes, retentionRes, sectorsRes] = await Promise.all([
+                const [censusRes, retentionRes, sectorsRes, radarRes] = await Promise.all([
                     api.get(`/metrics/diversity/${selectedCompanyId}`),
                     api.get(`/metrics/retention/${selectedCompanyId}`),
-                    api.get(`/metrics/sectors/${selectedCompanyId}`)
+                    api.get(`/metrics/sectors/${selectedCompanyId}`),
+                    api.get(`/metrics/radar/${selectedCompanyId}`)
                 ]);
                 setData(censusRes.data);
                 setRetention(retentionRes.data);
                 setSectors(sectorsRes.data);
+                setRadarData(radarRes.data);
             } catch (error) {
                 console.error('Error loading census:', error);
                 toast.error('Erro ao carregar dados do censo');
@@ -216,6 +224,27 @@ const InternalIndicators = () => {
                                 <Bar dataKey="FEMININO" stackId="a" fill="#FF8042" name="Feminino" />
                                 <Bar dataKey="OUTRO" stackId="a" fill="#00C49F" name="Outro" />
                             </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+
+                {/* Radar de Risco Reputacional */}
+                <div className="card col-span-1 lg:col-span-2 min-h-[400px]">
+                    <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+                        <TrendingUp className="w-5 h-5 text-gray-500" />
+                        Radar de Risco Reputacional (Top Áreas)
+                    </h3>
+                    <div className="h-[350px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
+                                <PolarGrid />
+                                <PolarAngleAxis dataKey="subject" />
+                                <PolarRadiusAxis angle={30} domain={[0, 100]} />
+                                <Radar name="Retenção" dataKey="A" stroke="#8884d8" fill="#8884d8" fillOpacity={0.6} />
+                                <Radar name="QS Score" dataKey="B" stroke="#82ca9d" fill="#82ca9d" fillOpacity={0.6} />
+                                <Legend />
+                                <Tooltip />
+                            </RadarChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
