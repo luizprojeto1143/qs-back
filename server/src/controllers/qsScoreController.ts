@@ -87,11 +87,12 @@ const calculateAreaScore = async (areaId: string, companyId: string) => {
 
     // Algoritmo de pontuação (0-1000)
     let score = 0;
+    let resolutionRate = 0;
 
     // 1. Taxa de Resolução de Pendências (Peso: 350)
     const totalItems = pendingItems + resolvedItems;
     if (totalItems > 0) {
-        const resolutionRate = resolvedItems / totalItems;
+        resolutionRate = resolvedItems / totalItems;
         score += Math.floor(resolutionRate * 350);
 
         // PENALIDADE: Se resolver menos de 40%, perde pontos (sinal de ineficiência)
@@ -99,8 +100,10 @@ const calculateAreaScore = async (areaId: string, companyId: string) => {
             score -= 100;
         }
     } else {
-        // Sem histórico de pendências, começa neutro mas sem bônus de proatividade
-        // Reduzi o incentivo inicial para forçar a criação de pendências/resoluções
+        resolutionRate = 1; // Se não tem pendências, consideramos 100% de eficiência hipotética para o breakdown? Ou 0? 
+        // Vamos deixar 0 ou 1, mas como score += 50, não impacta tanto no score.
+        // Para visualização de gestão, 1 (100%) pode parecer estranho se não fez nada.
+        // Vamos manter 0 se totalItems == 0, mas tratar no breakdown se necessário.
         score += 50;
     }
 
