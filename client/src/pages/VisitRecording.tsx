@@ -54,6 +54,7 @@ const VisitRecording = () => {
         relatos: {
             lideranca: '',
             colaborador: '',
+            consultoria: '',
             observacoes: '',
             audioLideranca: null as string | null,
             audioColaborador: null as string | null
@@ -168,6 +169,7 @@ const VisitRecording = () => {
                                 relatos: {
                                     lideranca: visit.relatoLideranca || '',
                                     colaborador: visit.relatoColaborador || '',
+                                    consultoria: visit.relatoConsultoria || '',
                                     observacoes: visit.observacoesMaster || '',
                                     audioLideranca: visit.audioLiderancaUrl || null,
                                     audioColaborador: visit.audioColaboradorUrl || null
@@ -621,6 +623,19 @@ const VisitRecording = () => {
                                             </button>
                                         )}
                                     </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-900">Relato da Consultoria</label>
+                                <div className="relative">
+                                    <textarea
+                                        rows={4}
+                                        className="block w-full rounded-xl border-gray-200 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-4"
+                                        placeholder="Digite o relato da consultoria..."
+                                        value={formData.relatos.consultoria}
+                                        onChange={e => setFormData({ ...formData, relatos: { ...formData.relatos, consultoria: e.target.value } })}
+                                    />
                                 </div>
                             </div>
 

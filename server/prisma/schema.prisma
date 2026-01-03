@@ -207,6 +207,7 @@ model Visit {
 
   collaborators CollaboratorProfile[] @relation("CollaboratorVisits")
 
+  relatoConsultoria    String?
   relatoLideranca      String?
   audioLiderancaUrl    String?
   relatoColaborador    String?

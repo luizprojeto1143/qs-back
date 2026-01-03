@@ -14,6 +14,7 @@ export const createVisitSchema = z.object({
     relatos: z.object({
         lideranca: z.string().optional(),
         colaborador: z.string().optional(),
+        consultoria: z.string().optional(),
         observacoes: z.string().optional()
     }),
     avaliacoes: z.object({
@@ -46,6 +47,7 @@ export const updateVisitSchema = z.object({
     relatos: z.object({
         lideranca: z.string().optional(),
         colaborador: z.string().optional(),
+        consultoria: z.string().optional(),
         observacoes: z.string().optional()
     }),
     avaliacoes: z.object({
