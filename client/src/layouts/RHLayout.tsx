@@ -129,8 +129,8 @@ const RHLayout = () => {
 
             {/* Mobile Menu Overlay */}
             {isMobileMenuOpen && (
-                <div className="md:hidden fixed inset-0 z-[150] bg-[#0A192F] pt-20 px-4 text-white">
-                    <nav className="space-y-2">
+                <div className="md:hidden fixed inset-0 z-[150] bg-[#0A192F] pt-20 px-4 text-white overflow-y-auto">
+                    <nav className="space-y-2 pb-20">
                         {menuItems.map((item) => (
                             <SidebarItem
                                 key={item.path}
