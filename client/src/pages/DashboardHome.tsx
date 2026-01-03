@@ -7,6 +7,7 @@ import { SkeletonCard } from '../components/Skeleton';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { api } from '../lib/api';
+import { VisitDetailsModal } from '../components/modals/VisitDetailsModal';
 
 const StatCard = ({ icon: Icon, label, value, color, onClick }: any) => (
     <div
@@ -27,6 +28,8 @@ const DashboardHome = () => {
     const navigate = useNavigate();
     const { companies, selectedCompanyId, selectCompany } = useCompany();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [selectedVisitId, setSelectedVisitId] = useState<string | null>(null);
+    const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
     const { data, isLoading: loading } = useQuery({
         queryKey: ['dashboardStats', selectedCompanyId],
@@ -146,7 +149,14 @@ const DashboardHome = () => {
                     <div className="space-y-4">
                         {recentActivity.length > 0 ? (
                             recentActivity.map((activity: any) => (
-                                <div key={activity.id} className="flex items-start space-x-3 pb-3 border-b border-gray-50 last:border-0 last:pb-0">
+                                <div
+                                    key={activity.id}
+                                    onClick={() => {
+                                        setSelectedVisitId(activity.id);
+                                        setIsDetailsModalOpen(true);
+                                    }}
+                                    className="flex items-start space-x-3 pb-3 border-b border-gray-50 last:border-0 last:pb-0 hover:bg-gray-50 p-2 -mx-2 rounded-lg cursor-pointer transition-colors"
+                                >
                                     <div className="mt-1 bg-blue-50 p-2 rounded-full">
                                         <Clock className="h-4 w-4 text-blue-500" />
                                     </div>
@@ -218,6 +228,12 @@ const DashboardHome = () => {
                     </div>
                 </div>
             </div>
+            {/* Visit Details Modal */}
+            <VisitDetailsModal
+                visitId={selectedVisitId}
+                isOpen={isDetailsModalOpen}
+                onClose={() => setIsDetailsModalOpen(false)}
+            />
         </div>
     );
 };

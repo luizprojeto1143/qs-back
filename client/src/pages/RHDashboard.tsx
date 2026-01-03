@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Users, ClipboardList, AlertTriangle, CheckCircle } from 'lucide-react';
 import { api } from '../lib/api';
 import { SkeletonCard, Skeleton } from '../components/Skeleton';
+import { VisitDetailsModal } from '../components/modals/VisitDetailsModal';
 
 const StatCard = ({ icon: Icon, label, value, color }: any) => (
     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center space-x-4">
@@ -28,6 +29,9 @@ const RHDashboard = () => {
     const [sectorEngagement, setSectorEngagement] = useState<any[]>([]);
     const [mostWatchedCourses, setMostWatchedCourses] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+
+    const [selectedVisitId, setSelectedVisitId] = useState<string | null>(null);
+    const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -154,7 +158,14 @@ const RHDashboard = () => {
                             <p className="text-gray-500 text-sm">Nenhuma atividade recente.</p>
                         ) : (
                             recentActivity.map((item) => (
-                                <div key={item.id} className="flex items-start space-x-3 pb-4 border-b border-gray-50 last:border-0">
+                                <div
+                                    key={item.id}
+                                    onClick={() => {
+                                        setSelectedVisitId(item.id);
+                                        setIsDetailsModalOpen(true);
+                                    }}
+                                    className="flex items-start space-x-3 pb-4 border-b border-gray-50 last:border-0 hover:bg-gray-50 p-2 -mx-2 rounded-lg cursor-pointer transition-colors"
+                                >
                                     <div className="w-2 h-2 mt-2 rounded-full bg-blue-500" />
                                     <div>
                                         <p className="text-sm text-gray-900 font-medium">{item.description}</p>
@@ -208,6 +219,12 @@ const RHDashboard = () => {
                     </div>
                 </div>
             </div>
+            {/* Visit Details Modal */}
+            <VisitDetailsModal
+                visitId={selectedVisitId}
+                isOpen={isDetailsModalOpen}
+                onClose={() => setIsDetailsModalOpen(false)}
+            />
         </div>
     );
 };
