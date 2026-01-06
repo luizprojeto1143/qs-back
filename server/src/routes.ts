@@ -27,6 +27,7 @@ import * as uploadController from './controllers/uploadController';
 import * as notificationController from './controllers/notificationController';
 import * as workScheduleController from './controllers/workScheduleController';
 import * as aiController from './controllers/aiController';
+import * as healthController from './controllers/healthController';
 import { createRoom } from './controllers/dailyController';
 import { createQuiz, addQuestion, getQuiz, submitQuiz, deleteQuiz, deleteQuestion, getQuizEditor } from './controllers/quizController';
 
@@ -37,6 +38,8 @@ router.use('/auth', authRoutes);
 router.use('/', companyRoutes); // Mounts /companies, /sectors, /areas, /structure, /public/areas
 router.use('/', universityRoutes); // Mounts /courses, etc.
 router.use('/', qsInclusionRoutes); // Mounts /qs-score, /settings, /complaints, /work-schedule, /days-off
+
+router.get('/status', healthController.checkStatus);
 
 // Protected Routes Middleware (for inline routes)
 router.use(authenticateToken);
