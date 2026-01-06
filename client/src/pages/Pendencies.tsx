@@ -5,12 +5,29 @@ import { toast } from 'sonner';
 
 import { useCompany } from '../contexts/CompanyContext';
 import { api } from '../lib/api';
+import { useConfirmModal } from '../components/ui/ConfirmModal';
+import { PENDENCY_STATUS, PRIORITY } from '../utils/constants';
+
+interface Pendency {
+    id: string;
+    description: string;
+    responsible: string;
+    priority: keyof typeof PRIORITY;
+    status: keyof typeof PENDENCY_STATUS;
+    deadline?: string;
+    areaId?: string;
+    area?: { name: string };
+    companyId: string;
+    collaboratorId?: string;
+    createdAt: string;
+}
 
 const Pendencies = () => {
     const { selectedCompanyId, companies: contextCompanies } = useCompany();
     const [searchParams] = useSearchParams();
+    const { confirm, ConfirmModalComponent } = useConfirmModal();
 
-    const [pendencies, setPendencies] = useState<any[]>([]);
+    const [pendencies, setPendencies] = useState<Pendency[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -58,8 +75,8 @@ const Pendencies = () => {
             setCompanies(resCompanies.data);
             setAreas(resAreas.data);
 
-        } catch (error) {
-            console.error('Error fetching data', error);
+        } catch {
+            toast.error('Erro ao carregar dados');
         } finally {
             setLoading(false);
         }
@@ -107,26 +124,36 @@ const Pendencies = () => {
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Tem certeza que deseja excluir esta pendência?')) return;
+        const confirmed = await confirm(
+            'Excluir Pendência',
+            'Tem certeza que deseja excluir esta pendência? Esta ação não pode ser desfeita.',
+            'danger'
+        );
+        if (!confirmed) return;
+
         try {
             await api.delete(`/pendencies/${id}`);
             fetchData();
             toast.success('Pendência excluída com sucesso!');
-        } catch (error) {
-            console.error('Error deleting pendency', error);
+        } catch {
             toast.error('Erro ao excluir pendência.');
         }
         setActiveMenuId(null);
     };
 
     const handleResolve = async (id: string) => {
-        if (!confirm('Marcar pendência como resolvida?')) return;
+        const confirmed = await confirm(
+            'Resolver Pendência',
+            'Deseja marcar esta pendência como resolvida?',
+            'info'
+        );
+        if (!confirmed) return;
+
         try {
             await api.put(`/pendencies/${id}`, { status: 'RESOLVIDA' });
             fetchData();
             toast.success('Pendência resolvida!');
-        } catch (error) {
-            console.error('Error resolving pendency', error);
+        } catch {
             toast.error('Erro ao resolver pendência.');
         }
     };
@@ -413,6 +440,7 @@ const Pendencies = () => {
                     </div>
                 </div>
             )}
+            <ConfirmModalComponent />
         </div>
     );
 };

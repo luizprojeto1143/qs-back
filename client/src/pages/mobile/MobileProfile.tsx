@@ -2,10 +2,19 @@ import { useState, useEffect } from 'react';
 import { User, Mail, Building, LogOut } from 'lucide-react';
 import { api } from '../../lib/api';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+
+interface User {
+    name: string;
+    email: string;
+    role: string;
+    avatar?: string;
+    company?: { name: string };
+}
 
 const MobileProfile = () => {
     const navigate = useNavigate();
-    const [user, setUser] = useState<any>(null);
+    const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -14,8 +23,8 @@ const MobileProfile = () => {
                 const response = await api.get('/me');
                 const data = response.data;
                 if (data.user) setUser(data.user);
-            } catch (error) {
-                console.error('Error fetching profile', error);
+            } catch {
+                toast.error('Erro ao carregar perfil');
             } finally {
                 setLoading(false);
             }

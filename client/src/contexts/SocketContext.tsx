@@ -19,7 +19,8 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const { selectedCompanyId } = useCompany();
 
     useEffect(() => {
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+        const apiUrl = import.meta.env.VITE_API_URL || '';
+        if (!apiUrl) console.warn('Socket URL missing (VITE_API_URL)');
 
         // Only connect if user is logged in
         if (!user) {

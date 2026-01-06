@@ -1,13 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Printer, TrendingUp, AlertCircle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import type { ReportData } from '../types/report';
 
 const ReportViewer = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const { reportType, data } = location.state || {};
-    const [reportData] = useState<any>(data);
+    const [reportData] = useState<ReportData>(data);
 
     useEffect(() => {
         if (!reportData) {
@@ -63,24 +64,26 @@ const ReportViewer = () => {
 
                         <div>
                             <h3 className="text-xl font-bold mb-4 border-b pb-2">Detalhamento de Visitas</h3>
-                            <table className="w-full text-sm text-left">
-                                <thead className="bg-gray-100">
-                                    <tr>
-                                        <th className="p-2">Data</th>
-                                        <th className="p-2">Área</th>
-                                        <th className="p-2">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {reportData.visits.map((v: any) => (
-                                        <tr key={v.id} className="border-b">
-                                            <td className="p-2">{new Date(v.date).toLocaleDateString()}</td>
-                                            <td className="p-2">{v.area?.name || '-'}</td>
-                                            <td className="p-2">Realizada</td>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm text-left">
+                                    <thead className="bg-gray-100">
+                                        <tr>
+                                            <th className="p-2">Data</th>
+                                            <th className="p-2">Área</th>
+                                            <th className="p-2">Status</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        {reportData.visits?.map((v) => (
+                                            <tr key={v.id} className="border-b">
+                                                <td className="p-2">{new Date(v.date).toLocaleDateString()}</td>
+                                                <td className="p-2">{v.area?.name || '-'}</td>
+                                                <td className="p-2">Realizada</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
 
                         {/* Seção de Ouvidoria */}
@@ -120,9 +123,10 @@ const ReportViewer = () => {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {reportData.complaints?.map((c: any) => {
-                                            const resolutionTime = c.resolvedAt
-                                                ? Math.ceil((new Date(c.resolvedAt).getTime() - new Date(c.createdAt).getTime()) / (1000 * 3600 * 24))
+                                        {reportData.complaints?.map((c) => {
+                                            const resolvedAt = c.resolvedAt;
+                                            const resTime = resolvedAt
+                                                ? Math.ceil((new Date(resolvedAt).getTime() - new Date(c.createdAt).getTime()) / (1000 * 3600 * 24))
                                                 : '-';
 
                                             return (
@@ -164,29 +168,31 @@ const ReportViewer = () => {
                 return (
                     <div className="space-y-6">
                         <h3 className="text-xl font-bold mb-4">Relatório de Pendências</h3>
-                        <table className="w-full text-sm text-left border-collapse">
-                            <thead className="bg-gray-100">
-                                <tr>
-                                    <th className="p-3 border">Descrição</th>
-                                    <th className="p-3 border">Responsável</th>
-                                    <th className="p-3 border">Prioridade</th>
-                                    <th className="p-3 border">Status</th>
-                                    <th className="p-3 border">Prazo</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {reportData.pendencies.map((p: any) => (
-                                    <tr key={p.id} className="border-b">
-                                        <td className="p-3 border">{p.description}</td>
-                                        <td className="p-3 border">{p.responsible}</td>
-                                        <td className={`p-3 border font-bold ${p.priority === 'ALTA' ? 'text-red-600' : 'text-yellow-600'
-                                            }`}>{p.priority}</td>
-                                        <td className="p-3 border">{p.status}</td>
-                                        <td className="p-3 border">{p.deadline ? new Date(p.deadline).toLocaleDateString() : '-'}</td>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm text-left border-collapse">
+                                <thead className="bg-gray-100">
+                                    <tr>
+                                        <th className="p-3 border">Descrição</th>
+                                        <th className="p-3 border">Responsável</th>
+                                        <th className="p-3 border">Prioridade</th>
+                                        <th className="p-3 border">Status</th>
+                                        <th className="p-3 border">Prazo</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {reportData.pendencies.map((p: any) => (
+                                        <tr key={p.id} className="border-b">
+                                            <td className="p-3 border">{p.description}</td>
+                                            <td className="p-3 border">{p.responsible}</td>
+                                            <td className={`p-3 border font-bold ${p.priority === 'ALTA' ? 'text-red-600' : 'text-yellow-600'
+                                                }`}>{p.priority}</td>
+                                            <td className="p-3 border">{p.status}</td>
+                                            <td className="p-3 border">{p.deadline ? new Date(p.deadline).toLocaleDateString() : '-'}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 );
 
@@ -198,30 +204,35 @@ const ReportViewer = () => {
                             <p className="text-gray-500">Relatório consolidado do setor</p>
                         </div>
                         <h3 className="text-lg font-bold mb-4">Visitas por Área</h3>
-                        <table className="w-full text-sm text-left">
-                            <thead className="bg-gray-100">
-                                <tr>
-                                    <th className="p-2">Data</th>
-                                    <th className="p-2">Área</th>
-                                    <th className="p-2">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {reportData.visits.map((v: any) => (
-                                    <tr key={v.id} className="border-b">
-                                        <td className="p-2">{new Date(v.date).toLocaleDateString()}</td>
-                                        <td className="p-2">{v.area?.name || '-'}</td>
-                                        <td className="p-2">Realizada</td>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm text-left">
+                                <thead className="bg-gray-100">
+                                    <tr>
+                                        <th className="p-2">Data</th>
+                                        <th className="p-2">Área</th>
+                                        <th className="p-2">Status</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {reportData.visits.map((v: any) => (
+                                        <tr key={v.id} className="border-b">
+                                            <td className="p-2">{new Date(v.date).toLocaleDateString()}</td>
+                                            <td className="p-2">{v.area?.name || '-'}</td>
+                                            <td className="p-2">Realizada</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 );
 
             case 'EXECUTIVE_SUMMARY':
                 const userExec = JSON.parse(localStorage.getItem('user') || '{}');
                 const canEditExecutive = userExec.role === 'MASTER';
+
+                // Narrowing type for Executive Summary metrics (Object shape)
+                const execMetrics = !Array.isArray(reportData.metrics) ? reportData.metrics : { totalVisits: 0, resolutionRate: 0, satisfaction: 'N/A' };
 
                 return (
                     <div className="space-y-8">
@@ -234,15 +245,15 @@ const ReportViewer = () => {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div className="p-6 bg-white rounded-xl border border-gray-200 shadow-sm">
                                 <h3 className="text-sm font-bold text-gray-500 uppercase">Total de Atendimentos</h3>
-                                <p className="text-4xl font-bold text-primary mt-2">{reportData.metrics?.totalVisits || 0}</p>
+                                <p className="text-4xl font-bold text-primary mt-2">{execMetrics?.totalVisits || 0}</p>
                             </div>
                             <div className="p-6 bg-white rounded-xl border border-gray-200 shadow-sm">
                                 <h3 className="text-sm font-bold text-gray-500 uppercase">Eficiência de Resolução</h3>
-                                <p className="text-4xl font-bold text-green-600 mt-2">{reportData.metrics?.resolutionRate || '0'}%</p>
+                                <p className="text-4xl font-bold text-green-600 mt-2">{execMetrics?.resolutionRate || '0'}%</p>
                             </div>
                             <div className="p-6 bg-white rounded-xl border border-gray-200 shadow-sm">
                                 <h3 className="text-sm font-bold text-gray-500 uppercase">Satisfação Média</h3>
-                                <p className="text-4xl font-bold text-purple-600 mt-2">{reportData.metrics?.satisfaction || 'N/A'}</p>
+                                <p className="text-4xl font-bold text-purple-600 mt-2">{execMetrics?.satisfaction || 'N/A'}</p>
                             </div>
                         </div>
 
@@ -356,6 +367,19 @@ const ReportViewer = () => {
                 );
 
             case 'AREA_REPORT':
+                // eslint-disable-next-line react-hooks/rules-of-hooks
+                const visitsByAreaCount = useMemo(() => {
+                    const counts: Record<string, number> = {};
+                    if (reportData.visits) {
+                        reportData.visits.forEach((v: any) => {
+                            if (v.areaId) {
+                                counts[v.areaId] = (counts[v.areaId] || 0) + 1;
+                            }
+                        });
+                    }
+                    return counts;
+                }, [reportData.visits]);
+
                 return (
                     <div className="space-y-6">
                         {reportData.area ? (
@@ -365,80 +389,84 @@ const ReportViewer = () => {
                                     <p className="text-gray-500">Setor: {reportData.area.sector?.name}</p>
                                 </div>
                                 <h3 className="text-lg font-bold mb-4">Visitas Realizadas</h3>
-                                <table className="w-full text-sm text-left">
-                                    <thead className="bg-gray-100">
-                                        <tr>
-                                            <th className="p-2">Data</th>
-                                            <th className="p-2">Responsável</th>
-                                            <th className="p-2 w-1/2">Registro do Acompanhamento</th>
-                                            <th className="p-2 text-center">Pendências</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {reportData.visits.map((v: any) => (
-                                            <tr key={v.id} className="border-b align-top">
-                                                <td className="p-2 whitespace-nowrap">{new Date(v.date).toLocaleDateString()}</td>
-                                                <td className="p-2 whitespace-nowrap">{v.master?.name || '-'}</td>
-                                                <td className="p-2">
-                                                    {v.observacoesMaster ? (
-                                                        <div className="whitespace-pre-wrap mb-2">{v.observacoesMaster}</div>
-                                                    ) : null}
-
-                                                    {v.notes && v.notes.length > 0 && (
-                                                        <div className="mt-1 bg-gray-50 p-2 rounded border border-gray-100">
-                                                            <p className="text-xs font-bold text-gray-500 mb-1">Notas Individuais:</p>
-                                                            <ul className="space-y-1">
-                                                                {v.notes.map((n: any, i: number) => (
-                                                                    <li key={i} className="text-xs text-gray-600">
-                                                                        <span className="font-semibold">{n.collaborator?.user?.name}:</span> {n.content}
-                                                                    </li>
-                                                                ))}
-                                                            </ul>
-                                                        </div>
-                                                    )}
-
-                                                    {!v.observacoesMaster && (!v.notes || v.notes.length === 0) && (
-                                                        <span className="text-gray-400 italic">Sem registros adicionais</span>
-                                                    )}
-                                                </td>
-                                                <td className="p-2 text-center">
-                                                    {v.generatedPendencies?.length > 0 ? (
-                                                        <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-bold">
-                                                            {v.generatedPendencies.length}
-                                                        </span>
-                                                    ) : (
-                                                        <span className="text-gray-300">-</span>
-                                                    )}
-                                                </td>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm text-left">
+                                        <thead className="bg-gray-100">
+                                            <tr>
+                                                <th className="p-2">Data</th>
+                                                <th className="p-2">Responsável</th>
+                                                <th className="p-2 w-1/2">Registro do Acompanhamento</th>
+                                                <th className="p-2 text-center">Pendências</th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody>
+                                            {reportData.visits.map((v: any) => (
+                                                <tr key={v.id} className="border-b align-top">
+                                                    <td className="p-2 whitespace-nowrap">{new Date(v.date).toLocaleDateString()}</td>
+                                                    <td className="p-2 whitespace-nowrap">{v.master?.name || '-'}</td>
+                                                    <td className="p-2">
+                                                        {v.observacoesMaster ? (
+                                                            <div className="whitespace-pre-wrap mb-2">{v.observacoesMaster}</div>
+                                                        ) : null}
+
+                                                        {v.notes && v.notes.length > 0 && (
+                                                            <div className="mt-1 bg-gray-50 p-2 rounded border border-gray-100">
+                                                                <p className="text-xs font-bold text-gray-500 mb-1">Notas Individuais:</p>
+                                                                <ul className="space-y-1">
+                                                                    {v.notes.map((n: any, i: number) => (
+                                                                        <li key={i} className="text-xs text-gray-600">
+                                                                            <span className="font-semibold">{n.collaborator?.user?.name}:</span> {n.content}
+                                                                        </li>
+                                                                    ))}
+                                                                </ul>
+                                                            </div>
+                                                        )}
+
+                                                        {!v.observacoesMaster && (!v.notes || v.notes.length === 0) && (
+                                                            <span className="text-gray-400 italic">Sem registros adicionais</span>
+                                                        )}
+                                                    </td>
+                                                    <td className="p-2 text-center">
+                                                        {v.generatedPendencies?.length > 0 ? (
+                                                            <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-bold">
+                                                                {v.generatedPendencies.length}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-gray-300">-</span>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </>
                         ) : (
                             <div className="space-y-8">
                                 <h2 className="text-xl font-bold">Relatório Geral de Áreas</h2>
-                                <table className="w-full text-sm text-left">
-                                    <thead className="bg-gray-100">
-                                        <tr>
-                                            <th className="p-2">Área</th>
-                                            <th className="p-2">Setor</th>
-                                            <th className="p-2">Total de Visitas</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {reportData.areas?.map((area: any) => {
-                                            const visitCount = reportData.visits?.filter((v: any) => v.areaId === area.id).length || 0;
-                                            return (
-                                                <tr key={area.id} className="border-b">
-                                                    <td className="p-2">{area.name}</td>
-                                                    <td className="p-2">{area.sector?.name}</td>
-                                                    <td className="p-2">{visitCount}</td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm text-left">
+                                        <thead className="bg-gray-100">
+                                            <tr>
+                                                <th className="p-2">Área</th>
+                                                <th className="p-2">Setor</th>
+                                                <th className="p-2">Total de Visitas</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {reportData.areas?.map((area: any) => {
+                                                const visitCount = visitsByAreaCount[area.id] || 0;
+                                                return (
+                                                    <tr key={area.id} className="border-b">
+                                                        <td className="p-2">{area.name}</td>
+                                                        <td className="p-2">{area.sector?.name}</td>
+                                                        <td className="p-2">{visitCount}</td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         )}
                     </div>
@@ -613,9 +641,9 @@ const ReportViewer = () => {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {reportData.pendencies?.map((p: any) => (
+                                        {reportData.pendencies?.map((p) => (
                                             <tr key={p.id} className="border-b">
-                                                <td className="p-3 border">{new Date(p.createdAt).toLocaleDateString()}</td>
+                                                <td className="p-3 border">{new Date(p.createdAt || new Date().toISOString()).toLocaleDateString()}</td>
                                                 <td className="p-3 border">{p.description}</td>
                                                 <td className={`p-3 border font-bold ${p.priority === 'ALTA' ? 'text-red-600' : 'text-yellow-600'}`}>{p.priority}</td>
                                                 <td className="p-3 border">
@@ -645,11 +673,11 @@ const ReportViewer = () => {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <p className="text-sm text-gray-500 uppercase font-bold">Data da Visita</p>
-                                    <p className="text-lg font-medium">{new Date(reportData.date).toLocaleDateString()} às {new Date(reportData.date).toLocaleTimeString()}</p>
+                                    <p className="text-lg font-medium">{reportData.date ? new Date(reportData.date).toLocaleDateString() : '-'} às {reportData.date ? new Date(reportData.date).toLocaleTimeString() : '-'}</p>
                                 </div>
                                 <div>
                                     <p className="text-sm text-gray-500 uppercase font-bold">Área / Setor</p>
-                                    <p className="text-lg font-medium">{reportData.area?.name} / {reportData.area?.sectorId ? 'Setor ' + reportData.area.sectorId.substring(0, 8) : '-'}</p>
+                                    <p className="text-lg font-medium">{reportData.area?.name} / {reportData.area?.sector?.name || '-'}</p>
                                 </div>
                                 <div>
                                     <p className="text-sm text-gray-500 uppercase font-bold">Master Responsável</p>
@@ -669,9 +697,9 @@ const ReportViewer = () => {
                                 Colaboradores Acompanhados
                             </h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {reportData.collaborators?.map((c: any) => (
+                                {reportData.collaborators?.map((c) => (
                                     <div key={c.id} className="p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
-                                        <p className="font-bold text-lg">{c.user?.name}</p>
+                                        <p className="font-bold text-lg">{c.user.name}</p>
                                         <p className="text-sm text-gray-500">Matrícula: {c.matricula || '-'}</p>
                                         <p className="text-sm text-gray-500">Turno: {c.shift}</p>
                                     </div>
@@ -702,11 +730,11 @@ const ReportViewer = () => {
                             <div>
                                 <h3 className="text-xl font-bold mb-4 border-b pb-2 mt-8">Notas Individuais (Histórico)</h3>
                                 <div className="space-y-4">
-                                    {reportData.notes.map((note: any) => (
+                                    {reportData.notes.map((note) => (
                                         <div key={note.id} className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                                             <div className="flex justify-between items-start mb-2">
                                                 <p className="font-bold text-yellow-900">{note.collaborator?.user?.name}</p>
-                                                <span className="text-xs text-yellow-600">{new Date(note.createdAt).toLocaleDateString()}</span>
+                                                <span className="text-xs text-yellow-600">{note.createdAt ? new Date(note.createdAt).toLocaleDateString() : '-'}</span>
                                             </div>
                                             <p className="text-yellow-800">{note.content}</p>
                                         </div>
@@ -732,7 +760,7 @@ const ReportViewer = () => {
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {reportData.generatedPendencies.map((p: any) => (
+                                                {reportData.generatedPendencies.map((p) => (
                                                     <tr key={p.id} className="border-b">
                                                         <td className="p-3 border">{p.description}</td>
                                                         <td className="p-3 border">{p.responsible}</td>
@@ -757,7 +785,7 @@ const ReportViewer = () => {
                             <div>
                                 <h3 className="text-xl font-bold mb-4 border-b pb-2 mt-8">Anexos</h3>
                                 <ul className="list-disc list-inside">
-                                    {reportData.attachments.map((att: any, index: number) => (
+                                    {reportData.attachments.map((att, index) => (
                                         <li key={index} className="text-blue-600 underline cursor-pointer">
                                             <a href={att.url} target="_blank" rel="noopener noreferrer">Anexo {index + 1}</a>
                                         </li>
@@ -768,72 +796,75 @@ const ReportViewer = () => {
                     </div>
                 );
                 if (reportData.metrics) {
-                    return (
-                        <div className="space-y-8">
-                            <div className="grid grid-cols-3 gap-6">
-                                {reportData.metrics.map((m: any, i: number) => (
-                                    <div key={i} className="p-6 bg-white rounded-xl border border-gray-200 shadow-sm text-center">
-                                        <h3 className="text-sm text-gray-500 uppercase tracking-wider mb-2">{m.label}</h3>
-                                        <p className="text-3xl font-bold text-primary">{m.value}</p>
+                    if (Array.isArray(reportData.metrics)) {
+                        if (reportData.metrics && Array.isArray(reportData.metrics)) {
+                            const metricsArray = reportData.metrics; // Explicit reference for narrowing
+                            return (
+                                <div className="space-y-8">
+                                    <div className="grid grid-cols-3 gap-6">
+                                        {metricsArray.map((m, i) => (
+                                            <div key={i} className="p-6 bg-white rounded-xl border border-gray-200 shadow-sm text-center">
+                                                <h3 className="text-sm text-gray-500 uppercase tracking-wider mb-2">{m.label}</h3>
+                                                <p className="text-3xl font-bold text-primary">{m.value}</p>
+                                            </div>
+                                        ))}
                                     </div>
-                                ))}
+                                    <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
+                                        <h3 className="text-lg font-bold mb-2">Resumo Executivo</h3>
+                                        <p className="text-gray-700 leading-relaxed">{reportData.details}</p>
+                                    </div>
+                                </div>
+                            );
+                        }
+                        return <pre className="bg-gray-100 p-4 rounded overflow-auto">{JSON.stringify(reportData, null, 2)}</pre>;
+                    }
+                };
+
+                return (
+                    <div className="min-h-screen bg-white text-gray-900 font-sans">
+                        {/* No-Print Header */}
+                        <div className="print:hidden bg-gray-900 text-white p-4 flex justify-between items-center sticky top-0 z-50 shadow-md">
+                            <div className="flex items-center space-x-4">
+                                <button onClick={() => navigate(-1)} className="hover:bg-gray-700 p-2 rounded-full transition-colors">
+                                    <ArrowLeft className="h-6 w-6" />
+                                </button>
+                                <h1 className="text-lg font-bold">Visualizador de Relatório</h1>
                             </div>
-                            <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
-                                <h3 className="text-lg font-bold mb-2">Resumo Executivo</h3>
-                                <p className="text-gray-700 leading-relaxed">{reportData.details}</p>
+                            <div className="flex space-x-3">
+                                <button onClick={handlePrint} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 shadow-sm font-medium">
+                                    <Printer className="h-4 w-4" />
+                                    <span>Imprimir / Salvar PDF</span>
+                                </button>
                             </div>
                         </div>
-                    );
-                }
-                return <pre className="bg-gray-100 p-4 rounded overflow-auto">{JSON.stringify(reportData, null, 2)}</pre>;
-        }
-    };
 
-    return (
-        <div className="min-h-screen bg-white text-gray-900 font-sans">
-            {/* No-Print Header */}
-            <div className="print:hidden bg-gray-900 text-white p-4 flex justify-between items-center sticky top-0 z-50 shadow-md">
-                <div className="flex items-center space-x-4">
-                    <button onClick={() => navigate(-1)} className="hover:bg-gray-700 p-2 rounded-full transition-colors">
-                        <ArrowLeft className="h-6 w-6" />
-                    </button>
-                    <h1 className="text-lg font-bold">Visualizador de Relatório</h1>
-                </div>
-                <div className="flex space-x-3">
-                    <button onClick={handlePrint} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 shadow-sm font-medium">
-                        <Printer className="h-4 w-4" />
-                        <span>Imprimir / Salvar PDF</span>
-                    </button>
-                </div>
-            </div>
+                        {/* Printable Content */}
+                        <div className="max-w-4xl mx-auto p-8 print:p-0 print:max-w-none">
+                            {/* Report Header */}
+                            <div className="border-b-2 border-primary pb-6 mb-8 flex justify-between items-end">
+                                <div>
+                                    <h1 className="text-3xl font-bold text-primary uppercase tracking-wide">Relatório QS Inclusão</h1>
+                                    <p className="text-gray-500 mt-1 text-lg">{reportType.replace(/_/g, ' ')}</p>
+                                </div>
+                                <div className="text-right text-sm text-gray-400">
+                                    <p>Gerado em: {new Date().toLocaleDateString()} às {new Date().toLocaleTimeString()}</p>
+                                    <p>QS Inclusão - Sistema de Acompanhamento</p>
+                                </div>
+                            </div>
 
-            {/* Printable Content */}
-            <div className="max-w-4xl mx-auto p-8 print:p-0 print:max-w-none">
-                {/* Report Header */}
-                <div className="border-b-2 border-primary pb-6 mb-8 flex justify-between items-end">
-                    <div>
-                        <h1 className="text-3xl font-bold text-primary uppercase tracking-wide">Relatório QS Inclusão</h1>
-                        <p className="text-gray-500 mt-1 text-lg">{reportType.replace(/_/g, ' ')}</p>
+                            {/* Report Body */}
+                            <div className="report-content">
+                                {renderContent()}
+                            </div>
+
+                            {/* Report Footer */}
+                            <div className="mt-12 pt-6 border-t border-gray-200 text-center text-gray-400 text-sm print:fixed print:bottom-0 print:w-full print:bg-white">
+                                <p>QS Inclusão - Soluções em Acessibilidade e Inclusão</p>
+                                <p>www.qsinclusao.com.br</p>
+                            </div>
+                        </div>
                     </div>
-                    <div className="text-right text-sm text-gray-400">
-                        <p>Gerado em: {new Date().toLocaleDateString()} às {new Date().toLocaleTimeString()}</p>
-                        <p>QS Inclusão - Sistema de Acompanhamento</p>
-                    </div>
-                </div>
+                );
+        };
 
-                {/* Report Body */}
-                <div className="report-content">
-                    {renderContent()}
-                </div>
-
-                {/* Report Footer */}
-                <div className="mt-12 pt-6 border-t border-gray-200 text-center text-gray-400 text-sm print:fixed print:bottom-0 print:w-full print:bg-white">
-                    <p>QS Inclusão - Soluções em Acessibilidade e Inclusão</p>
-                    <p>www.qsinclusao.com.br</p>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-export default ReportViewer;
+        export default ReportViewer;

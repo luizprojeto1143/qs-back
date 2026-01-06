@@ -11,16 +11,66 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 import routes from './routes';
+import swaggerUi from 'swagger-ui-express';
+import swaggerSpec from './config/swagger';
+
+// Swagger UI
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Security Middleware
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"], // Adjust as needed
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'", process.env.CORS_ORIGIN || "*"]
+    }
+  }
+}));
 
+// CORS Configuration
+const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173,http://localhost:4173').split(',');
 app.use(cors({
-  origin: true, // Allow all origins
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-company-id']
 }));
+
+// Basic Rate Limiting (In-memory)
+const rateLimit = new Map();
+app.use((req, res, next) => {
+  const ip = req.ip;
+  const now = Date.now();
+  const windowMs = 15 * 60 * 1000; // 15 minutes
+  const maxReq = 100;
+
+  const record = rateLimit.get(ip) || { count: 0, startTime: now };
+
+  if (now - record.startTime > windowMs) {
+    record.count = 1;
+    record.startTime = now;
+  } else {
+    record.count++;
+  }
+
+  rateLimit.set(ip, record);
+
+  if (record.count > maxReq) {
+    res.status(429).json({ error: 'Too many requests, please try again later.' });
+    return;
+  }
+  next();
+});
+
 app.use(express.json());
 
 app.use('/api', routes);
@@ -31,44 +81,27 @@ app.use(errorHandler);
 
 import compression from 'compression';
 
-// ...
+// Compression Middleware
+app.use(compression());
 
-// Security Middleware
-app.use(helmet());
-app.use(compression()); // Gzip Compression
-
-// ...
-
+// Health Check Endpoint (Sanitized)
 app.get('/health', async (req, res) => {
   try {
-    // Test database connection
+    // Check DB connection only, do not expose counts
     const prisma = (await import('./prisma')).default;
-    const userCount = await prisma.user.count();
+    await prisma.$queryRaw`SELECT 1`; // Lightweight check
+
     res.status(200).json({
       status: 'UP',
-      timestamp: new Date(),
-      version: '10.16',
-      database: 'CONNECTED',
-      userCount: userCount,
-      env: {
-        hasJwtSecret: !!process.env.JWT_SECRET,
-        hasDbUrl: !!process.env.DATABASE_URL,
-        nodeEnv: process.env.NODE_ENV
-      }
+      timestamp: new Date().toISOString(),
+      service: 'QS Inclusão API'
     });
-  } catch (error: any) {
-    console.error('Health check error:', error);
-    res.status(500).json({
+  } catch (error) {
+    // Do not log full error details to client
+    console.error('Health check failed');
+    res.status(503).json({
       status: 'DOWN',
-      timestamp: new Date(),
-      version: '10.16',
-      database: 'DISCONNECTED',
-      error: error?.message,
-      env: {
-        hasJwtSecret: !!process.env.JWT_SECRET,
-        hasDbUrl: !!process.env.DATABASE_URL,
-        nodeEnv: process.env.NODE_ENV
-      }
+      timestamp: new Date().toISOString()
     });
   }
 });
@@ -83,24 +116,24 @@ import { Server } from 'socket.io';
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: true,
+    origin: allowedOrigins,
     credentials: true
   }
 });
 
-// Tornar o io acessível globalmente (opcional, ou exportar)
-(global as any).io = io;
+// Securely share IO instance via app locals
+app.set('io', io);
 
 io.on('connection', (socket) => {
-  console.log(`Socket connected: ${socket.id}`);
+  // console.log(`Socket connected: ${socket.id}`); // Remove logspam
 
   socket.on('join_company', (companyId) => {
     socket.join(`company:${companyId}`);
-    console.log(`Socket ${socket.id} joined company:${companyId}`);
+    // console.log(`Socket ${socket.id} joined company:${companyId}`);
   });
 
   socket.on('disconnect', () => {
-    console.log(`Socket disconnected: ${socket.id}`);
+    // console.log(`Socket disconnected: ${socket.id}`);
   });
 });
 

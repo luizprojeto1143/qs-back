@@ -10,13 +10,26 @@ const Login = () => {
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
+    const [totpCode, setTotpCode] = useState('');
+    const [require2FA, setRequire2FA] = useState(false);
+
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
 
         try {
-            const response = await api.post('/auth/login', { email, password });
+            const payload: any = { email, password };
+            if (require2FA && totpCode) payload.totpCode = totpCode;
+
+            const response = await api.post('/auth/login', payload);
             const data = response.data;
+
+            if (data.require2fa) {
+                setRequire2FA(true);
+                toast.info('Autenticação em 2 etapas necessária. Digite o código do seu app autenticador.');
+                setLoading(false);
+                return;
+            }
 
             localStorage.setItem('token', data.token);
             localStorage.setItem('user', JSON.stringify(data.user));
@@ -40,7 +53,11 @@ const Login = () => {
             }
         } catch (error: any) {
             console.error('Login error', error);
-            toast.error(error.message || 'Erro ao fazer login');
+            const msg = error.response?.data?.error || error.message || 'Erro ao fazer login';
+            toast.error(msg);
+            if (msg.includes('Invalid 2FA')) {
+                setTotpCode(''); // Clear invalid code
+            }
         } finally {
             setLoading(false);
         }
@@ -149,6 +166,27 @@ const Login = () => {
                                     />
                                 </div>
                             </div>
+
+                            {require2FA && (
+                                <div className="space-y-1.5 animate-in fade-in slide-in-from-top-4 duration-300">
+                                    <label className="text-sm font-medium text-gray-700">Código 2FA (Autenticador)</label>
+                                    <div className="relative group">
+                                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-blue-500 transition-colors">
+                                            <Lock className="h-5 w-5" />
+                                        </div>
+                                        <input
+                                            type="text"
+                                            value={totpCode}
+                                            onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                                            className="block w-full pl-12 pr-4 py-3.5 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-gray-50 hover:bg-white focus:bg-white tracking-widest text-center font-mono text-lg"
+                                            placeholder="000 000"
+                                            required={require2FA}
+                                            autoFocus
+                                        />
+                                    </div>
+                                    <p className="text-xs text-gray-500 text-center">Digite o código de 6 dígitos do seu app autenticador.</p>
+                                </div>
+                            )}
 
                             <div className="space-y-1.5">
                                 <label className="text-sm font-medium text-gray-700">Senha</label>

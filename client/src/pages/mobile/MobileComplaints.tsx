@@ -12,7 +12,7 @@ import { useCompany } from '../../contexts/CompanyContext';
 const MobileComplaints = () => {
     const navigate = useNavigate();
     const { companies } = useCompany();
-    const currentCompany = companies[0]; // Assuming collaborator context
+    const currentCompany = companies && companies.length > 0 ? companies[0] : null;
 
     const [step, setStep] = useState(1);
     const [type, setType] = useState<'TEXTO' | 'VIDEO_LIBRAS' | 'ANONIMO' | null>(null);
@@ -69,8 +69,7 @@ const MobileComplaints = () => {
 
             toast.success('Relato enviado com sucesso! Seus dados estão seguros.');
             setTimeout(() => navigate('/app'), 2000);
-        } catch (error) {
-            console.error('Error sending complaint', error);
+        } catch {
             toast.error('Erro ao enviar relato. Tente novamente.');
             setSending(false);
         }
@@ -194,7 +193,7 @@ const MobileComplaints = () => {
                                     onChange={(e) => setContent(e.target.value)}
                                     placeholder="Descreva a situação com o máximo de detalhes possível..."
                                     className="w-full p-3 bg-white border border-gray-300 rounded-xl h-40 resize-none"
-                                    required={type !== 'VIDEO_LIBRAS'}
+                                    required
                                 />
                             </div>
                         )}

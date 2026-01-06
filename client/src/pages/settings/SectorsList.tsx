@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import { Layers, Plus, X } from 'lucide-react';
 import { useCompany } from '../../contexts/CompanyContext';
 import { api } from '../../lib/api';
+import { EmptyState } from '../../components/EmptyState';
+import type { Sector, Company } from '../../types/organization';
 
 const SectorsList = () => {
     const { selectedCompanyId, companies: contextCompanies } = useCompany();
-    const [sectors, setSectors] = useState<any[]>([]);
-    const [companies, setCompanies] = useState<any[]>(contextCompanies);
+    const [sectors, setSectors] = useState<Sector[]>([]);
+    const [companies, setCompanies] = useState<Company[]>(contextCompanies);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -21,10 +23,6 @@ const SectorsList = () => {
 
     const fetchData = async () => {
         try {
-            // const token = localStorage.getItem('token');
-            // const headers = { 'Authorization': `Bearer ${token}` };
-
-            // Use context companies if available, otherwise fetch
             // Use context companies if available, otherwise fetch
             if (contextCompanies.length > 0) {
                 setCompanies(contextCompanies);
@@ -34,7 +32,9 @@ const SectorsList = () => {
             }
 
             const resSectors = await api.get('/sectors');
-            setSectors(resSectors.data);
+            // Assuming the API returns a list of sectors
+            const sectorsData = Array.isArray(resSectors.data) ? resSectors.data : (resSectors.data?.data || []);
+            setSectors(sectorsData);
 
         } catch (error) {
             console.error('Error fetching data', error);
@@ -45,7 +45,7 @@ const SectorsList = () => {
 
     useEffect(() => {
         fetchData();
-    }, [contextCompanies, selectedCompanyId]); // Re-fetch if context companies or selected company changes
+    }, [contextCompanies, selectedCompanyId]);
 
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -66,7 +66,7 @@ const SectorsList = () => {
         }
     };
 
-    const handleEdit = (sector: any) => {
+    const handleEdit = (sector: Sector) => {
         setNewSector({
             name: sector.name,
             companyId: sector.companyId
@@ -94,37 +94,49 @@ const SectorsList = () => {
 
             {loading ? (
                 <div className="text-center py-10 text-gray-500 dark:text-gray-400">Carregando...</div>
+            ) : filteredSectors.length === 0 ? (
+                <EmptyState
+                    title="Nenhum setor encontrado"
+                    description="Defina os setores da organização para agrupar as áreas e colaboradores."
+                    icon={Layers}
+                    action={{
+                        label: 'Novo Setor',
+                        onClick: () => setIsModalOpen(true)
+                    }}
+                />
             ) : (
                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-                    <table className="w-full text-left">
-                        <thead className="bg-gray-50 dark:bg-gray-700 border-b border-gray-100 dark:border-gray-700">
-                            <tr>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider">Nome do Setor</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider">Empresa</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                            {filteredSectors.map((sector) => (
-                                <tr key={sector.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                    <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">
-                                        <div className="flex items-center space-x-3">
-                                            <div className="p-2 bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-lg">
-                                                <Layers className="h-5 w-5" />
-                                            </div>
-                                            <span>{sector.name}</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 text-gray-500 dark:text-gray-400">
-                                        {sector.company?.name || '-'}
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <button type="button" onClick={() => handleEdit(sector)} className="text-primary hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium">Editar</button>
-                                    </td>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left">
+                            <thead className="bg-gray-50 dark:bg-gray-700 border-b border-gray-100 dark:border-gray-700">
+                                <tr>
+                                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider">Nome do Setor</th>
+                                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider">Empresa</th>
+                                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider">Ações</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                                {filteredSectors.map((sector) => (
+                                    <tr key={sector.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                        <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">
+                                            <div className="flex items-center space-x-3">
+                                                <div className="p-2 bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-lg">
+                                                    <Layers className="h-5 w-5" />
+                                                </div>
+                                                <span>{sector.name}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-gray-500 dark:text-gray-400">
+                                            {sector.company?.name || '-'}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <button type="button" onClick={() => handleEdit(sector)} className="text-primary hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium">Editar</button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             )}
 
@@ -134,7 +146,7 @@ const SectorsList = () => {
                     <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md p-6">
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-bold text-gray-900 dark:text-white">{editingId ? 'Editar Setor' : 'Novo Setor'}</h2>
-                            <button type="button" onClick={() => { setIsModalOpen(false); setEditingId(null); }} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                            <button type="button" onClick={() => { setIsModalOpen(false); setEditingId(null); }} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" aria-label="Fechar modal">
                                 <X className="h-6 w-6" />
                             </button>
                         </div>

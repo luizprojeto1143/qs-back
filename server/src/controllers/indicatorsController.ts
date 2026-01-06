@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { AuthRequest } from '../middleware/authMiddleware';
 import prisma from '../prisma';
 
 export const indicatorsController = {
@@ -6,7 +7,8 @@ export const indicatorsController = {
     async getDiversityCensus(req: Request, res: Response) {
         try {
             const { companyId } = req.params;
-            const user = (req as any).user;
+            const user = (req as AuthRequest).user;
+            if (!user) return res.status(401).json({ error: 'Não autenticado' });
 
             if (user.role !== 'MASTER' && user.role !== 'RH') {
                 return res.status(403).json({ error: 'Sem permissão' });
@@ -14,7 +16,6 @@ export const indicatorsController = {
 
             const collaborators = await prisma.collaboratorProfile.findMany({
                 where: { area: { sector: { companyId } } },
-                // @ts-ignore
                 select: {
                     gender: true,
                     ethnicity: true,
@@ -50,26 +51,30 @@ export const indicatorsController = {
                 '55+': 0
             };
 
+            // Helper types for keys
+            type GenderKey = keyof typeof genderDistribution;
+            type EthnicityKey = keyof typeof ethnicityDistribution;
+
             collaborators.forEach(c => {
                 // Gênero
-                const gender = (c as any).gender || 'NAO_DECLARADO';
+                const gender = (c.gender as GenderKey) || 'NAO_DECLARADO';
                 if (gender in genderDistribution) {
-                    genderDistribution[gender as keyof typeof genderDistribution]++;
+                    genderDistribution[gender]++;
                 } else {
                     genderDistribution['NAO_DECLARADO']++;
                 }
 
                 // Etnia
-                const ethnicity = (c as any).ethnicity || 'NAO_DECLARADO';
+                const ethnicity = (c.ethnicity as EthnicityKey) || 'NAO_DECLARADO';
                 if (ethnicity in ethnicityDistribution) {
-                    ethnicityDistribution[ethnicity as keyof typeof ethnicityDistribution]++;
+                    ethnicityDistribution[ethnicity]++;
                 } else {
                     ethnicityDistribution['NAO_DECLARADO']++;
                 }
 
                 // Faixa Etária
-                if ((c as any).birthDate) {
-                    const age = new Date().getFullYear() - new Date((c as any).birthDate).getFullYear();
+                if (c.birthDate) {
+                    const age = new Date().getFullYear() - new Date(c.birthDate).getFullYear();
                     if (age >= 18 && age <= 24) ageDistribution['18-24']++;
                     else if (age >= 25 && age <= 34) ageDistribution['25-34']++;
                     else if (age >= 35 && age <= 44) ageDistribution['35-44']++;
@@ -94,7 +99,8 @@ export const indicatorsController = {
     async getPcdRetention(req: Request, res: Response) {
         try {
             const { companyId } = req.params;
-            const user = (req as any).user;
+            const user = (req as AuthRequest).user;
+            if (!user) return res.status(401).json({ error: 'Não autenticado' });
 
             if (user.role !== 'MASTER' && user.role !== 'RH') {
                 return res.status(403).json({ error: 'Sem permissão' });
@@ -106,7 +112,6 @@ export const indicatorsController = {
                     area: { sector: { companyId } },
                     disabilityType: { not: 'NENHUMA' } // Assumindo que 'NENHUMA' indica sem deficiência
                 },
-                // @ts-ignore
                 select: {
                     id: true,
                     isActive: true,
@@ -140,7 +145,8 @@ export const indicatorsController = {
     async getSectorComparison(req: Request, res: Response) {
         try {
             const { companyId } = req.params;
-            const user = (req as any).user;
+            const user = (req as AuthRequest).user;
+            if (!user) return res.status(401).json({ error: 'Não autenticado' });
 
             if (user.role !== 'MASTER' && user.role !== 'RH') {
                 return res.status(403).json({ error: 'Sem permissão' });
@@ -153,6 +159,9 @@ export const indicatorsController = {
 
             // Agrupar por Área
             const areaMap = new Map<string, any>();
+
+            type GenderKey = 'MASCULINO' | 'FEMININO' | 'OUTRO' | 'NAO_DECLARADO';
+            type EthnicityKey = 'BRANCA' | 'PRETA' | 'PARDA' | 'AMARELA' | 'INDIGENA' | 'NAO_DECLARADO';
 
             collaborators.forEach(c => {
                 const areaName = c.area.name;
@@ -175,11 +184,11 @@ export const indicatorsController = {
                 entry.total++;
 
                 // Gênero
-                const gender = (c as any).gender || 'NAO_DECLARADO';
+                const gender = (c.gender as GenderKey) || 'NAO_DECLARADO';
                 if (entry[gender] !== undefined) entry[gender]++;
 
                 // Etnia
-                const ethnicity = (c as any).ethnicity || 'NAO_DECLARADO';
+                const ethnicity = (c.ethnicity as EthnicityKey) || 'NAO_DECLARADO';
                 if (entry[ethnicity] !== undefined) entry[ethnicity]++;
             });
 
@@ -196,7 +205,8 @@ export const indicatorsController = {
     async getReputationalRadar(req: Request, res: Response) {
         try {
             const { companyId } = req.params;
-            const user = (req as any).user;
+            const user = (req as AuthRequest).user;
+            if (!user) return res.status(401).json({ error: 'Não autenticado' });
 
             if (user.role !== 'MASTER' && user.role !== 'RH') {
                 return res.status(403).json({ error: 'Sem permissão' });
@@ -210,11 +220,8 @@ export const indicatorsController = {
                         where: {
                             disabilityType: { not: 'NENHUMA' }
                         },
-                        // @ts-ignore
                         select: { isActive: true }
                     },
-                    // Assumindo que temos relação com QS Score, se não tiver, vamos simular ou pegar de outra forma
-                    // Como QS Score é complexo, vamos simplificar para este MVP usando dados simulados baseados em denúncias
                 }
             });
 
@@ -223,8 +230,8 @@ export const indicatorsController = {
 
             const radarData = areas.map(area => {
                 // Cálculo de Retenção por Área
-                const totalPcds = (area as any).collaborators.length;
-                const activePcds = (area as any).collaborators.filter((c: any) => c.isActive).length;
+                const totalPcds = area.collaborators.length;
+                const activePcds = area.collaborators.filter((c) => c.isActive).length;
                 const retentionRate = totalPcds > 0 ? (activePcds / totalPcds) * 100 : 100;
 
                 // Simulação de Dados de Risco (já que não temos tabela de QS Score histórico linkado direto fácil aqui)

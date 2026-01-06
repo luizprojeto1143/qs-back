@@ -61,6 +61,7 @@ const CoursePlayer = lazy(() => import('./pages/university/CoursePlayer'));
 const QuizPlayer = lazy(() => import('./pages/university/QuizPlayer'));
 const UniversityReports = lazy(() => import('./pages/university/UniversityReports'));
 const Certificates = lazy(() => import('./pages/university/Certificates'));
+const SecuritySettings = lazy(() => import('./pages/settings/SecuritySettings'));
 
 // Loading Fallback
 const PageLoader = () => (
@@ -72,10 +73,7 @@ const PageLoader = () => (
 import { AuthProvider } from './contexts/AuthContext';
 import { SocketProvider } from './contexts/SocketContext';
 
-// ... imports
-
 function App() {
-  console.log('QS System Version: Enterprise (v11.0)');
   return (
     <AuthProvider>
       <CompanyProvider>
@@ -118,6 +116,7 @@ function App() {
                     <Route path="specialists" element={<SpecialistSettings />} />
                     <Route path="history" element={<CompanyHistory />} />
                     <Route path="pdi" element={<PDIManagement />} />
+                    <Route path="security" element={<SecuritySettings />} />
 
                     {/* Master Modules */}
                     <Route path="university" element={<UniversityManagement />} />
@@ -148,7 +147,6 @@ function App() {
                   </Route>
                   {/* Mobile App Routes */}
                   <Route path="/app" element={<MobileLayout />}>
-                    {/* ... (in Routes) */}
                     <Route index element={<MobileHome />} />
                     <Route path="schedule" element={<MobileWorkSchedule />} />
                     <Route path="request" element={<MobileSchedule />} />
@@ -158,8 +156,6 @@ function App() {
                     <Route path="profile" element={<MobileProfile />} />
                     <Route path="libras" element={<LibrasCentral />} />
                     <Route path="university" element={<CourseCatalog />} />
-                    <Route path="university/course/:id" element={<CoursePlayer />} />
-                    <Route path="university/quiz/:id" element={<QuizPlayer />} />
                     <Route path="university/course/:id" element={<CoursePlayer />} />
                     <Route path="university/quiz/:id" element={<QuizPlayer />} />
                     <Route path="university/certificates" element={<Certificates />} />

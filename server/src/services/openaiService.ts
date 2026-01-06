@@ -7,7 +7,7 @@ const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
 });
 
-export const analyzeInclusionData = async (data: any) => {
+export const analyzeInclusionData = async (data: unknown) => {
     // 1. Mock Mode (Fallback)
     if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'pending') {
         console.warn('⚠️ OpenAI API Key missing or pending. Using MOCK data.');
@@ -69,8 +69,9 @@ export const analyzeInclusionData = async (data: any) => {
             return { error: 'Failed to parse AI analysis', raw: content };
         }
 
-    } catch (error: any) {
-        console.error('Error calling OpenAI (Falling back to mock):', error);
+    } catch (error) { // Removed : any
+        const err = error as Error;
+        console.error('Error calling OpenAI (Falling back to mock):', err.message);
 
         // Fallback to Mock Data smoothly instead of breaking the UI
         return {
@@ -90,7 +91,7 @@ export const analyzeInclusionData = async (data: any) => {
     }
 };
 
-export const generateSmartAlerts = async (complaints: any[], score: number) => {
+export const generateSmartAlerts = async (complaints: Array<unknown>, score: number) => {
     // Implementação futura para alertas proativos
     return [];
 };

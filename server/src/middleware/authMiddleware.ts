@@ -15,8 +15,17 @@ export interface AuthRequest extends Request {
         role: string;
         companyId: string | null;
         areaId?: string | null;
+        email?: string; // Optional for now, populated if available
     };
 }
+
+export const getIp = (req: Request) => {
+    return (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || '';
+};
+
+export const getUserAgent = (req: Request) => {
+    return req.headers['user-agent'] || '';
+};
 
 export const authenticateToken = async (req: Request, res: Response, next: NextFunction) => {
     const authHeader = req.headers['authorization'];
@@ -58,13 +67,6 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
             verified.areaId = userStatus.areaId;
         }
 
-        console.log('Auth Debug:', {
-            tokenRole: verified.role,
-            dbRole: userStatus.role,
-            userId: verified.userId,
-            path: req.path
-        });
-
         (req as AuthRequest).user = verified;
         next();
     } catch (error) {
@@ -76,11 +78,7 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
 export const requireRole = (roles: string[]) => {
     return (req: Request, res: Response, next: NextFunction) => {
         const user = (req as AuthRequest).user;
-        console.log('Role Check:', {
-            required: roles,
-            userRole: user?.role,
-            hasPermission: user && roles.includes(user.role)
-        });
+
 
         if (!user || !roles.includes(user.role)) {
             return res.status(403).json({ error: 'Insufficient permissions' });

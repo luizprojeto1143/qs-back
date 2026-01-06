@@ -1,6 +1,5 @@
-
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { useCompany } from '../../contexts/CompanyContext';
 import { api } from '../../lib/api';
 import { toast } from 'sonner';
@@ -72,11 +71,32 @@ const QSScoreDashboard: React.FC = () => {
     const [riskMap, setRiskMap] = useState<RiskMapData | null>(null);
     const [recalculating, setRecalculating] = useState(false);
 
+    const loadData = useCallback(async () => {
+        if (!selectedCompanyId) return;
+        setLoading(true);
+        try {
+            const [scoreRes, riskRes] = await Promise.all([
+                api.get(`/qs-score/company/${selectedCompanyId}`),
+                api.get(`/qs-score/risk-map/${selectedCompanyId}`),
+            ]);
+            setScoreData(scoreRes.data);
+            setRiskMap(riskRes.data);
+        } catch (error: any) {
+            if (error.response?.status === 403) {
+                toast.error('QS Score não está habilitado para esta empresa');
+            } else {
+                toast.error('Erro ao carregar dados do QS Score');
+            }
+        } finally {
+            setLoading(false);
+        }
+    }, [selectedCompanyId]);
+
     useEffect(() => {
         if (selectedCompanyId) {
             loadData();
         }
-    }, [selectedCompanyId]);
+    }, [selectedCompanyId, loadData]);
 
     const loadData = async () => {
         if (!selectedCompanyId) return;
@@ -107,7 +127,7 @@ const QSScoreDashboard: React.FC = () => {
             await api.post(`/qs-score/recalculate/${selectedCompanyId}`, {});
             toast.success('Scores recalculados com sucesso!');
             loadData();
-        } catch (error) {
+        } catch {
             toast.error('Erro ao recalcular scores');
         } finally {
             setRecalculating(false);
@@ -285,10 +305,10 @@ const QSScoreDashboard: React.FC = () => {
                                 >
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-4">
-                                            <div className={`w - 3 h - 3 rounded - full ${area.color === 'red' ? 'bg-red-500' :
+                                            <div className={`w-3 h-3 rounded-full ${area.color === 'red' ? 'bg-red-500' :
                                                 area.color === 'yellow' ? 'bg-yellow-500' :
                                                     'bg-green-500'
-                                                } `} />
+                                                }`} />
                                             <div>
                                                 <p className="font-medium text-gray-900">{area.areaName}</p>
                                                 <p className="text-sm text-gray-500">{area.sectorName}</p>
@@ -297,7 +317,7 @@ const QSScoreDashboard: React.FC = () => {
                                         <div className="flex items-center gap-4">
                                             {getRiskBadge(area.color)}
                                             <div className="text-right">
-                                                <p className={`text - 2xl font - bold ${getScoreColor(area.score)} `}>
+                                                <p className={`text-2xl font-bold ${getScoreColor(area.score)}`}>
                                                     {area.score}
                                                 </p>
                                                 <p className="text-xs text-gray-500">pontos</p>
@@ -332,12 +352,12 @@ const QSScoreDashboard: React.FC = () => {
                             <p className="text-blue-100">Use a IA para identificar padrões e prioridades</p>
                         </div>
                     </div>
-                    <a
-                        href="/dashboard/ai-insights"
+                    <Link
+                        to="/dashboard/ai-insights"
                         className="px-6 py-3 bg-white text-blue-600 rounded-xl font-medium hover:bg-blue-50 transition-colors"
                     >
                         Ver Insights de IA
-                    </a>
+                    </Link>
                 </div>
             </div>
         </div>

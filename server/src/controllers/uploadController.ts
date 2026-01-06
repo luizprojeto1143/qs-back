@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import multer from 'multer';
 import { v2 as cloudinary } from 'cloudinary';
-import { CloudinaryStorage } from 'multer-storage-cloudinary';
+import stream from 'stream';
 
 // Configure Cloudinary
 cloudinary.config({
@@ -10,15 +10,8 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-// Configure storage
-const storage = new CloudinaryStorage({
-    cloudinary: cloudinary,
-    params: {
-        folder: 'qs-inclusao', // Folder name in Cloudinary
-        allowed_formats: ['jpg', 'png', 'jpeg', 'pdf', 'doc', 'docx', 'mp4', 'mp3', 'wav'],
-        resource_type: 'auto', // Auto-detect type (image, video, raw)
-    } as any // Cast to any because types might be slightly mismatched
-});
+// Configure storage: Memory storage to allow buffer inspection
+const storage = multer.memoryStorage();
 
 const upload = multer({
     storage: storage,
@@ -27,27 +20,67 @@ const upload = multer({
 
 export const uploadMiddleware = upload.single('file');
 
+// Magic Bytes Helper
+const checkMagicBytes = (buffer: Buffer, mimetype: string): boolean => {
+    if (!buffer || buffer.length < 4) return false;
+    const header = buffer.toString('hex', 0, 4);
+
+    switch (mimetype) {
+        case 'image/jpeg':
+            return header.startsWith('ffd8ff');
+        case 'image/png':
+            return header === '89504e47';
+        case 'application/pdf':
+            return header === '25504446'; // %PDF
+        case 'image/gif':
+            return header.startsWith('47494638'); // GIF8
+        // Add other signatures as needed (MP4, MP3 are complex, accepting by mime for now if magic check fails or complex)
+        default:
+            // For other types, fallback to mimetype check IF strict mode isn't required for them
+            // In a strict environment, we should check all. 
+            // For now, allowing others but blocking obvious mismatch if possible.
+            return true;
+    }
+};
+
 export const uploadFile = (req: Request, res: Response) => {
-    // Error handling is done by multer middleware, but if we reach here without a file:
     if (!req.file) {
-        return res.status(400).json({ error: 'No file uploaded or file type not allowed' });
+        return res.status(400).json({ error: 'No file uploaded' });
     }
 
-    // Cloudinary returns the URL in `path` or `secure_url`
-    // multer-storage-cloudinary puts the file info in req.file
-    interface CloudinaryFile extends Express.Multer.File {
-        path: string;
-        secure_url?: string;
+    // 1. Validate Magic Bytes
+    if (!checkMagicBytes(req.file.buffer, req.file.mimetype)) {
+        console.error(`Security Block: File header mismatch for ${req.file.mimetype}`);
+        return res.status(400).json({ error: 'File content does not match extension (Spoofing detected)' });
     }
 
-    const file = req.file as CloudinaryFile;
+    // 2. Upload to Cloudinary via Stream
+    const uploadStream = cloudinary.uploader.upload_stream(
+        {
+            folder: 'qs-inclusao',
+            resource_type: 'auto'
+        },
+        (error, result) => {
+            if (error) {
+                console.error('Cloudinary upload error:', error);
+                return res.status(500).json({ error: 'Upload to cloud service failed' });
+            }
+            if (!result) {
+                return res.status(500).json({ error: 'Unknown upload error' });
+            }
 
-    res.json({
-        url: file.path || file.secure_url,
-        filename: file.filename,
-        mimetype: file.mimetype,
-        size: file.size
-    });
+            res.json({
+                url: result.secure_url,
+                filename: req.file?.originalname, // Safe navigation
+                mimetype: result.format ? `${result.resource_type}/${result.format}` : req.file?.mimetype,
+                size: result.bytes
+            });
+        }
+    );
+
+    const bufferStream = new stream.PassThrough();
+    bufferStream.end(req.file.buffer);
+    bufferStream.pipe(uploadStream);
 };
 
 // Error handling middleware for Multer
@@ -58,7 +91,7 @@ export const handleUploadError = (err: any, req: Request, res: Response, next: F
         }
         return res.status(400).json({ error: `Upload error: ${err.message}` });
     } else if (err) {
-        console.error('Multer/Cloudinary Error:', err);
+        console.error('Multer/Storage Error:', err);
         return res.status(400).json({ error: `Invalid file type or upload failed: ${err.message || err}` });
     }
     next();

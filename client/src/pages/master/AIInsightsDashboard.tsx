@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { api } from '../../lib/api';
 import { useCompany } from '../../contexts/CompanyContext';
-import { Brain, Sparkles, AlertTriangle, ArrowRight, Loader } from 'lucide-react';
+import { Brain, Sparkles, Loader } from 'lucide-react';
 import { toast } from 'sonner';
-import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
+import { LoadingState } from '../../components/master/ai-insights/LoadingState';
+import { EmptyState } from '../../components/master/ai-insights/EmptyState';
+import { AnalysisResults } from '../../components/master/ai-insights/AnalysisResults';
 
 const AIInsightsDashboard = () => {
     const { selectedCompanyId } = useCompany();
@@ -54,95 +56,11 @@ const AIInsightsDashboard = () => {
                 </div>
             </div>
 
-            {!analysis && !loading && (
-                <div className="bg-purple-50 border border-purple-100 rounded-xl p-8 text-center">
-                    <Sparkles className="h-12 w-12 text-purple-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-purple-900">Nenhuma análise gerada ainda</h3>
-                    <p className="text-purple-700 max-w-md mx-auto mt-2">
-                        Clique no botão acima para que nossa IA analise os dados de denúncias, clima e score para gerar insights estratégicos.
-                    </p>
-                </div>
-            )}
+            {!analysis && !loading && <EmptyState />}
 
-            {loading && (
-                <div className="bg-white dark:bg-gray-800 rounded-xl p-12 text-center border animate-pulse">
-                    <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto mb-4"></div>
-                    <div className="h-4 bg-gray-200 rounded w-1/2 mx-auto mb-4"></div>
-                    <div className="h-4 bg-gray-200 rounded w-2/3 mx-auto"></div>
-                    <p className="mt-6 text-gray-500">A IA está processando seus dados...</p>
-                </div>
-            )}
+            {loading && <LoadingState />}
 
-            {analysis && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in">
-                    {/* Resumo */}
-                    <Card className="lg:col-span-2 border-l-4 border-l-purple-500">
-                        <CardHeader>
-                            <CardTitle className="text-purple-700 flex items-center gap-2">
-                                <Sparkles className="h-5 w-5" />
-                                Análise Executiva
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-lg text-gray-700 leading-relaxed">
-                                {analysis.analysis}
-                            </p>
-                        </CardContent>
-                    </Card>
-
-                    {/* Ações Prioritárias */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-gray-800">
-                                <AlertTriangle className="h-5 w-5 text-orange-500" />
-                                Ações Prioritárias
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <ul className="space-y-3">
-                                {analysis.priorityActions?.map((action: string, idx: number) => (
-                                    <li key={idx} className="flex items-start gap-3 p-3 bg-orange-50 rounded-lg">
-                                        <div className="bg-orange-200 text-orange-700 w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold">
-                                            {idx + 1}
-                                        </div>
-                                        <span className="text-gray-700 text-sm font-medium">{action}</span>
-                                    </li>
-                                ))}
-                            </ul>
-                        </CardContent>
-                    </Card>
-
-                    {/* Pontos Positivos */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-gray-800">
-                                <ArrowRight className="h-5 w-5 text-green-500" />
-                                Pontos Fortes Identificados
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <ul className="space-y-3">
-                                {analysis.positivePoints?.map((point: string, idx: number) => (
-                                    <li key={idx} className="flex items-center gap-2 p-3 bg-green-50 rounded-lg border border-green-100">
-                                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                                        <span className="text-gray-700 text-sm">{point}</span>
-                                    </li>
-                                ))}
-                            </ul>
-                        </CardContent>
-                    </Card>
-
-                    {/* Recomendação Final */}
-                    <Card className="lg:col-span-2 bg-gradient-to-r from-blue-50 to-purple-50 border-none">
-                        <CardContent className="p-6">
-                            <h4 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">Recomendação Estratégica</h4>
-                            <p className="text-xl font-medium text-gray-800 italic">
-                                "{analysis.recommendation}"
-                            </p>
-                        </CardContent>
-                    </Card>
-                </div>
-            )}
+            {analysis && <AnalysisResults data={analysis} />}
         </div>
     );
 };

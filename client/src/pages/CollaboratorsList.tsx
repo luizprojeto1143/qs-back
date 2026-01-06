@@ -4,6 +4,7 @@ import { useCompany } from '../contexts/CompanyContext';
 import { api } from '../lib/api';
 import CollaboratorHistory from '../components/CollaboratorHistory';
 import { formatShift } from '../utils/formatters';
+import { EmptyState } from '../components/EmptyState';
 
 const CollaboratorsList = () => {
     const { selectedCompanyId, companies: contextCompanies } = useCompany();
@@ -143,6 +144,20 @@ const CollaboratorsList = () => {
             {/* List */}
             {loading ? (
                 <div className="text-center py-10 text-gray-500 dark:text-gray-400">Carregando...</div>
+            ) : filteredCollaborators.length === 0 ? (
+                <EmptyState
+                    title="Nenhum colaborador encontrado"
+                    description={
+                        selectedCompanyId
+                            ? "Não há colaboradores cadastrados nesta empresa com os filtros atuais."
+                            : "Selecione uma empresa ou cadastre um novo colaborador."
+                    }
+                    icon={User}
+                    action={{
+                        label: 'Adicionar Colaborador',
+                        onClick: () => setIsModalOpen(true)
+                    }}
+                />
             ) : (
                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
                     <div className="divide-y divide-gray-100 dark:divide-gray-700">

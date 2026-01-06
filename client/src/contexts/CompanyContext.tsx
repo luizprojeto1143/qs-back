@@ -39,7 +39,8 @@ export const CompanyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(localStorage.getItem('selectedCompanyId'));
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+    const apiUrl = import.meta.env.VITE_API_URL || '';
+    if (!apiUrl) console.warn('CompanyContext: VITE_API_URL missing');
 
     const fetchCompanies = async () => {
         // Don't fetch if no token (public routes)

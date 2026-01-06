@@ -3,8 +3,17 @@ import { Check, X, Calendar, Clock, RefreshCw } from 'lucide-react';
 import { api } from '../../lib/api';
 import { toast } from 'sonner';
 
+interface ApprovalRequest {
+    id: string;
+    type: string;
+    user: string;
+    date: string;
+    rawDate: string;
+    category: 'dayoff' | 'schedule';
+}
+
 const MobileApprovals = () => {
-    const [requests, setRequests] = useState<any[]>([]);
+    const [requests, setRequests] = useState<ApprovalRequest[]>([]);
     const [loading, setLoading] = useState(true);
 
     const fetchRequests = async () => {
@@ -35,8 +44,7 @@ const MobileApprovals = () => {
 
             setRequests([...dayOffs, ...schedules].sort((a, b) => new Date(a.rawDate).getTime() - new Date(b.rawDate).getTime()));
 
-        } catch (error) {
-            console.error('Error fetching approvals', error);
+        } catch {
             toast.error('Erro ao carregar solicitações');
         } finally {
             setLoading(false);
@@ -60,8 +68,7 @@ const MobileApprovals = () => {
             toast.success(action === 'APPROVE' ? 'Solicitação aprovada!' : 'Solicitação recusada!');
             fetchRequests(); // Refresh list
 
-        } catch (error) {
-            console.error('Error processing request', error);
+        } catch {
             toast.error('Erro ao processar solicitação.');
         }
     };

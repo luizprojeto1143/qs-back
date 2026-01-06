@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { SkeletonRow } from '../components/Skeleton';
 import { api } from '../lib/api';
+import { EmptyState } from '../components/EmptyState';
 
 const VisitHistory = () => {
     const navigate = useNavigate();
@@ -117,6 +118,7 @@ const VisitHistory = () => {
                     <span>Exportar CSV</span>
                 </button>
             </div>
+
             {loading ? (
                 <div className="space-y-4">
                     <SkeletonRow />
@@ -125,7 +127,15 @@ const VisitHistory = () => {
                     <SkeletonRow />
                 </div>
             ) : filteredVisits.length === 0 ? (
-                <div className="text-center py-10 text-gray-500">Nenhuma visita encontrada com os filtros atuais.</div>
+                <EmptyState
+                    title="Nenhuma visita encontrada"
+                    description="Não há registros de visitas com os filtros selecionados ou ainda não houve cadastros."
+                    icon={Calendar}
+                    action={basePath !== '/rh' ? {
+                        label: 'Novo Acompanhamento',
+                        onClick: () => navigate(`${basePath}/visits/new`)
+                    } : undefined}
+                />
             ) : (
                 <div className="space-y-4">
                     {filteredVisits.map((visit) => (
@@ -167,9 +177,8 @@ const VisitHistory = () => {
                         </div>
                     ))}
                 </div>
-            )
-            }
-        </div >
+            )}
+        </div>
     );
 };
 

@@ -1,11 +1,14 @@
 import { Request, Response } from 'express';
+import { AuthRequest } from '../middleware/authMiddleware';
 import prisma from '../prisma';
 
 export const mediationController = {
     // Criar nova mediação
     async create(req: Request, res: Response) {
         try {
-            const user = (req as any).user;
+            const user = (req as AuthRequest).user;
+            if (!user) return res.status(401).json({ error: 'Não autenticado' });
+
             const {
                 companyId,
                 areaId,
@@ -39,7 +42,6 @@ export const mediationController = {
                     confidentiality: confidentiality || 'RESTRITO',
                     notes,
                     createdById: user.userId,
-                    // @ts-ignore
                     leaderId,
                 }
             });
@@ -56,7 +58,8 @@ export const mediationController = {
         try {
             const { companyId } = req.params;
             const { status, startDate, endDate } = req.query;
-            const user = (req as any).user;
+            const user = (req as AuthRequest).user;
+            if (!user) return res.status(401).json({ error: 'Não autenticado' });
 
             // RH e Master podem ver
             if (user.role !== 'MASTER' && user.role !== 'RH') {
@@ -79,7 +82,6 @@ export const mediationController = {
                 include: {
                     area: { select: { name: true } },
                     createdBy: { select: { name: true } },
-                    // @ts-ignore
                     leader: { select: { name: true } }
                 },
                 orderBy: { date: 'desc' }
@@ -87,7 +89,7 @@ export const mediationController = {
 
             const parsedMediations = mediations.map(m => ({
                 ...m,
-                participants: JSON.parse(m.participants)
+                participants: m.participants ? JSON.parse(m.participants) : []
             }));
 
             res.json(parsedMediations);
@@ -101,7 +103,8 @@ export const mediationController = {
     async get(req: Request, res: Response) {
         try {
             const { id } = req.params;
-            const user = (req as any).user;
+            const user = (req as AuthRequest).user;
+            if (!user) return res.status(401).json({ error: 'Não autenticado' });
 
             if (user.role !== 'MASTER' && user.role !== 'RH') {
                 return res.status(403).json({ error: 'Sem permissão' });
@@ -112,7 +115,6 @@ export const mediationController = {
                 include: {
                     area: true,
                     createdBy: { select: { id: true, name: true, role: true } },
-                    // @ts-ignore
                     leader: { select: { id: true, name: true } }
                 }
             });
@@ -123,7 +125,7 @@ export const mediationController = {
 
             res.json({
                 ...mediation,
-                participants: JSON.parse(mediation.participants)
+                participants: mediation.participants ? JSON.parse(mediation.participants) : []
             });
         } catch (error) {
             console.error('Error getting mediation:', error);
@@ -146,7 +148,8 @@ export const mediationController = {
                 areaId
             } = req.body;
 
-            const user = (req as any).user;
+            const user = (req as AuthRequest).user;
+            if (!user) return res.status(401).json({ error: 'Não autenticado' });
             if (user.role !== 'MASTER' && user.role !== 'RH') {
                 return res.status(403).json({ error: 'Sem permissão' });
             }
@@ -160,7 +163,6 @@ export const mediationController = {
                     participants: participants ? JSON.stringify(participants) : undefined,
                     notes,
                     confidentiality,
-                    // @ts-ignore
                     leaderId: leaderId || undefined,
                     areaId: areaId || undefined
                 }
@@ -178,7 +180,8 @@ export const mediationController = {
         try {
             const { id } = req.params;
             const { result, resultDetails } = req.body; // ACORDO, SEM_ACORDO, ENCAMINHAMENTO
-            const user = (req as any).user;
+            const user = (req as AuthRequest).user;
+            if (!user) return res.status(401).json({ error: 'Não autenticado' });
 
             if (user.role !== 'MASTER' && user.role !== 'RH') {
                 return res.status(403).json({ error: 'Sem permissão' });

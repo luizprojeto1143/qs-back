@@ -42,8 +42,19 @@ export const getRHDashboardStats = async (req: Request, res: Response) => {
             }
         }).catch(() => 0);
 
+        // Define types for the aggregation result
+        interface AggregatedArea {
+            _count: { users: number };
+            users: { id: string }[];
+        }
+
+        interface AggregatedSector {
+            name: string;
+            areas: AggregatedArea[];
+        }
+
         // Complex query: Sectors
-        let sectors: any[] = [];
+        let sectors: AggregatedSector[] = [];
         try {
             sectors = await prisma.sector.findMany({
                 where: { companyId },
@@ -101,8 +112,8 @@ export const getRHDashboardStats = async (req: Request, res: Response) => {
             : 0;
 
         const sectorEngagement = sectors.map(sector => {
-            const totalUsers = sector.areas.reduce((acc: number, area: any) => acc + area._count.users, 0);
-            const activeUsers = sector.areas.reduce((acc: number, area: any) => acc + area.users.length, 0);
+            const totalUsers = sector.areas.reduce((acc: number, area: AggregatedArea) => acc + area._count.users, 0);
+            const activeUsers = sector.areas.reduce((acc: number, area: AggregatedArea) => acc + area.users.length, 0);
 
             return {
                 name: sector.name,

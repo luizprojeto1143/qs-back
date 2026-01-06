@@ -35,51 +35,9 @@ export const listCourses = async (req: Request, res: Response) => {
         });
 
         res.json(courses);
-    } catch (error: any) {
+    } catch (error) {
         console.error('Error listing courses:', error);
-
-        // DIAGNOSTIC MODE: Gather DB info
-        let dbInfo = 'Could not fetch DB info';
-        try {
-            const tables: any[] = await prisma.$queryRaw`
-                SELECT table_name 
-                FROM information_schema.tables 
-                WHERE table_schema = 'public' AND table_name = 'Course'
-            `;
-
-            if (tables.length === 0) {
-                dbInfo = 'Table Course DOES NOT EXIST in DB';
-            } else {
-                const columns: any[] = await prisma.$queryRaw`
-                    SELECT column_name, data_type 
-                    FROM information_schema.columns 
-                    WHERE table_name = 'Course'
-                `;
-                dbInfo = 'Columns: ' + columns.map(c => c.column_name).join(', ');
-            }
-        } catch (dbError: any) {
-            dbInfo = 'DB Inspection Failed: ' + dbError.message;
-        }
-
-        // Return a FAKE course with the error details so it shows up in the UI
-        const debugCourse = {
-            id: 'debug-error',
-            title: `ERRO: ${error.message.substring(0, 50)}...`,
-            description: `DB INFO: ${dbInfo}. FULL ERROR: ${error.message}`,
-            coverUrl: null,
-            duration: 0,
-            category: 'ERRO',
-            difficulty: 'Iniciante',
-            active: true,
-            isMandatory: false,
-            publishedAt: new Date(),
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            modules: [],
-            enrollments: []
-        };
-
-        res.json([debugCourse]);
+        res.status(500).json({ error: 'Erro ao listar cursos' });
     }
 };
 
@@ -216,7 +174,7 @@ export const createLesson = async (req: Request, res: Response) => {
                 order: Number(order),
                 moduleId,
                 attachments: {
-                    create: attachments?.map((att: any) => ({
+                    create: attachments?.map((att: { name: string; url: string; type: string }) => ({
                         name: att.name,
                         url: att.url,
                         type: att.type
@@ -476,7 +434,7 @@ export const getAnalytics = async (req: Request, res: Response) => {
         // We'll take the first course as an example or aggregate all
         // For simplicity, let's return data for the most popular course
         const popularCourse = courses[0];
-        let heatmap: any[] = [];
+        let heatmap: { lesson: string; completionRate: number }[] = [];
 
         if (popularCourse) {
             heatmap = popularCourse.modules.flatMap(m =>

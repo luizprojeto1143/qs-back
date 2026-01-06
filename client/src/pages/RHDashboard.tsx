@@ -3,7 +3,35 @@ import { Users, ClipboardList, AlertTriangle, CheckCircle } from 'lucide-react';
 import { api } from '../lib/api';
 import { SkeletonCard, Skeleton } from '../components/Skeleton';
 import { VisitDetailsModal } from '../components/modals/VisitDetailsModal';
+import { toast } from 'sonner';
 
+// Interfaces para tipagem forte
+interface RHStats {
+    totalCollaborators: number;
+    visitsThisMonth: number;
+    openPendencies: number;
+    resolutionRate: string;
+    completedCourses: number;
+    pcdPercentage: string;
+}
+
+interface RecentActivity {
+    id: string;
+    description: string;
+    time: string;
+    author: string;
+}
+
+interface SectorEngagement {
+    name: string;
+    enrollments: number;
+}
+
+interface CourseWatched {
+    id: string;
+    title: string;
+    views: number;
+}
 const StatCard = ({ icon: Icon, label, value, color }: any) => (
     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center space-x-4">
         <div className={`p-3 rounded-xl ${color} bg-opacity-10`}>
@@ -17,7 +45,7 @@ const StatCard = ({ icon: Icon, label, value, color }: any) => (
 );
 
 const RHDashboard = () => {
-    const [stats, setStats] = useState({
+    const [stats, setStats] = useState<RHStats>({
         totalCollaborators: 0,
         visitsThisMonth: 0,
         openPendencies: 0,
@@ -25,10 +53,11 @@ const RHDashboard = () => {
         completedCourses: 0,
         pcdPercentage: '0%'
     });
-    const [recentActivity, setRecentActivity] = useState<any[]>([]);
-    const [sectorEngagement, setSectorEngagement] = useState<any[]>([]);
-    const [mostWatchedCourses, setMostWatchedCourses] = useState<any[]>([]);
+    const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
+    const [sectorEngagement, setSectorEngagement] = useState<SectorEngagement[]>([]);
+    const [mostWatchedCourses, setMostWatchedCourses] = useState<CourseWatched[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(false);
 
     const [selectedVisitId, setSelectedVisitId] = useState<string | null>(null);
     const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
@@ -36,14 +65,16 @@ const RHDashboard = () => {
     useEffect(() => {
         const fetchStats = async () => {
             try {
+                setError(false);
                 const response = await api.get('/dashboard/rh');
                 const data = response.data;
                 if (data.stats) setStats(data.stats);
                 if (data.recentActivity) setRecentActivity(data.recentActivity);
                 if (data.sectorEngagement) setSectorEngagement(data.sectorEngagement);
                 if (data.mostWatchedCourses) setMostWatchedCourses(data.mostWatchedCourses);
-            } catch (error) {
-                console.error('Error fetching dashboard stats', error);
+            } catch {
+                setError(true);
+                toast.error('Erro ao carregar dados do dashboard');
             } finally {
                 setLoading(false);
             }

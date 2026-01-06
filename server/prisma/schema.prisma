@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // Enums are not supported in SQLite, so we use String with validation in code
@@ -108,6 +109,9 @@ model User {
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  twoFactorEnabled Boolean @default(false)
+  twoFactorSecret  String?
 
   active    Boolean  @default(true)
   deletedAt DateTime?
@@ -568,15 +572,18 @@ model Certificate {
 
 model AuditLog {
   id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  action    String   // VIEW_COURSE, COMPLETE_LESSON, etc.
-  resource  String   // Course:ID, Lesson:ID
-  details   String?  // JSON
-  createdAt DateTime @default(now())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  action    String   // LOGIN, LOGIN_FAIL, CREATE_USER, etc.
+  resource  String?  // Target resource ID or name
+  details   String?  // JSON details
+  ipAddress String?
+  userAgent String?
   
-  companyId String
-  company   Company  @relation(fields: [companyId], references: [id])
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
+  
+  createdAt DateTime @default(now())
 }
 
 // Quiz System Models

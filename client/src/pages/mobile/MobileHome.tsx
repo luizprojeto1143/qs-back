@@ -4,15 +4,56 @@ import { Play, Calendar, Clock, X, Video, AlertTriangle } from 'lucide-react';
 import { api } from '../../lib/api';
 import { useLibrasAvailability } from '../../hooks/useLibrasAvailability';
 
+import { toast } from 'sonner';
+
+interface FeedItem {
+    id: string;
+    title: string;
+    description: string;
+    type: 'video' | 'article';
+    thumbnail: string;
+    author: string;
+    readTime?: string;
+    duration?: string;
+    videoLibrasUrl?: string;
+    imageUrl?: string;
+    category?: string;
+    createdAt: string;
+}
+
+interface Schedule {
+    id: string;
+    date: string;
+    time?: string;
+    collaborator?: string;
+}
+
+interface User {
+    name: string;
+    role?: string;
+    avatar?: string;
+}
+
 const MobileHome = () => {
     const navigate = useNavigate();
     const { isLibrasAvailable } = useLibrasAvailability();
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    const firstName = user.name ? user.name.split(' ')[0] : 'Visitante';
-    const [selectedPost, setSelectedPost] = useState<any>(null);
 
-    const [feedItems, setFeedItems] = useState<any[]>([]);
-    const [nextSchedule, setNextSchedule] = useState<any>(null);
+    // Parsing seguro do localStorage
+    let user: User = { name: 'Visitante' };
+    try {
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+            user = JSON.parse(storedUser);
+        }
+    } catch {
+        // Fallback silencioso se JSON inválido
+    }
+
+    const firstName = user.name ? user.name.split(' ')[0] : 'Visitante';
+    const [selectedPost, setSelectedPost] = useState<FeedItem | null>(null);
+
+    const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
+    const [nextSchedule, setNextSchedule] = useState<Schedule | null>(null);
     const [loading, setLoading] = useState(true);
     useEffect(() => {
         const fetchData = async () => {
@@ -51,8 +92,8 @@ const MobileHome = () => {
                     if (next) setNextSchedule(next);
                 }
 
-            } catch (error) {
-                console.error('Error fetching mobile home data', error);
+            } catch {
+                toast.error('Erro ao carregar novidades');
             } finally {
                 setLoading(false);
             }
@@ -140,7 +181,8 @@ const MobileHome = () => {
                             <>
                                 <p className="font-semibold">Acompanhamento</p>
                                 <p className="text-sm text-blue-100 mt-1">
-                                    {new Date(nextSchedule.date).toLocaleDateString()} às {nextSchedule.time}
+                                    {new Date(nextSchedule.date).toLocaleDateString()}
+                                    {nextSchedule.time ? ` às ${nextSchedule.time}` : ''}
                                 </p>
                                 <p className="text-xs text-blue-200 mt-2 flex items-center">
                                     <Clock className="h-3 w-3 mr-1" />

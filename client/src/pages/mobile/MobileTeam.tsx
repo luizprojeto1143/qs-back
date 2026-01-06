@@ -1,9 +1,19 @@
 import { useState, useEffect } from 'react';
 import { User, Phone, Mail, Calendar } from 'lucide-react';
 import { api } from '../../lib/api';
+import { toast } from 'sonner';
+
+interface TeamMember {
+    id: string;
+    name: string;
+    role: string;
+    status?: string;
+    email: string;
+    avatar?: string;
+}
 
 const MobileTeam = () => {
-    const [team, setTeam] = useState<any[]>([]);
+    const [team, setTeam] = useState<TeamMember[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -17,9 +27,8 @@ const MobileTeam = () => {
                 const teamMembers = allUsers.filter((u: any) => u.role === 'COLABORADOR');
                 setTeam(teamMembers);
 
-            } catch (error) {
-                console.error('Error fetching team', error);
-                // Keep empty or show error
+            } catch {
+                toast.error('Erro ao carregar equipe');
             } finally {
                 setLoading(false);
             }

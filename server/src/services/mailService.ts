@@ -10,13 +10,16 @@ const transporter = nodemailer.createTransport({
     },
 });
 
-export const sendInviteEmail = async (to: string, roomUrl: string, collaboratorInfo: any) => {
+interface CollaboratorInfo {
+    name: string;
+    matricula: string;
+    area: string;
+    shift: string;
+}
+
+export const sendInviteEmail = async (to: string, roomUrl: string, collaboratorInfo: CollaboratorInfo) => {
     if (!process.env.SMTP_USER) {
-        console.log('---------------------------------------------------');
-        console.log('⚠️ SMTP not configured. Email would be sent to:', to);
-        // console.log('Room URL:', roomUrl); // Removed for security
-        // console.log('Collaborator:', collaboratorInfo); // Removed for security
-        console.log('---------------------------------------------------');
+        console.log(`[MailService] SMTP not configured. Email to ${to} suppressed.`);
         return;
     }
 

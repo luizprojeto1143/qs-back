@@ -1,8 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, AlertCircle } from 'lucide-react';
-import { api } from '../lib/api';
-import { toast } from 'sonner';
+import { useInclusionDiagnosis } from '../hooks/useInclusionDiagnosis';
 
 const CATEGORIES = [
     'acessibilidade_arquitetonica',
@@ -16,74 +13,15 @@ const CATEGORIES = [
 ];
 
 const InclusionDiagnosisEditor = () => {
-    const navigate = useNavigate();
-    const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState(false);
-    const [companyId, setCompanyId] = useState('');
-    const [diagnosis, setDiagnosis] = useState<any>({});
-
-    useEffect(() => {
-        const user = JSON.parse(localStorage.getItem('user') || '{}');
-        const selectedCompanyId = localStorage.getItem('selectedCompanyId') || user.companyId;
-
-        if (!selectedCompanyId) {
-            toast.error('Empresa não selecionada');
-            navigate('/dashboard');
-            return;
-        }
-
-        setCompanyId(selectedCompanyId);
-        fetchDiagnosis();
-    }, [navigate]);
-
-    const fetchDiagnosis = async () => {
-        try {
-            // We fetch the report data to get the current diagnosis
-            const res = await api.post('/reports', {
-                type: 'INCLUSION_DIAGNOSIS',
-                filters: {} // Context company ID is used automatically
-            });
-
-            if (res.data.success && res.data.data) {
-                setDiagnosis(res.data.data.categories || {});
-            }
-        } catch (error) {
-            console.error('Error fetching diagnosis', error);
-            toast.error('Erro ao carregar diagnóstico');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleScoreChange = (category: string, score: number) => {
-        setDiagnosis((prev: any) => ({
-            ...prev,
-            [category]: { ...prev[category], score }
-        }));
-    };
-
-    const handleNotesChange = (category: string, notes: string) => {
-        setDiagnosis((prev: any) => ({
-            ...prev,
-            [category]: { ...prev[category], notes }
-        }));
-    };
-
-    const handleSave = async () => {
-        setSaving(true);
-        try {
-            await api.put(`/companies/${companyId}`, {
-                inclusionDiagnosis: { categories: diagnosis }
-            });
-            toast.success('Diagnóstico salvo com sucesso!');
-            navigate(-1);
-        } catch (error) {
-            console.error('Error saving diagnosis', error);
-            toast.error('Erro ao salvar diagnóstico');
-        } finally {
-            setSaving(false);
-        }
-    };
+    const {
+        loading,
+        saving,
+        diagnosis,
+        handleScoreChange,
+        handleNotesChange,
+        saveDiagnosis,
+        navigate
+    } = useInclusionDiagnosis();
 
     if (loading) return <div className="p-8 text-center">Carregando...</div>;
 
@@ -101,7 +39,7 @@ const InclusionDiagnosisEditor = () => {
                         </div>
                     </div>
                     <button
-                        onClick={handleSave}
+                        onClick={saveDiagnosis}
                         disabled={saving}
                         className="btn-primary flex items-center space-x-2"
                     >

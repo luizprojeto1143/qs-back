@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import { MapPin, Plus, X } from 'lucide-react';
 import { useCompany } from '../../contexts/CompanyContext';
 import { api } from '../../lib/api';
+import { EmptyState } from '../../components/EmptyState';
+import type { Area, Sector } from '../../types/organization';
 
 const AreasList = () => {
     const { selectedCompanyId } = useCompany();
-    const [areas, setAreas] = useState<any[]>([]);
-    const [sectors, setSectors] = useState<any[]>([]);
+    const [areas, setAreas] = useState<Area[]>([]);
+    const [sectors, setSectors] = useState<Sector[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -14,9 +16,6 @@ const AreasList = () => {
 
     const fetchData = async () => {
         try {
-            // const token = localStorage.getItem('token');
-            // const headers = { 'Authorization': `Bearer ${token}` };
-
             const [resAreas, resSectors] = await Promise.all([
                 api.get('/areas'),
                 api.get('/sectors')
@@ -54,7 +53,7 @@ const AreasList = () => {
         }
     };
 
-    const handleEdit = (area: any) => {
+    const handleEdit = (area: Area) => {
         setNewArea({
             name: area.name,
             sectorId: area.sectorId
@@ -89,39 +88,51 @@ const AreasList = () => {
 
             {loading ? (
                 <div className="text-center py-10 text-gray-500 dark:text-gray-400">Carregando...</div>
+            ) : filteredAreas.length === 0 ? (
+                <EmptyState
+                    title="Nenhuma área encontrada"
+                    description="Cadastre as áreas da empresa para organizar melhor os colaboradores e visitas."
+                    icon={MapPin}
+                    action={{
+                        label: 'Nova Área',
+                        onClick: () => setIsModalOpen(true)
+                    }}
+                />
             ) : (
                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-                    <table className="w-full text-left">
-                        <thead className="bg-gray-50 dark:bg-gray-700 border-b border-gray-100 dark:border-gray-700">
-                            <tr>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider">Nome da Área</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider">Setor</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider">Empresa</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                            {filteredAreas.map((area) => (
-                                <tr key={area.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                    <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">
-                                        <div className="flex items-center space-x-3">
-                                            <div className="p-2 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-lg">
-                                                <MapPin className="h-5 w-5" />
-                                            </div>
-                                            <span>{area.name}</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 text-gray-500 dark:text-gray-400">{area.sector?.name}</td>
-                                    <td className="px-6 py-4 text-gray-500 dark:text-gray-400">
-                                        {area.sector?.company?.name || '-'}
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <button type="button" onClick={() => handleEdit(area)} className="text-primary hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium">Editar</button>
-                                    </td>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left">
+                            <thead className="bg-gray-50 dark:bg-gray-700 border-b border-gray-100 dark:border-gray-700">
+                                <tr>
+                                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider">Nome da Área</th>
+                                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider">Setor</th>
+                                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider">Empresa</th>
+                                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider">Ações</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                                {filteredAreas.map((area) => (
+                                    <tr key={area.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                        <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">
+                                            <div className="flex items-center space-x-3">
+                                                <div className="p-2 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-lg">
+                                                    <MapPin className="h-5 w-5" />
+                                                </div>
+                                                <span>{area.name}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-gray-500 dark:text-gray-400">{area.sector?.name}</td>
+                                        <td className="px-6 py-4 text-gray-500 dark:text-gray-400">
+                                            {area.sector?.company?.name || '-'}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <button type="button" onClick={() => handleEdit(area)} className="text-primary hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium">Editar</button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             )}
 
@@ -131,7 +142,7 @@ const AreasList = () => {
                     <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md p-6">
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-bold text-gray-900 dark:text-white">{editingId ? 'Editar Área' : 'Nova Área'}</h2>
-                            <button type="button" onClick={() => { setIsModalOpen(false); setEditingId(null); }} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                            <button type="button" onClick={() => { setIsModalOpen(false); setEditingId(null); }} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" aria-label="Fechar modal">
                                 <X className="h-6 w-6" />
                             </button>
                         </div>
