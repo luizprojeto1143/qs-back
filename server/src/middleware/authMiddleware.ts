@@ -37,9 +37,14 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
 
     try {
         const verified = jwt.verify(token, JWT_SECRET) as any;
+        console.log('[Auth] Detected Token Payload:', JSON.stringify(verified));
+
+        if (!verified || !verified.userId) {
+            console.error('[Auth] Token missing userId');
+            return res.status(403).json({ error: 'Invalid token structure' });
+        }
 
         // SECURITY CHECK: Verify if user still exists and is active
-        // This prevents access from banned/fired users with valid tokens
         const userStatus = await prisma.user.findUnique({
             where: { id: verified.userId },
             select: { active: true, companyId: true, role: true, areaId: true }
@@ -80,7 +85,12 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
         }
 
         // If it's not JWT, it might be DB
-        res.status(500).json({ error: 'Internal Auth Validation Error', details: errorMessage });
+        console.error('[Auth] Full Error Object:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
+        res.status(500).json({
+            error: 'Internal Auth Validation Error',
+            details: errorMessage,
+            raw: JSON.stringify(error, Object.getOwnPropertyNames(error))
+        });
     }
 };
 
