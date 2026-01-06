@@ -110,6 +110,10 @@ app.get('/', (req, res) => {
   res.send('QS Inclusão API is running');
 });
 
+// Deep Diagnostic Endpoint (Public)
+import * as healthController from './controllers/healthController';
+app.get('/api/status', healthController.checkStatus);
+
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 
