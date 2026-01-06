@@ -50,8 +50,8 @@ const rateLimit = new Map();
 app.use((req, res, next) => {
   const ip = req.ip;
   const now = Date.now();
-  const windowMs = 15 * 60 * 1000; // 15 minutes
-  const maxReq = 100;
+  const windowMs = 5 * 60 * 1000; // 5 minutes
+  const maxReq = 2000; // Allow more requests for polling
 
   const record = rateLimit.get(ip) || { count: 0, startTime: now };
 
