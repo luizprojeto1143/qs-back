@@ -214,7 +214,9 @@ export const getShifts = async (req: Request, res: Response) => {
         res.json(shifts);
     } catch (error) {
         console.error('Error fetching shifts:', error);
-        res.status(500).json({ error: 'Error fetching shifts' });
+        // @ts-ignore
+        console.error('Shifts Error Details:', error.message);
+        res.status(500).json({ error: 'Error fetching shifts', details: String(error) });
     }
 };
 

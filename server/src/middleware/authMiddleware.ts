@@ -70,8 +70,17 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
         (req as AuthRequest).user = verified;
         next();
     } catch (error) {
-        console.error('Auth Error:', error);
-        res.status(403).json({ error: 'Invalid token' });
+        console.error('FATAL Auth Error:', error);
+        // @ts-ignore
+        const errorMessage = error.message || 'Unknown error';
+        console.error('Auth Error Details:', errorMessage);
+
+        if (errorMessage.includes('jwt')) {
+            return res.status(403).json({ error: 'Invalid token' });
+        }
+
+        // If it's not JWT, it might be DB
+        res.status(500).json({ error: 'Internal Auth Validation Error', details: errorMessage });
     }
 };
 
