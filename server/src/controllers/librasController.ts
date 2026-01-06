@@ -81,7 +81,8 @@ export const checkAvailability = async (req: Request, res: Response) => {
 
     } catch (error) {
         console.error('Error checking libras availability:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        // Fail safe: unavailable
+        res.json({ available: false, reason: 'System error' });
     }
 };
 
@@ -100,7 +101,8 @@ export const getSettings = async (req: Request, res: Response) => {
         res.json(company?.librasAvailability ? JSON.parse(company.librasAvailability) : {});
     } catch (error) {
         console.error('Error fetching libras settings:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        // Fail safe: empty settings (default UI)
+        res.json({});
     }
 };
 
