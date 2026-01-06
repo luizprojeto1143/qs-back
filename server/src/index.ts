@@ -31,7 +31,7 @@ app.use(helmet({
 }));
 
 // CORS Configuration
-const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173,http://localhost:4173').split(',');
+const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173,http://localhost:4173,https://qs-back.vercel.app').split(',');
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin || allowedOrigins.indexOf(origin) !== -1) {
