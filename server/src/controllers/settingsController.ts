@@ -312,10 +312,15 @@ export const deleteShift = async (req: Request, res: Response) => {
 // Availability
 export const getAvailability = async (req: Request, res: Response) => {
     try {
+        console.log('[Settings] Entering getAvailability...');
         const user = (req as AuthRequest).user;
+        console.log('[Settings] User context:', user);
+
         if (!user || !user.companyId) {
+            console.log('[Settings] Missing user or companyId');
             return res.status(400).json({ error: 'User or Company not found' });
         }
+
 
         const company = await prisma.company.findFirst({
             where: { id: user.companyId },
