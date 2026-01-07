@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Play, Calendar, Clock, X, Video, AlertTriangle } from 'lucide-react';
 import { api } from '../../lib/api';
 import { useLibrasAvailability } from '../../hooks/useLibrasAvailability';
+import { useCompany } from '../../contexts/CompanyContext';
 
 import { toast } from 'sonner';
 
@@ -37,6 +38,11 @@ interface User {
 const MobileHome = () => {
     const navigate = useNavigate();
     const { isLibrasAvailable } = useLibrasAvailability();
+    const { companies } = useCompany();
+
+    // Get current company to check module enablement
+    const currentCompany = companies[0];
+    const isComplaintsEnabled = currentCompany?.systemSettings?.complaintsEnabled;
 
     // Parsing seguro do localStorage
     let user: User = { name: 'Visitante' };
@@ -154,21 +160,23 @@ const MobileHome = () => {
                     <span className="text-sm font-bold text-gray-700 text-center">Solicitar Folga</span>
                 </button>
 
-                {/* Canal de Ética */}
-                <button
-                    onClick={() => navigate('/app/complaints')}
-                    className="col-span-2 bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between px-6 active:scale-95 transition-transform"
-                >
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-orange-50 text-orange-600 rounded-full flex items-center justify-center">
-                            <AlertTriangle className="h-5 w-5" />
+                {/* Canal de Ética - Only show if complaints module is enabled */}
+                {isComplaintsEnabled && (
+                    <button
+                        onClick={() => navigate('/app/complaints')}
+                        className="col-span-2 bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between px-6 active:scale-95 transition-transform"
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-orange-50 text-orange-600 rounded-full flex items-center justify-center">
+                                <AlertTriangle className="h-5 w-5" />
+                            </div>
+                            <div className="text-left">
+                                <span className="block text-sm font-bold text-gray-900">Canal de Ética</span>
+                                <span className="text-xs text-gray-500">Denúncia anônima ou identificada</span>
+                            </div>
                         </div>
-                        <div className="text-left">
-                            <span className="block text-sm font-bold text-gray-900">Canal de Ética</span>
-                            <span className="text-xs text-gray-500">Denúncia anônima ou identificada</span>
-                        </div>
-                    </div>
-                </button>
+                    </button>
+                )}
             </div>
 
             {/* Next Schedule Card */}
