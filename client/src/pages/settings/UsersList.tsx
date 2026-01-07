@@ -218,135 +218,133 @@ export function UsersList() {
                                 </tr>
                             ))}
                         </tbody>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-            {
-        isModalOpen && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md p-6 m-4">
-                    <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-xl font-bold text-gray-800 dark:text-white">
-                            {editingUser ? 'Editar Usuário' : 'Novo Usuário'}
-                        </h3>
-                        <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" aria-label="Fechar modal">
-                            <X size={24} />
-                        </button>
-                    </div>
-
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome</label>
-                            <input
-                                type="text"
-                                required
-                                value={formData.name}
-                                onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
-                            <input
-                                type="email"
-                                required
-                                value={formData.email}
-                                onChange={e => setFormData({ ...formData, email: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Senha</label>
-                            <input
-                                type="password"
-                                required={!editingUser}
-                                placeholder={editingUser ? 'Deixe em branco para manter' : ''}
-                                value={formData.password}
-                                onChange={e => setFormData({ ...formData, password: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Perfil</label>
-                            <select
-                                value={formData.role}
-                                onChange={e => setFormData({ ...formData, role: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                            >
-                                <option value="RH">RH</option>
-                                <option value="LIDER">Líder</option>
-                                <option value="MASTER">Master</option>
-                            </select>
-                        </div>
-
-                        {formData.role !== 'MASTER' && (
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Empresa</label>
-                                <div className="relative">
-                                    <Building2 className="absolute left-3 top-2.5 text-gray-400" size={18} />
-                                    <select
-                                        required
-                                        value={formData.companyId}
-                                        onChange={e => setFormData({ ...formData, companyId: e.target.value })}
-                                        className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                                    >
-                                        <option value="">Selecione uma empresa...</option>
-                                        {companies?.map(company => (
-                                            <option key={company.id} value={company.id}>{company.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-                        )}
-
-                        {formData.role === 'LIDER' && (
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Área</label>
-                                <div className="relative">
-                                    <MapPin className="absolute left-3 top-2.5 text-gray-400" size={18} />
-                                    <select
-                                        required
-                                        value={formData.areaId}
-                                        onChange={e => setFormData({ ...formData, areaId: e.target.value })}
-                                        className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                                    >
-                                        <option value="">Selecione uma área...</option>
-                                        {areas
-                                            ?.filter((area: any) => !formData.companyId || (area.sector && area.sector.companyId === formData.companyId))
-                                            .map(area => (
-                                                <option key={area.id} value={area.id}>{area.name}</option>
-                                            ))}
-                                    </select>
-                                </div>
-                            </div>
-                        )}
-
-                        <div className="flex justify-end gap-3 mt-6">
-                            <button
-                                type="button"
-                                onClick={() => setIsModalOpen(false)}
-                                className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                type="submit"
-                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-                            >
-                                <Check size={18} />
-                                {editingUser ? 'Salvar Alterações' : 'Criar Usuário'}
-                            </button>
-                        </div>
-                    </form>
+                    </table>
                 </div>
+
+                {
+                    isModalOpen && (
+                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md p-6 m-4">
+                                <div className="flex justify-between items-center mb-6">
+                                    <h3 className="text-xl font-bold text-gray-800 dark:text-white">
+                                        {editingUser ? 'Editar Usuário' : 'Novo Usuário'}
+                                    </h3>
+                                    <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" aria-label="Fechar modal">
+                                        <X size={24} />
+                                    </button>
+                                </div>
+
+                                <form onSubmit={handleSubmit} className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={formData.name}
+                                            onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                                        <input
+                                            type="email"
+                                            required
+                                            value={formData.email}
+                                            onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Senha</label>
+                                        <input
+                                            type="password"
+                                            required={!editingUser}
+                                            placeholder={editingUser ? 'Deixe em branco para manter' : ''}
+                                            value={formData.password}
+                                            onChange={e => setFormData({ ...formData, password: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Perfil</label>
+                                        <select
+                                            value={formData.role}
+                                            onChange={e => setFormData({ ...formData, role: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                        >
+                                            <option value="RH">RH</option>
+                                            <option value="LIDER">Líder</option>
+                                            <option value="MASTER">Master</option>
+                                        </select>
+                                    </div>
+
+                                    {formData.role !== 'MASTER' && (
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Empresa</label>
+                                            <div className="relative">
+                                                <Building2 className="absolute left-3 top-2.5 text-gray-400" size={18} />
+                                                <select
+                                                    required
+                                                    value={formData.companyId}
+                                                    onChange={e => setFormData({ ...formData, companyId: e.target.value })}
+                                                    className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                                >
+                                                    <option value="">Selecione uma empresa...</option>
+                                                    {companies?.map(company => (
+                                                        <option key={company.id} value={company.id}>{company.name}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {formData.role === 'LIDER' && (
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Área</label>
+                                            <div className="relative">
+                                                <MapPin className="absolute left-3 top-2.5 text-gray-400" size={18} />
+                                                <select
+                                                    required
+                                                    value={formData.areaId}
+                                                    onChange={e => setFormData({ ...formData, areaId: e.target.value })}
+                                                    className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                                >
+                                                    <option value="">Selecione uma área...</option>
+                                                    {areas
+                                                        ?.filter((area: any) => !formData.companyId || (area.sector && area.sector.companyId === formData.companyId))
+                                                        .map(area => (
+                                                            <option key={area.id} value={area.id}>{area.name}</option>
+                                                        ))}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="flex justify-end gap-3 mt-6">
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsModalOpen(false)}
+                                            className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                                        >
+                                            Cancelar
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                                        >
+                                            <Check size={18} />
+                                            {editingUser ? 'Salvar Alterações' : 'Criar Usuário'}
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    )
+                }
             </div>
-        )
-    }
-        </div >
-    );
+            );
 }

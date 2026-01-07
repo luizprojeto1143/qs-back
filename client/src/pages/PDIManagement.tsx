@@ -35,7 +35,7 @@ const PDIManagement = () => {
         userId: '',
         objective: '',
         skills: '',
-        skills: '',
+
         actions: '',
         accessibilityNeeds: ''
     });
