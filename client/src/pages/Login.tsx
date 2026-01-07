@@ -18,7 +18,7 @@ const Login = () => {
         setLoading(true);
 
         try {
-            const payload: any = { email, password };
+            const payload: any = { email: email.trim().toLowerCase(), password };
             if (require2FA && totpCode) payload.totpCode = totpCode;
 
             const response = await api.post('/auth/login', payload);

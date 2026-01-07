@@ -98,7 +98,8 @@ export const login = async (req: Request, res: Response) => {
         if (!validation.success) {
             return res.status(400).json({ error: 'Validation error', details: validation.error.format() });
         }
-        const { email, password } = validation.data;
+        const { email: rawEmail, password } = validation.data;
+        const email = rawEmail.toLowerCase().trim();
         const { totpCode } = req.body;
 
         const user = await prisma.user.findFirst({ where: { email } });
