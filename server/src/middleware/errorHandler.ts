@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { sendError500, ERROR_CODES } from '../utils/errorUtils';
 
 export const errorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
     console.error('Unhandled Error:', err);
@@ -15,8 +16,5 @@ export const errorHandler = (err: any, req: Request, res: Response, next: NextFu
         return res.status(404).json({ error: 'Resource not found' });
     }
 
-    res.status(500).json({
-        error: 'Internal Server Error',
-        message: process.env.NODE_ENV === 'development' ? err.message : undefined
-    });
+    sendError500(res, ERROR_CODES.UNKNOWN, err);
 };

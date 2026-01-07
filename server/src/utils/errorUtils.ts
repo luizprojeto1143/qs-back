@@ -22,6 +22,7 @@ export const ERROR_CODES = {
     AUTH_VERIFY_2FA: 'AUTH_006',
     AUTH_DISABLE_2FA: 'AUTH_007',
     AUTH_VALIDATION: 'AUTH_008',
+    AUTH_CHECK: 'AUTH_009',
 
     // User errors (USER_xxx)
     USER_LIST: 'USER_001',
@@ -207,6 +208,7 @@ export const ERROR_CODES = {
 
     // Generic
     INTERNAL: 'ERR_500',
+    UNKNOWN: 'ERR_999',
 } as const;
 
 // Portuguese messages for each error code
@@ -220,6 +222,7 @@ export const ERROR_MESSAGES: Record<string, string> = {
     [ERROR_CODES.AUTH_VERIFY_2FA]: 'Erro ao verificar código 2FA',
     [ERROR_CODES.AUTH_DISABLE_2FA]: 'Erro ao desativar autenticação de dois fatores',
     [ERROR_CODES.AUTH_VALIDATION]: 'Erro de validação de autenticação',
+    [ERROR_CODES.AUTH_CHECK]: 'Erro ao verificar status da conta',
 
     // User
     [ERROR_CODES.USER_LIST]: 'Erro ao listar usuários',
@@ -405,6 +408,7 @@ export const ERROR_MESSAGES: Record<string, string> = {
 
     // Generic
     [ERROR_CODES.INTERNAL]: 'Erro interno do servidor',
+    [ERROR_CODES.UNKNOWN]: 'Erro inesperado do sistema',
 };
 
 /**

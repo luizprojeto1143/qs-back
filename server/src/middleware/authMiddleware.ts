@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import * as jwt from 'jsonwebtoken';
 
 import prisma from '../prisma';
+import { sendError500, ERROR_CODES } from '../utils/errorUtils';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -81,17 +82,12 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
         }
 
         // Only expose detailed errors in development
+        // Only expose detailed errors in development
         if (process.env.NODE_ENV === 'development') {
             console.error('Auth Error:', errorMessage);
-            res.status(500).json({
-                error: 'Internal Auth Validation Error',
-                message: errorMessage,
-                stack: error.stack,
-                type: error.constructor.name
-            });
-        } else {
-            res.status(500).json({ error: 'Authentication error' });
         }
+
+        sendError500(res, ERROR_CODES.AUTH_CHECK, error);
     }
 };
 
