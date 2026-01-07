@@ -35,13 +35,13 @@ export const register = async (req: Request, res: Response) => {
 
         // Validate Company if provided
         if (companyId) {
-            const company = await prisma.company.findUnique({ where: { id: companyId } });
+            const company = await prisma.company.findFirst({ where: { id: companyId } });
             if (!company) {
                 return res.status(400).json({ error: 'Invalid Company ID' });
             }
         }
 
-        const existingUser = await prisma.user.findUnique({ where: { email } });
+        const existingUser = await prisma.user.findFirst({ where: { email } });
         if (existingUser) {
             return res.status(400).json({ error: 'User already exists' });
         }
@@ -115,7 +115,8 @@ export const login = async (req: Request, res: Response) => {
         // For now, let's extract it from req.body directly as it might be extra
         const { totpCode } = req.body;
 
-        const user = await prisma.user.findUnique({ where: { email } });
+        console.log(`[Auth] Login Attempt for: ${email}`);
+        const user = await prisma.user.findFirst({ where: { email } });
         if (!user) {
             await logAction(null, ACTIONS.LOGIN_FAIL, 'AUTH', { email, reason: 'User not found' }, null, getIp(req), getUserAgent(req));
             return res.status(401).json({ error: 'Invalid credentials' });
@@ -189,11 +190,11 @@ export const registerCollaborator = async (req: Request, res: Response) => {
         const { email, password, name, matricula, areaId, companyId, shift, disabilityType, needsDescription } = validation.data;
 
         // 1. Validate Company
-        const company = await prisma.company.findUnique({ where: { id: companyId } });
+        const company = await prisma.company.findFirst({ where: { id: companyId } });
         if (!company) return res.status(400).json({ error: 'Invalid Company' });
 
         // 2. Check if user exists
-        const existingUser = await prisma.user.findUnique({ where: { email } });
+        const existingUser = await prisma.user.findFirst({ where: { email } });
         if (existingUser) return res.status(400).json({ error: 'Email already registered' });
 
         // 3. Create User & Profile in Transaction
@@ -240,7 +241,7 @@ export const getProfile = async (req: Request, res: Response) => {
             return res.status(401).json({ error: 'User ID not found in token' });
         }
 
-        const user = await prisma.user.findUnique({
+        const user = await prisma.user.findFirst({
             where: { id: userId },
             include: {
                 company: true,
