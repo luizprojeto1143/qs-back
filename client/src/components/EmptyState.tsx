@@ -1,9 +1,9 @@
-import { LucideIcon } from 'lucide-react';
+import React from 'react';
 
 interface EmptyStateProps {
     title: string;
     description: string;
-    icon: LucideIcon;
+    icon: React.ElementType;
     action?: {
         label: string;
         onClick: () => void;
