@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { AuthRequest } from '../middleware/authMiddleware';
 import prisma from '../prisma';
+import { sendError500, ERROR_CODES } from '../utils/errorUtils';
 
 export const mediationController = {
     // Criar nova mediação
@@ -48,8 +49,7 @@ export const mediationController = {
 
             res.status(201).json(mediation);
         } catch (error) {
-            console.error('Error creating mediation:', error);
-            res.status(500).json({ error: 'Erro ao criar mediação' });
+            sendError500(res, ERROR_CODES.MED_CREATE, error);
         }
     },
 
@@ -94,8 +94,7 @@ export const mediationController = {
 
             res.json(parsedMediations);
         } catch (error) {
-            console.error('Error listing mediations:', error);
-            res.status(500).json({ error: 'Erro ao listar mediações' });
+            sendError500(res, ERROR_CODES.MED_LIST, error);
         }
     },
 
@@ -128,8 +127,7 @@ export const mediationController = {
                 participants: mediation.participants ? JSON.parse(mediation.participants) : []
             });
         } catch (error) {
-            console.error('Error getting mediation:', error);
-            res.status(500).json({ error: 'Erro ao obter mediação' });
+            sendError500(res, ERROR_CODES.MED_GET, error);
         }
     },
 
@@ -170,8 +168,7 @@ export const mediationController = {
 
             res.json(mediation);
         } catch (error) {
-            console.error('Error updating mediation:', error);
-            res.status(500).json({ error: 'Erro ao atualizar mediação' });
+            sendError500(res, ERROR_CODES.MED_UPDATE, error);
         }
     },
 
@@ -210,8 +207,7 @@ export const mediationController = {
 
             res.json(mediation);
         } catch (error) {
-            console.error('Error concluding mediation:', error);
-            res.status(500).json({ error: 'Erro ao concluir mediação' });
+            sendError500(res, ERROR_CODES.MED_CONCLUDE, error);
         }
     }
 };

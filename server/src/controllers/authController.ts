@@ -7,18 +7,7 @@ import { AuthRequest, getIp, getUserAgent } from '../middleware/authMiddleware';
 import * as speakeasy from 'speakeasy';
 import * as qrcode from 'qrcode';
 import { logAction, ACTIONS } from '../services/auditService';
-
-// ... (code between header and getProfile remains unchanged, I will target the getProfile function)
-
-// I cannot target non-contiguous blocks easily with one replace, but I can target the top imports and the getProfile function separately if needed, 
-// or I can assume lines 1-5 need the import added.
-// Wait, I can't use multi_replace for non-contiguous if I use replace_file_content.
-// I will use multi_replace_file_content as I need to touch imports AND the usage down below.
-// Actually, I'll allow multiple tool calls or just use replace_file_content twice?
-// No, I should use multi_replace_file_content if I want to do it cleanly in one go, but replace_file_content is requested.
-// I will add the import first, then fix the function.
-// Actually, I can just add the import at the top.
-
+import { sendError500, ERROR_CODES } from '../utils/errorUtils';
 
 if (!process.env.JWT_SECRET) {
     throw new Error('FATAL: JWT_SECRET is not defined.');
@@ -64,8 +53,7 @@ export const register = async (req: Request, res: Response) => {
 
         res.status(201).json({ message: 'User created successfully', userId: user.id });
     } catch (error) {
-        console.error('Registration error:', error);
-        res.status(500).json({ error: 'Error creating user' });
+        sendError500(res, ERROR_CODES.AUTH_CREATE_USER, error);
     }
 };
 
@@ -111,41 +99,49 @@ export const login = async (req: Request, res: Response) => {
             return res.status(400).json({ error: 'Validation error', details: validation.error.format() });
         }
         const { email, password } = validation.data;
-        // Check for totp code in body (not in schema yet, but we can extract it manually or update schema)
-        // For now, let's extract it from req.body directly as it might be extra
         const { totpCode } = req.body;
 
-        console.log(`[Auth] Login Attempt for: ${email}`);
-        console.log('[Login] Step 1: Searching user...');
         const user = await prisma.user.findFirst({ where: { email } });
         if (!user) {
-            console.log('[Login] User not found');
             await logAction(null, ACTIONS.LOGIN_FAIL, 'AUTH', { email, reason: 'User not found' }, null, getIp(req), getUserAgent(req));
             return res.status(401).json({ error: 'Invalid credentials' });
         }
-        console.log('[Login] Step 2: User found, verifying password...');
 
         const isValidPassword = await bcrypt.compare(password, user.password);
         if (!isValidPassword) {
-            console.log('[Login] Invalid password');
             await logAction(user.id, ACTIONS.LOGIN_FAIL, 'AUTH', { email, reason: 'Invalid password' }, user.companyId, getIp(req), getUserAgent(req));
             return res.status(401).json({ error: 'Invalid credentials' });
         }
-        console.log('[Login] Step 3: Password valid. Checking 2FA...');
 
-        // 2FA Logic
+        // 2FA Logic - Verify TOTP if enabled
         if (user.twoFactorEnabled) {
-            // ... (keep existing logic)
+            if (!totpCode) {
+                return res.status(400).json({ error: '2FA code required', requires2FA: true });
+            }
+
+            if (!user.twoFactorSecret) {
+                return sendError500(res, ERROR_CODES.AUTH_SETUP_2FA, new Error('2FA secret missing'));
+            }
+
+            const isValidTotp = speakeasy.totp.verify({
+                secret: user.twoFactorSecret,
+                encoding: 'base32',
+                token: totpCode,
+                window: 1 // Allow 1 step before/after for clock drift
+            });
+
+            if (!isValidTotp) {
+                await logAction(user.id, ACTIONS.LOGIN_FAIL, 'AUTH', { email, reason: 'Invalid 2FA code' }, user.companyId, getIp(req), getUserAgent(req));
+                return res.status(401).json({ error: 'Invalid 2FA code' });
+            }
         }
 
-        console.log('[Login] Step 4: Generating token...');
+        const jwtExpiration = process.env.JWT_EXPIRATION || '1d';
         const token = jwt.sign(
             { userId: user.id, role: user.role, companyId: user.companyId },
             JWT_SECRET,
-            { expiresIn: '1d' }
+            { expiresIn: jwtExpiration as jwt.SignOptions['expiresIn'] }
         );
-
-        console.log('[Login] Step 5: Token generated. Logging action and responding...');
 
         res.json({
             token,
@@ -165,14 +161,8 @@ export const login = async (req: Request, res: Response) => {
         } catch (logError) {
             console.error('[Login] Warning: Audit log failed but login succeeded', logError);
         }
-    } catch (error: any) {
-        console.error('Login CRASH:', error);
-        res.status(500).json({
-            error: 'Internal Login Error',
-            message: error.message,
-            stack: error.stack,
-            type: error.constructor.name
-        });
+    } catch (error) {
+        sendError500(res, ERROR_CODES.AUTH_LOGIN, error);
     }
 };
 
@@ -225,8 +215,7 @@ export const registerCollaborator = async (req: Request, res: Response) => {
         res.status(201).json({ message: 'Collaborator registered successfully', userId: result.user.id });
 
     } catch (error) {
-        console.error('Error registering collaborator:', error);
-        res.status(500).json({ error: 'Error registering collaborator' });
+        sendError500(res, ERROR_CODES.AUTH_REGISTER_COLLABORATOR, error);
     }
 };
 export const getProfile = async (req: Request, res: Response) => {
@@ -258,8 +247,7 @@ export const getProfile = async (req: Request, res: Response) => {
         res.json({ user: userWithoutPassword });
         // ... existing codes
     } catch (error) {
-        console.error('Error fetching profile:', error);
-        res.status(500).json({ error: 'Error fetching user profile' });
+        sendError500(res, ERROR_CODES.AUTH_GET_PROFILE, error);
     }
 };
 
@@ -286,8 +274,7 @@ export const setup2FA = async (req: Request, res: Response) => {
 
         await logAction(userId, ACTIONS.setup2FA, 'USER', null, (req as AuthRequest).user?.companyId || null, getIp(req), getUserAgent(req));
     } catch (error) {
-        console.error('Error setting up 2FA:', error);
-        res.status(500).json({ error: 'Error setting up 2FA' });
+        sendError500(res, ERROR_CODES.AUTH_SETUP_2FA, error);
     }
 };
 
@@ -318,8 +305,7 @@ export const verify2FA = async (req: Request, res: Response) => {
             res.status(400).json({ error: 'Invalid token' });
         }
     } catch (error) {
-        console.error('Error verifying 2FA:', error);
-        res.status(500).json({ error: 'Error verifying 2FA' });
+        sendError500(res, ERROR_CODES.AUTH_VERIFY_2FA, error);
     }
 };
 
@@ -337,7 +323,6 @@ export const disable2FA = async (req: Request, res: Response) => {
         res.json({ message: '2FA disabled successfully' });
         await logAction(userId, ACTIONS.disable2FA, 'USER', null, (req as AuthRequest).user?.companyId || null, getIp(req), getUserAgent(req));
     } catch (error) {
-        console.error('Error disabling 2FA:', error);
-        res.status(500).json({ error: 'Error disabling 2FA' });
+        sendError500(res, ERROR_CODES.AUTH_DISABLE_2FA, error);
     }
 };

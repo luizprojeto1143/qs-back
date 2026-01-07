@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import prisma from '../prisma';
+import { sendError500, ERROR_CODES } from '../utils/errorUtils';
 
 export const workScheduleController = {
     // Obter escala de um colaborador
@@ -25,8 +26,7 @@ export const workScheduleController = {
 
             res.json(schedule);
         } catch (error) {
-            console.error('Error getting schedule:', error);
-            res.status(500).json({ error: 'Erro ao obter escala' });
+            sendError500(res, ERROR_CODES.WORK_GET, error);
         }
     },
 
@@ -80,8 +80,7 @@ export const workScheduleController = {
 
             res.json(schedule);
         } catch (error) {
-            console.error('Error upserting schedule:', error);
-            res.status(500).json({ error: 'Erro ao salvar escala' });
+            sendError500(res, ERROR_CODES.WORK_SAVE, error);
         }
     },
 
@@ -110,8 +109,7 @@ export const workScheduleController = {
 
             res.json(schedules);
         } catch (error) {
-            console.error('Error listing schedules:', error);
-            res.status(500).json({ error: 'Erro ao listar escalas' });
+            sendError500(res, ERROR_CODES.WORK_LIST, error);
         }
     },
 
@@ -169,8 +167,7 @@ export const workScheduleController = {
                 calculatedDaysOff: daysOffFromSchedule.slice(0, 10).map(d => d.toISOString().split('T')[0]),
             });
         } catch (error) {
-            console.error('Error getting next days off:', error);
-            res.status(500).json({ error: 'Erro ao calcular folgas' });
+            sendError500(res, ERROR_CODES.WORK_CALC_DAYS_OFF, error);
         }
     },
 };
@@ -227,8 +224,7 @@ export const dayOffController = {
 
             res.status(201).json(dayOff);
         } catch (error) {
-            console.error('Error creating day off:', error);
-            res.status(500).json({ error: 'Erro ao registrar folga' });
+            sendError500(res, ERROR_CODES.WORK_DAY_OFF_CREATE, error);
         }
     },
 
@@ -255,8 +251,7 @@ export const dayOffController = {
 
             res.json(daysOff);
         } catch (error) {
-            console.error('Error listing days off:', error);
-            res.status(500).json({ error: 'Erro ao listar folgas' });
+            sendError500(res, ERROR_CODES.WORK_DAY_OFF_LIST, error);
         }
     },
 
@@ -269,8 +264,7 @@ export const dayOffController = {
 
             res.json({ message: 'Folga removida com sucesso' });
         } catch (error) {
-            console.error('Error deleting day off:', error);
-            res.status(500).json({ error: 'Erro ao remover folga' });
+            sendError500(res, ERROR_CODES.WORK_DAY_OFF_DELETE, error);
         }
     },
     // List pending days off for company leaders
@@ -303,8 +297,7 @@ export const dayOffController = {
 
             res.json(pending);
         } catch (error) {
-            console.error('Error listing pending days off:', error);
-            res.status(500).json({ error: 'Error listing pending' });
+            sendError500(res, ERROR_CODES.WORK_PENDING_LIST, error);
         }
     },
 
@@ -361,8 +354,7 @@ export const dayOffController = {
 
             res.json(dayOff);
         } catch (error) {
-            console.error('Error reviewing day off:', error);
-            res.status(500).json({ error: 'Error processing review' });
+            sendError500(res, ERROR_CODES.WORK_REVIEW, error);
         }
     },
 };

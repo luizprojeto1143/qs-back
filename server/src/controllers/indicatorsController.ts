@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { AuthRequest } from '../middleware/authMiddleware';
 import prisma from '../prisma';
+import { sendError500, ERROR_CODES } from '../utils/errorUtils';
 
 export const indicatorsController = {
     // Obter Censo de Diversidade
@@ -90,8 +91,7 @@ export const indicatorsController = {
                 age: Object.entries(ageDistribution).map(([name, value]) => ({ name, value })),
             });
         } catch (error) {
-            console.error('Error getting diversity census:', error);
-            res.status(500).json({ error: 'Erro ao obter censo de diversidade' });
+            sendError500(res, ERROR_CODES.IND_DIVERSITY, error);
         }
     },
 
@@ -136,8 +136,7 @@ export const indicatorsController = {
             });
 
         } catch (error) {
-            console.error('Error getting PCD retention:', error);
-            res.status(500).json({ error: 'Erro ao obter taxa de retenção' });
+            sendError500(res, ERROR_CODES.IND_RETENTION, error);
         }
     },
 
@@ -196,8 +195,7 @@ export const indicatorsController = {
 
             res.json(result);
         } catch (error) {
-            console.error('Error getting sector comparison:', error);
-            res.status(500).json({ error: 'Erro ao obter comparativo entre setores' });
+            sendError500(res, ERROR_CODES.IND_SECTOR, error);
         }
     },
 
@@ -249,8 +247,7 @@ export const indicatorsController = {
 
             res.json(radarData);
         } catch (error) {
-            console.error('Error getting reputational radar:', error);
-            res.status(500).json({ error: 'Erro ao obter radar de risco' });
+            sendError500(res, ERROR_CODES.IND_RISK, error);
         }
     }
 };

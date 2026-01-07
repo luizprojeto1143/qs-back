@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import prisma from '../prisma';
+import { sendError500, ERROR_CODES } from '../utils/errorUtils';
 
 export const complaintController = {
     // Criar nova denúncia
@@ -42,8 +43,7 @@ export const complaintController = {
 
             res.status(201).json(complaint);
         } catch (error) {
-            console.error('Error creating complaint:', error);
-            res.status(500).json({ error: 'Erro ao criar denúncia' });
+            sendError500(res, ERROR_CODES.COMPL_CREATE, error);
         }
     },
 
@@ -82,8 +82,7 @@ export const complaintController = {
 
             res.json(complaints);
         } catch (error) {
-            console.error('Error listing complaints:', error);
-            res.status(500).json({ error: 'Erro ao listar denúncias' });
+            sendError500(res, ERROR_CODES.COMPL_LIST, error);
         }
     },
 
@@ -118,8 +117,7 @@ export const complaintController = {
 
             res.json(complaint);
         } catch (error) {
-            console.error('Error getting complaint:', error);
-            res.status(500).json({ error: 'Erro ao obter denúncia' });
+            sendError500(res, ERROR_CODES.COMPL_GET, error);
         }
     },
 
@@ -144,8 +142,7 @@ export const complaintController = {
 
             res.json(complaint);
         } catch (error) {
-            console.error('Error translating complaint:', error);
-            res.status(500).json({ error: 'Erro ao traduzir denúncia' });
+            sendError500(res, ERROR_CODES.COMPL_UPDATE, error);
         }
     },
 
@@ -185,8 +182,7 @@ export const complaintController = {
 
             res.json(complaint);
         } catch (error) {
-            console.error('Error validating complaint:', error);
-            res.status(500).json({ error: 'Erro ao validar denúncia' });
+            sendError500(res, ERROR_CODES.COMPL_UPDATE, error);
         }
     },
 
@@ -226,8 +222,7 @@ export const complaintController = {
 
             res.json(complaint);
         } catch (error) {
-            console.error('Error forwarding complaint:', error);
-            res.status(500).json({ error: 'Erro ao encaminhar denúncia' });
+            sendError500(res, ERROR_CODES.COMPL_UPDATE, error);
         }
     },
 
@@ -263,8 +258,7 @@ export const complaintController = {
 
             res.json(complaint);
         } catch (error) {
-            console.error('Error discarding complaint:', error);
-            res.status(500).json({ error: 'Erro ao descartar denúncia' });
+            sendError500(res, ERROR_CODES.COMPL_DELETE, error);
         }
     },
 
@@ -307,8 +301,7 @@ export const complaintController = {
 
             res.json(complaint);
         } catch (error) {
-            console.error('Error resolving complaint:', error);
-            res.status(500).json({ error: 'Erro ao resolver denúncia' });
+            sendError500(res, ERROR_CODES.COMPL_UPDATE, error);
         }
     },
 };

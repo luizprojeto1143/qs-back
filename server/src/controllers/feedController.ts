@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../prisma';
 import { AuthRequest } from '../middleware/authMiddleware';
-
+import { sendError500, ERROR_CODES } from '../utils/errorUtils';
 import { createFeedPostSchema } from '../schemas/dataSchemas';
 
 export const createPost = async (req: Request, res: Response) => {
@@ -43,8 +43,7 @@ export const createPost = async (req: Request, res: Response) => {
 
         res.status(201).json(post);
     } catch (error) {
-        console.error('Error creating post:', error);
-        res.status(500).json({ error: 'Error creating post' });
+        sendError500(res, ERROR_CODES.FEED_CREATE, error);
     }
 };
 
@@ -83,8 +82,7 @@ export const listPosts = async (req: Request, res: Response) => {
             }
         });
     } catch (error) {
-        console.error('Error listing posts:', error);
-        res.status(500).json({ error: 'Error listing posts' });
+        sendError500(res, ERROR_CODES.FEED_LIST, error);
     }
 };
 
@@ -124,8 +122,7 @@ export const updatePost = async (req: Request, res: Response) => {
 
         res.json(post);
     } catch (error) {
-        console.error('Error updating post:', error);
-        res.status(500).json({ error: 'Error updating post' });
+        sendError500(res, ERROR_CODES.FEED_UPDATE, error);
     }
 };
 
@@ -153,7 +150,6 @@ export const deletePost = async (req: Request, res: Response) => {
 
         res.status(204).send();
     } catch (error) {
-        console.error('Error deleting post:', error);
-        res.status(500).json({ error: 'Error deleting post' });
+        sendError500(res, ERROR_CODES.FEED_DELETE, error);
     }
 };

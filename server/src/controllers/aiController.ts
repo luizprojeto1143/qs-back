@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { analyzeInclusionData } from '../services/openaiService';
 import prisma from '../prisma';
 import { AuthRequest } from '../middleware/authMiddleware';
+import { sendError500, ERROR_CODES } from '../utils/errorUtils';
 
 // --- Métodos Individuais ---
 
@@ -51,8 +52,7 @@ export const analyzePatterns = async (req: Request, res: Response) => {
         });
 
     } catch (error) {
-        console.error('AI Analysis Error:', error);
-        res.status(500).json({ error: 'Internal Server Error during AI Analysis' });
+        sendError500(res, ERROR_CODES.AI_ANALYZE, error);
     }
 };
 

@@ -46,10 +46,9 @@ const handleResponse = async (response: Response) => {
 
 // Use explicit env var or fallback
 const BASE_URL = `${import.meta.env.VITE_API_URL || ''}/api`;
-if (!import.meta.env.VITE_API_URL) {
+if (!import.meta.env.VITE_API_URL && import.meta.env.DEV) {
     console.warn('VITE_API_URL is not defined. API calls may fail in production.');
 }
-console.log('API BASE_URL:', BASE_URL); // Debugging
 
 const fetchWithTimeout = async (url: string, options: RequestInit, timeout = 30000) => { // Increased timeout
     const controller = new AbortController();

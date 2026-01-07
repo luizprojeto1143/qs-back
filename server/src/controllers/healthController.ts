@@ -1,6 +1,7 @@
 
 import { Request, Response } from 'express';
 import prisma from '../prisma';
+import { sendError500, ERROR_CODES } from '../utils/errorUtils';
 
 export const checkStatus = async (req: Request, res: Response) => {
     try {
@@ -15,13 +16,7 @@ export const checkStatus = async (req: Request, res: Response) => {
             sampleUser: oneUser ? 'Found' : 'None',
             env: process.env.NODE_ENV
         });
-    } catch (error: any) {
-        console.error('Health Check Failed:', error);
-        res.status(500).json({
-            status: 'error',
-            message: 'Database connection failed',
-            details: error.message,
-            stack: error.stack
-        });
+    } catch (error) {
+        sendError500(res, ERROR_CODES.HEALTH_CHECK, error);
     }
 };

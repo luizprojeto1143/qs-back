@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import prisma from '../prisma';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { createScheduleSchema } from '../schemas/dataSchemas';
+import { sendError500, ERROR_CODES } from '../utils/errorUtils';
 
 export const createSchedule = async (req: Request, res: Response) => {
     try {
@@ -79,7 +80,7 @@ export const createSchedule = async (req: Request, res: Response) => {
         if (error.message === 'Collaborator already has a schedule at this time') {
             return res.status(409).json({ error: error.message });
         }
-        res.status(500).json({ error: 'Error creating schedule' });
+        sendError500(res, ERROR_CODES.SCHED_CREATE, error);
     }
 };
 
@@ -164,8 +165,7 @@ export const listSchedules = async (req: Request, res: Response) => {
 
         res.json(formattedSchedules);
     } catch (error) {
-        console.error('Error listing schedules:', error);
-        res.status(500).json({ error: 'Error listing schedules' });
+        sendError500(res, ERROR_CODES.SCHED_LIST, error);
     }
 };
 
@@ -197,7 +197,6 @@ export const updateScheduleStatus = async (req: Request, res: Response) => {
 
         res.json(updatedSchedule);
     } catch (error) {
-        console.error('Error updating schedule status:', error);
-        res.status(500).json({ error: 'Error updating schedule status' });
+        sendError500(res, ERROR_CODES.SCHED_UPDATE, error);
     }
 };

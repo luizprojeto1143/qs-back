@@ -1,13 +1,13 @@
 import { Request, Response } from 'express';
 import { AuthRequest } from '../middleware/authMiddleware';
+import { sendError500, ERROR_CODES } from '../utils/errorUtils';
 
 const DAILY_API_KEY = process.env.DAILY_API_KEY;
 
 export const createRoom = async (req: Request, res: Response) => {
     try {
         if (!DAILY_API_KEY) {
-            console.error('DAILY_API_KEY not configured');
-            return res.status(500).json({ error: 'Video service not configured' });
+            return sendError500(res, ERROR_CODES.DAILY_ROOM, new Error('DAILY_API_KEY not configured'));
         }
 
         const user = (req as AuthRequest).user;
@@ -54,8 +54,7 @@ export const createRoom = async (req: Request, res: Response) => {
 
             if (!createResponse.ok) {
                 const errorData = await createResponse.json();
-                console.error('Daily.co creation error:', errorData);
-                return res.status(500).json({ error: 'Failed to create video room' });
+                return sendError500(res, ERROR_CODES.DAILY_ROOM, new Error(JSON.stringify(errorData)));
             }
 
             const newRoomData = await createResponse.json();
@@ -82,8 +81,7 @@ export const createRoom = async (req: Request, res: Response) => {
 
         if (!tokenResponse.ok) {
             const errorData = await tokenResponse.json();
-            console.error('Daily.co token error:', errorData);
-            return res.status(500).json({ error: 'Failed to generate video token' });
+            return sendError500(res, ERROR_CODES.DAILY_ROOM, new Error(JSON.stringify(errorData)));
         }
 
         const tokenData = await tokenResponse.json();
@@ -91,7 +89,6 @@ export const createRoom = async (req: Request, res: Response) => {
         res.json({ url: roomUrl, token: tokenData.token });
 
     } catch (error) {
-        console.error('Error in createRoom:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        sendError500(res, ERROR_CODES.DAILY_ROOM, error);
     }
 };

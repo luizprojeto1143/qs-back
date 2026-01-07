@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../prisma';
 import { AuthRequest } from '../middleware/authMiddleware';
+import { sendError500, ERROR_CODES } from '../utils/errorUtils';
 
 export const listPendencies = async (req: Request, res: Response) => {
     try {
@@ -28,8 +29,7 @@ export const listPendencies = async (req: Request, res: Response) => {
         });
         res.json(pendencies);
     } catch (error) {
-        console.error('Error fetching pendencies:', error);
-        res.status(500).json({ error: 'Error fetching pendencies' });
+        sendError500(res, ERROR_CODES.PEND_LIST, error);
     }
 };
 
@@ -64,8 +64,7 @@ export const createPendency = async (req: Request, res: Response) => {
 
         res.status(201).json(pendency);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Error creating pendency' });
+        sendError500(res, ERROR_CODES.PEND_CREATE, error);
     }
 };
 
@@ -107,8 +106,7 @@ export const updatePendency = async (req: Request, res: Response) => {
 
         res.json(pendency);
     } catch (error) {
-        console.error('Error updating pendency:', error);
-        res.status(500).json({ error: 'Error updating pendency' });
+        sendError500(res, ERROR_CODES.PEND_UPDATE, error);
     }
 };
 
@@ -136,7 +134,6 @@ export const deletePendency = async (req: Request, res: Response) => {
 
         res.status(204).send();
     } catch (error) {
-        console.error('Error deleting pendency:', error);
-        res.status(500).json({ error: 'Error deleting pendency' });
+        sendError500(res, ERROR_CODES.PEND_DELETE, error);
     }
 };

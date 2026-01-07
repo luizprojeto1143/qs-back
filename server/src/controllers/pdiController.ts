@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../prisma';
 import { AuthRequest } from '../middleware/authMiddleware';
-
+import { sendError500, ERROR_CODES } from '../utils/errorUtils';
 import { createPDISchema, updatePDISchema } from '../schemas/dataSchemas';
 
 export const createPDI = async (req: Request, res: Response) => {
@@ -35,8 +35,7 @@ export const createPDI = async (req: Request, res: Response) => {
 
         res.status(201).json(pdi);
     } catch (error) {
-        console.error('Error creating PDI:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        sendError500(res, ERROR_CODES.PDI_CREATE, error);
     }
 };
 
@@ -84,8 +83,7 @@ export const listPDIs = async (req: Request, res: Response) => {
             }
         });
     } catch (error) {
-        console.error('Error listing PDIs:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        sendError500(res, ERROR_CODES.PDI_LIST, error);
     }
 };
 
@@ -122,8 +120,7 @@ export const updatePDI = async (req: Request, res: Response) => {
 
         res.json(pdi);
     } catch (error) {
-        console.error('Error updating PDI:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        sendError500(res, ERROR_CODES.PDI_UPDATE, error);
     }
 };
 
@@ -146,7 +143,6 @@ export const deletePDI = async (req: Request, res: Response) => {
         await prisma.pDI.delete({ where: { id } });
         res.status(204).send();
     } catch (error) {
-        console.error('Error deleting PDI:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        sendError500(res, ERROR_CODES.PDI_DELETE, error);
     }
 };

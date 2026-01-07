@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import multer from 'multer';
 import { v2 as cloudinary } from 'cloudinary';
 import stream from 'stream';
+import { sendError500, ERROR_CODES } from '../utils/errorUtils';
 
 // Configure Cloudinary
 cloudinary.config({
@@ -62,11 +63,10 @@ export const uploadFile = (req: Request, res: Response) => {
         },
         (error, result) => {
             if (error) {
-                console.error('Cloudinary upload error:', error);
-                return res.status(500).json({ error: 'Upload to cloud service failed' });
+                return sendError500(res, ERROR_CODES.UPL_CLOUD, error);
             }
             if (!result) {
-                return res.status(500).json({ error: 'Unknown upload error' });
+                return sendError500(res, ERROR_CODES.UPL_UNKNOWN, new Error('No result from upload'));
             }
 
             res.json({

@@ -53,6 +53,14 @@ const Login = () => {
             }
         } catch (error: any) {
             console.error('Login error', error);
+
+            // EMERGENCY DEBUG ALERT
+            if (error.response?.data) {
+                const serverError = error.response.data;
+                alert(`ERRO CRÍTICO NO LOGIN:\n\nMessage: ${serverError.message}\nType: ${serverError.type}\nStack: ${serverError.stack ? 'See console' : 'N/A'}`);
+                console.error('CRITICAL SERVER ERROR:', serverError);
+            }
+
             const msg = error.response?.data?.error || error.message || 'Erro ao fazer login';
             toast.error(msg);
             if (msg.includes('Invalid 2FA')) {

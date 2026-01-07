@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import prisma from '../prisma';
+import { sendError500, ERROR_CODES } from '../utils/errorUtils';
 
 export const systemSettingsController = {
     // Obter configurações da empresa
@@ -38,8 +39,7 @@ export const systemSettingsController = {
 
             res.json(settings);
         } catch (error) {
-            console.error('Error getting settings:', error);
-            res.status(500).json({ error: 'Erro ao obter configurações' });
+            sendError500(res, ERROR_CODES.SYS_GET, error);
         }
     },
 
@@ -113,8 +113,7 @@ export const systemSettingsController = {
 
             res.json(settings);
         } catch (error) {
-            console.error('Error updating settings:', error);
-            res.status(500).json({ error: 'Erro ao atualizar configurações' });
+            sendError500(res, ERROR_CODES.SYS_UPDATE, error);
         }
     },
 
@@ -159,8 +158,7 @@ export const systemSettingsController = {
 
             res.json({ feature, enabled, settings });
         } catch (error) {
-            console.error('Error toggling feature:', error);
-            res.status(500).json({ error: 'Erro ao alternar funcionalidade' });
+            sendError500(res, ERROR_CODES.SYS_TOGGLE, error);
         }
     },
 };

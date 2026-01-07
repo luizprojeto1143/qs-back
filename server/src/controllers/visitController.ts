@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../prisma';
 import { AuthRequest } from '../middleware/authMiddleware';
-
+import { sendError500, ERROR_CODES } from '../utils/errorUtils';
 import { createVisitSchema, updateVisitSchema } from '../schemas/dataSchemas';
 import { PAGINATION } from '../config/constants';
 
@@ -122,8 +122,7 @@ export const createVisit = async (req: Request, res: Response) => {
 
         res.status(201).json(result);
     } catch (error) {
-        // console.error('Error creating visit:', error);
-        res.status(500).json({ error: 'Error creating visit record' });
+        sendError500(res, ERROR_CODES.VISIT_CREATE, error);
     }
 };
 
@@ -174,7 +173,7 @@ export const listVisits = async (req: Request, res: Response) => {
             }
         });
     } catch (error) {
-        res.status(500).json({ error: 'Error fetching visits' });
+        sendError500(res, ERROR_CODES.VISIT_LIST, error);
     }
 };
 
@@ -212,7 +211,7 @@ export const getVisit = async (req: Request, res: Response) => {
 
         res.json(visit);
     } catch (error) {
-        res.status(500).json({ error: 'Error fetching visit' });
+        sendError500(res, ERROR_CODES.VISIT_GET, error);
     }
 };
 
@@ -365,7 +364,6 @@ export const updateVisit = async (req: Request, res: Response) => {
 
         res.json(result);
     } catch (error) {
-        // console.error('Error updating visit:', error);
-        res.status(500).json({ error: 'Error updating visit record' });
+        sendError500(res, ERROR_CODES.VISIT_UPDATE, error);
     }
 };

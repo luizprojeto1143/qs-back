@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import prisma from '../prisma';
+import { sendError500, ERROR_CODES } from '../utils/errorUtils';
 
 export const decisionController = {
     // Obter histórico de decisões de uma entidade
@@ -32,8 +33,7 @@ export const decisionController = {
 
             res.json(history);
         } catch (error) {
-            console.error('Error getting decision history:', error);
-            res.status(500).json({ error: 'Erro ao obter histórico' });
+            sendError500(res, ERROR_CODES.DEC_HISTORY, error);
         }
     }
 };

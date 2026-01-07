@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../prisma';
 import { AuthRequest } from '../middleware/authMiddleware';
+import { sendError500, ERROR_CODES } from '../utils/errorUtils';
 
 interface SimulationAction {
     type: string;
@@ -314,8 +315,7 @@ export const qsScoreController = {
             });
 
         } catch (error) {
-            console.error('Error getting company score:', error);
-            res.status(500).json({ error: 'Erro ao obter QS Score' });
+            sendError500(res, ERROR_CODES.QS_GET, error);
         }
     },
 
@@ -343,8 +343,7 @@ export const qsScoreController = {
 
             res.json(score);
         } catch (error) {
-            console.error('Error getting area score:', error);
-            res.status(500).json({ error: 'Erro ao obter score da área' });
+            sendError500(res, ERROR_CODES.QS_AREA, error);
         }
     },
 
@@ -397,8 +396,7 @@ export const qsScoreController = {
             });
 
         } catch (error) {
-            console.error('Error getting risk map:', error);
-            res.status(500).json({ error: 'Erro ao obter mapa de risco' });
+            sendError500(res, ERROR_CODES.QS_RISK, error);
         }
     },
 
@@ -409,8 +407,7 @@ export const qsScoreController = {
             await qsScoreController.performRecalculation(companyId);
             res.json({ message: 'Scores recalculados com sucesso' });
         } catch (error) {
-            console.error('Error recalculating scores:', error);
-            res.status(500).json({ error: 'Erro ao recalcular scores' });
+            sendError500(res, ERROR_CODES.QS_RECALC, error);
         }
     },
 
@@ -590,8 +587,7 @@ export const qsScoreController = {
             });
 
         } catch (error) {
-            console.error('Error simulating impact:', error);
-            res.status(500).json({ error: 'Erro ao simular impacto' });
+            sendError500(res, ERROR_CODES.QS_SIMULATE, error);
         }
     }
 };

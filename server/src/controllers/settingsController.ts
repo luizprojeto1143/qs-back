@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../prisma';
 import { AuthRequest } from '../middleware/authMiddleware';
+import { sendError500, ERROR_CODES } from '../utils/errorUtils';
 
 // Terms of Use
 export const getTerms = async (req: Request, res: Response) => {
@@ -11,7 +12,7 @@ export const getTerms = async (req: Request, res: Response) => {
         });
         res.json(terms || { content: '' });
     } catch (error) {
-        res.status(500).json({ error: 'Error fetching terms' });
+        sendError500(res, ERROR_CODES.SET_TERMS_GET, error);
     }
 };
 
@@ -41,8 +42,7 @@ export const checkTermsStatus = async (req: Request, res: Response) => {
             latestTerm
         });
     } catch (error) {
-        console.error('Error checking terms status:', error);
-        res.status(500).json({ error: 'Error checking terms status' });
+        sendError500(res, ERROR_CODES.SET_TERMS_STATUS, error);
     }
 };
 
@@ -54,7 +54,7 @@ export const updateTerms = async (req: Request, res: Response) => {
         });
         res.json(terms);
     } catch (error) {
-        res.status(500).json({ error: 'Error updating terms' });
+        sendError500(res, ERROR_CODES.SET_TERMS_UPDATE, error);
     }
 };
 
@@ -90,8 +90,7 @@ export const acceptTerms = async (req: Request, res: Response) => {
 
         res.json({ message: 'Terms accepted successfully' });
     } catch (error) {
-        console.error('Error accepting terms:', error);
-        res.status(500).json({ error: 'Error accepting terms' });
+        sendError500(res, ERROR_CODES.SET_TERMS_ACCEPT, error);
     }
 };
 
@@ -124,8 +123,7 @@ export const getTermsAcceptanceReport = async (req: Request, res: Response) => {
 
         res.json(report);
     } catch (error) {
-        console.error('Error fetching terms report:', error);
-        res.status(500).json({ error: 'Error fetching report' });
+        sendError500(res, ERROR_CODES.SET_TERMS_REPORT, error);
     }
 };
 
@@ -164,8 +162,7 @@ export const createFeedCategory = async (req: Request, res: Response) => {
         });
         res.status(201).json(category);
     } catch (error) {
-        console.error('Error creating feed category:', error);
-        res.status(500).json({ error: 'Error creating category' });
+        sendError500(res, ERROR_CODES.SET_CATEGORY_CREATE, error);
     }
 };
 
@@ -191,7 +188,7 @@ export const deleteFeedCategory = async (req: Request, res: Response) => {
         await prisma.feedCategory.delete({ where: { id } });
         res.json({ message: 'Category deleted' });
     } catch (error) {
-        console.error('Error deleting feed category:', error);
+        sendError500(res, ERROR_CODES.SET_CATEGORY_DELETE, error);
     }
 };
 
@@ -241,8 +238,7 @@ export const createShift = async (req: Request, res: Response) => {
         });
         res.status(201).json(shift);
     } catch (error) {
-        console.error('Error creating shift:', error);
-        res.status(500).json({ error: 'Error creating shift' });
+        sendError500(res, ERROR_CODES.SET_SHIFT_CREATE, error);
     }
 };
 
@@ -280,8 +276,7 @@ export const updateShift = async (req: Request, res: Response) => {
         });
         res.json(shift);
     } catch (error) {
-        console.error('Error updating shift:', error);
-        res.status(500).json({ error: 'Error updating shift' });
+        sendError500(res, ERROR_CODES.SET_SHIFT_UPDATE, error);
     }
 };
 
@@ -305,7 +300,7 @@ export const deleteShift = async (req: Request, res: Response) => {
         await prisma.shift.delete({ where: { id } });
         res.json({ message: 'Shift deleted' });
     } catch (error) {
-        console.error('Error deleting shift:', error);
+        sendError500(res, ERROR_CODES.SET_SHIFT_DELETE, error);
     }
 };
 
@@ -360,7 +355,6 @@ export const updateAvailability = async (req: Request, res: Response) => {
 
         res.json({ message: 'Availability updated' });
     } catch (error) {
-        console.error('Error updating availability:', error);
-        res.status(500).json({ error: 'Error updating availability' });
+        sendError500(res, ERROR_CODES.SET_AVAILABILITY, error);
     }
 };

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../prisma';
 import { AuthRequest } from '../middleware/authMiddleware';
+import { sendError500, ERROR_CODES } from '../utils/errorUtils';
 
 export const getStructure = async (req: Request, res: Response) => {
     try {
@@ -24,7 +25,7 @@ export const getStructure = async (req: Request, res: Response) => {
 
         res.json(companies);
     } catch (error) {
-        res.status(500).json({ error: 'Error fetching structure' });
+        sendError500(res, ERROR_CODES.COMP_STRUCTURE, error);
     }
 };
 
@@ -64,7 +65,7 @@ export const createCompany = async (req: Request, res: Response) => {
         if (error.code === 'P2002') {
             return res.status(400).json({ error: 'Já existe uma empresa com este CNPJ ou email.' });
         }
-        res.status(500).json({ error: 'Erro interno ao criar empresa', details: error.message });
+        sendError500(res, ERROR_CODES.COMP_CREATE, error);
     }
 };
 
@@ -85,7 +86,7 @@ export const createSector = async (req: Request, res: Response) => {
         });
         res.status(201).json(sector);
     } catch (error) {
-        res.status(500).json({ error: 'Error creating sector' });
+        sendError500(res, ERROR_CODES.SECTOR_CREATE, error);
     }
 };
 
@@ -109,7 +110,7 @@ export const createArea = async (req: Request, res: Response) => {
         });
         res.status(201).json(area);
     } catch (error) {
-        res.status(500).json({ error: 'Error creating area' });
+        sendError500(res, ERROR_CODES.AREA_CREATE, error);
     }
 };
 
@@ -133,20 +134,14 @@ export const listCompanies = async (req: Request, res: Response) => {
             where.id = user.companyId!;
         }
 
-        console.log('listCompanies called by:', user.userId, user.role, user.companyId);
-        console.log('Query where:', JSON.stringify(where, null, 2));
-
         const companies = await prisma.company.findMany({
             where,
             orderBy: { name: 'asc' }
         });
-        console.log('Companies found:', companies.length);
-        companies.forEach(c => console.log(`- ${c.name} (${c.id}) Active: ${c.active}`));
 
         res.json(companies);
     } catch (error) {
-        console.error('Error in listCompanies:', error);
-        res.status(500).json({ error: 'Error fetching companies', details: error });
+        sendError500(res, ERROR_CODES.COMP_LIST, error);
     }
 };
 
@@ -170,8 +165,7 @@ export const deleteCompany = async (req: Request, res: Response) => {
 
         res.status(204).send();
     } catch (error) {
-        console.error('Error deleting company:', error);
-        res.status(500).json({ error: 'Error deleting company' });
+        sendError500(res, ERROR_CODES.COMP_DELETE, error);
     }
 };
 
@@ -194,7 +188,7 @@ export const listSectors = async (req: Request, res: Response) => {
         });
         res.json(sectors);
     } catch (error) {
-        res.status(500).json({ error: 'Error fetching sectors' });
+        sendError500(res, ERROR_CODES.SECTOR_LIST, error);
     }
 };
 
@@ -221,7 +215,7 @@ export const listAreas = async (req: Request, res: Response) => {
         });
         res.json(areas);
     } catch (error) {
-        res.status(500).json({ error: 'Error fetching areas' });
+        sendError500(res, ERROR_CODES.AREA_LIST, error);
     }
 };
 
@@ -286,9 +280,8 @@ export const updateCompany = async (req: Request, res: Response) => {
         });
 
         res.json(result);
-    } catch (error: any) {
-        console.error('Error updating company:', error);
-        res.status(500).json({ error: `Error updating company: ${error.message || error}` });
+    } catch (error) {
+        sendError500(res, ERROR_CODES.COMP_UPDATE, error);
     }
 };
 
@@ -313,7 +306,7 @@ export const updateSector = async (req: Request, res: Response) => {
         });
         res.json(sector);
     } catch (error) {
-        res.status(500).json({ error: 'Error updating sector' });
+        sendError500(res, ERROR_CODES.SECTOR_UPDATE, error);
     }
 };
 
@@ -338,7 +331,7 @@ export const updateArea = async (req: Request, res: Response) => {
         });
         res.json(area);
     } catch (error) {
-        res.status(500).json({ error: 'Error updating area' });
+        sendError500(res, ERROR_CODES.AREA_UPDATE, error);
     }
 };
 
@@ -366,8 +359,7 @@ export const listPublicAreas = async (req: Request, res: Response) => {
 
         res.json(areas);
     } catch (error) {
-        console.error('Error fetching public areas:', error);
-        res.status(500).json({ error: 'Error fetching areas' });
+        sendError500(res, ERROR_CODES.AREA_LIST, error);
     }
 };
 // Public Shifts for Registration
@@ -399,7 +391,6 @@ export const listPublicShifts = async (req: Request, res: Response) => {
 
         res.json(shifts);
     } catch (error) {
-        console.error('Error fetching public shifts:', error);
-        res.status(500).json({ error: 'Error fetching shifts' });
+        sendError500(res, ERROR_CODES.COMP_LIST, error);
     }
 };

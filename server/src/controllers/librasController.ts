@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../prisma';
 import { AuthRequest } from '../middleware/authMiddleware';
+import { sendError500, ERROR_CODES } from '../utils/errorUtils';
 
 interface TimeSlot {
     start: string;
@@ -123,7 +124,6 @@ export const updateSettings = async (req: Request, res: Response) => {
 
         res.json({ message: 'Settings updated successfully' });
     } catch (error) {
-        console.error('Error updating libras settings:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        sendError500(res, ERROR_CODES.LIBRAS_UPDATE_SETTINGS, error);
     }
 };

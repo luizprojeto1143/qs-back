@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../prisma';
 import { AuthRequest } from '../middleware/authMiddleware';
+import { sendError500, ERROR_CODES } from '../utils/errorUtils';
 
 export const listReports = async (req: Request, res: Response) => {
     // Since we don't have a Report history table yet, we return the available types
@@ -319,7 +320,6 @@ export const generateReport = async (req: Request, res: Response) => {
         });
 
     } catch (error) {
-        console.error('Error generating report:', error);
-        res.status(500).json({ error: 'Error generating report' });
+        sendError500(res, ERROR_CODES.REP_GENERATE, error);
     }
 };

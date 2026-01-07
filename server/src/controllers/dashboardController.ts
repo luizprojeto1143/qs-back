@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../prisma';
 import { AuthRequest } from '../middleware/authMiddleware';
+import { sendError500, ERROR_CODES } from '../utils/errorUtils';
 
 export const getRHDashboardStats = async (req: Request, res: Response) => {
     try {
@@ -147,8 +148,7 @@ export const getRHDashboardStats = async (req: Request, res: Response) => {
         });
 
     } catch (error) {
-        console.error('Error fetching dashboard stats:', error);
-        res.status(500).json({ error: 'Error fetching stats' });
+        sendError500(res, ERROR_CODES.DASH_RH, error);
     }
 };
 
@@ -210,11 +210,10 @@ export const getMasterDashboardStats = async (req: Request, res: Response) => {
                 id: visit.id,
                 description: `Nova visita registrada: ${visit.area?.name || 'Geral'}`,
                 time: visit.date,
-                author: visit.master.name
+                author: visit.master?.name || 'Desconhecido'
             }))
         });
     } catch (error) {
-        console.error('Error fetching master dashboard stats:', error);
-        res.status(500).json({ error: 'Error fetching stats' });
+        sendError500(res, ERROR_CODES.DASH_MASTER, error);
     }
 };

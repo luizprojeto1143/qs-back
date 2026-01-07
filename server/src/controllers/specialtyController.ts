@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../prisma';
 import { AuthRequest } from '../middleware/authMiddleware';
+import { sendError500, ERROR_CODES } from '../utils/errorUtils';
 
 export const listSpecialties = async (req: Request, res: Response) => {
     try {
@@ -16,8 +17,7 @@ export const listSpecialties = async (req: Request, res: Response) => {
 
         res.json(specialties);
     } catch (error) {
-        console.error('Error listing specialties:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        sendError500(res, ERROR_CODES.SPECIALTY_LIST, error);
     }
 };
 
@@ -43,8 +43,7 @@ export const createSpecialty = async (req: Request, res: Response) => {
 
         res.status(201).json(specialty);
     } catch (error) {
-        console.error('Error creating specialty:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        sendError500(res, ERROR_CODES.SPECIALTY_CREATE, error);
     }
 };
 
@@ -71,7 +70,6 @@ export const deleteSpecialty = async (req: Request, res: Response) => {
 
         res.json({ message: 'Specialty deleted successfully' });
     } catch (error) {
-        console.error('Error deleting specialty:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        sendError500(res, ERROR_CODES.SPECIALTY_DELETE, error);
     }
 };

@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { AuthRequest } from '../middleware/authMiddleware';
 import prisma from '../prisma';
 import { createRoom } from './dailyController';
+import { sendError500, ERROR_CODES } from '../utils/errorUtils';
 
 // Request a call (Collaborator)
 export const requestCall = async (req: Request, res: Response) => {
@@ -38,8 +39,7 @@ export const requestCall = async (req: Request, res: Response) => {
 
         res.json(result);
     } catch (error) {
-        console.error('Error requesting call:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        sendError500(res, ERROR_CODES.LIBRAS_CALL_REQUEST, error);
     }
 };
 
@@ -72,8 +72,7 @@ export const checkCallStatus = async (req: Request, res: Response) => {
 
         res.json({ status: call.status, roomUrl });
     } catch (error) {
-        console.error('Error checking call status:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        sendError500(res, ERROR_CODES.LIBRAS_CALL_STATUS, error);
     }
 };
 
@@ -109,8 +108,7 @@ export const listPendingCalls = async (req: Request, res: Response) => {
 
         res.json({ calls });
     } catch (error) {
-        console.error('Error listing calls:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        sendError500(res, ERROR_CODES.LIBRAS_CALL_LIST, error);
     }
 };
 
@@ -129,8 +127,7 @@ export const acceptCall = async (req: Request, res: Response) => {
 
         res.json({ call });
     } catch (error) {
-        console.error('Error accepting call:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        sendError500(res, ERROR_CODES.LIBRAS_CALL_UPDATE, error);
     }
 };
 
@@ -150,8 +147,7 @@ export const updateCallStatus = async (req: Request, res: Response) => {
 
         res.json({ call });
     } catch (error) {
-        console.error('Error updating call:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        sendError500(res, ERROR_CODES.LIBRAS_CALL_UPDATE, error);
     }
 };
 
@@ -195,7 +191,6 @@ export const inviteToCall = async (req: Request, res: Response) => {
 
         res.json({ message: 'Invite sent successfully' });
     } catch (error) {
-        console.error('Error sending invite:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        sendError500(res, ERROR_CODES.LIBRAS_CALL_UPDATE, error);
     }
 };

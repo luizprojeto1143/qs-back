@@ -3,6 +3,7 @@ import * as bcrypt from 'bcryptjs';
 import prisma from '../prisma';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { createUserSchema, updateUserSchema } from '../schemas/authSchemas';
+import { sendError500, ERROR_CODES } from '../utils/errorUtils';
 
 export const listUsers = async (req: Request, res: Response) => {
     try {
@@ -63,8 +64,7 @@ export const listUsers = async (req: Request, res: Response) => {
             }
         });
     } catch (error) {
-        console.error('Error listing users:', error);
-        res.status(500).json({ error: 'Error listing users' });
+        sendError500(res, ERROR_CODES.USER_LIST, error);
     }
 };
 
@@ -97,8 +97,7 @@ export const createUser = async (req: Request, res: Response) => {
         const { password: _, ...userWithoutPassword } = newUser;
         res.status(201).json(userWithoutPassword);
     } catch (error) {
-        console.error('Error creating user:', error);
-        res.status(500).json({ error: 'Error creating user' });
+        sendError500(res, ERROR_CODES.USER_CREATE, error);
     }
 };
 
@@ -136,8 +135,7 @@ export const updateUser = async (req: Request, res: Response) => {
         const { password: _, ...userWithoutPassword } = updatedUser;
         res.json(userWithoutPassword);
     } catch (error) {
-        console.error('Error updating user:', error);
-        res.status(500).json({ error: 'Error updating user' });
+        sendError500(res, ERROR_CODES.USER_UPDATE, error);
     }
 };
 
@@ -161,7 +159,6 @@ export const deleteUser = async (req: Request, res: Response) => {
 
         res.status(204).send();
     } catch (error) {
-        console.error('Error deleting user:', error);
-        res.status(500).json({ error: 'Error deleting user' });
+        sendError500(res, ERROR_CODES.USER_DELETE, error);
     }
 };

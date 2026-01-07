@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../prisma';
 import { AuthRequest } from '../middleware/authMiddleware';
+import { sendError500, ERROR_CODES } from '../utils/errorUtils';
 
 // --- Courses ---
 
@@ -36,8 +37,7 @@ export const listCourses = async (req: Request, res: Response) => {
 
         res.json(courses);
     } catch (error) {
-        console.error('Error listing courses:', error);
-        res.status(500).json({ error: 'Erro ao listar cursos' });
+        sendError500(res, ERROR_CODES.COURSE_LIST, error);
     }
 };
 
@@ -70,8 +70,7 @@ export const createCourse = async (req: Request, res: Response) => {
 
         res.status(201).json(course);
     } catch (error) {
-        console.error('Error creating course:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        sendError500(res, ERROR_CODES.COURSE_CREATE, error);
     }
 };
 
@@ -106,8 +105,7 @@ export const updateCourse = async (req: Request, res: Response) => {
 
         res.json(course);
     } catch (error) {
-        console.error('Error updating course:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        sendError500(res, ERROR_CODES.COURSE_UPDATE, error);
     }
 };
 
@@ -122,8 +120,7 @@ export const deleteCourse = async (req: Request, res: Response) => {
         await prisma.course.delete({ where: { id } });
         res.status(204).send();
     } catch (error) {
-        console.error('Error deleting course:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        sendError500(res, ERROR_CODES.COURSE_DELETE, error);
     }
 };
 
@@ -148,8 +145,7 @@ export const createModule = async (req: Request, res: Response) => {
 
         res.status(201).json(module);
     } catch (error) {
-        console.error('Error creating module:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        sendError500(res, ERROR_CODES.MODULE_CREATE, error);
     }
 };
 
@@ -186,8 +182,7 @@ export const createLesson = async (req: Request, res: Response) => {
 
         res.status(201).json(lesson);
     } catch (error) {
-        console.error('Error creating lesson:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        sendError500(res, ERROR_CODES.LESSON_CREATE, error);
     }
 };
 
@@ -225,8 +220,7 @@ export const getCourseDetails = async (req: Request, res: Response) => {
 
         res.json(course);
     } catch (error) {
-        console.error('Error fetching course details:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        sendError500(res, ERROR_CODES.COURSE_GET, error);
     }
 };
 
@@ -317,8 +311,7 @@ export const updateLessonProgress = async (req: Request, res: Response) => {
 
         res.json(progress);
     } catch (error) {
-        console.error('Error updating progress:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        sendError500(res, ERROR_CODES.ENROLL, error);
     }
 };
 
@@ -360,8 +353,7 @@ export const getCompanyProgress = async (req: Request, res: Response) => {
 
         res.json(enrollments);
     } catch (error) {
-        console.error('Error fetching company progress:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        sendError500(res, ERROR_CODES.COURSE_LIST, error);
     }
 };
 
@@ -456,8 +448,7 @@ export const getAnalytics = async (req: Request, res: Response) => {
         });
 
     } catch (error) {
-        console.error('Error fetching analytics:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        sendError500(res, ERROR_CODES.COURSE_LIST, error);
     }
 };
 
@@ -545,7 +536,6 @@ export const getUserUniversityDetails = async (req: Request, res: Response) => {
         });
 
     } catch (error) {
-        console.error('Error fetching user details:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        sendError500(res, ERROR_CODES.COURSE_GET, error);
     }
 };

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../prisma';
 import { AuthRequest } from '../middleware/authMiddleware';
+import { sendError500, ERROR_CODES } from '../utils/errorUtils';
 
 // --- Quiz Management ---
 
@@ -25,8 +26,7 @@ export const createQuiz = async (req: Request, res: Response) => {
 
         res.status(201).json(quiz);
     } catch (error) {
-        console.error('Error creating quiz:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        sendError500(res, ERROR_CODES.QUIZ_CREATE, error);
     }
 };
 
@@ -41,8 +41,7 @@ export const deleteQuiz = async (req: Request, res: Response) => {
         await prisma.quiz.delete({ where: { id } });
         res.status(204).send();
     } catch (error) {
-        console.error('Error deleting quiz:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        sendError500(res, ERROR_CODES.QUIZ_DELETE, error);
     }
 };
 
@@ -57,8 +56,7 @@ export const deleteQuestion = async (req: Request, res: Response) => {
         await prisma.question.delete({ where: { id } });
         res.status(204).send();
     } catch (error) {
-        console.error('Error deleting question:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        sendError500(res, ERROR_CODES.QUIZ_DEL_QUESTION, error);
     }
 };
 
@@ -85,8 +83,7 @@ export const getQuizEditor = async (req: Request, res: Response) => {
 
         res.json(quiz);
     } catch (error) {
-        console.error('Error fetching quiz for editor:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        sendError500(res, ERROR_CODES.QUIZ_GET_EDITOR, error);
     }
 };
 
@@ -116,8 +113,7 @@ export const addQuestion = async (req: Request, res: Response) => {
 
         res.status(201).json(question);
     } catch (error) {
-        console.error('Error adding question:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        sendError500(res, ERROR_CODES.QUIZ_ADD_QUESTION, error);
     }
 };
 
@@ -146,8 +142,7 @@ export const getQuiz = async (req: Request, res: Response) => {
 
         res.json(quiz);
     } catch (error) {
-        console.error('Error fetching quiz:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        sendError500(res, ERROR_CODES.QUIZ_GET, error);
     }
 };
 
@@ -217,7 +212,6 @@ export const submitQuiz = async (req: Request, res: Response) => {
         });
 
     } catch (error) {
-        console.error('Error submitting quiz:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        sendError500(res, ERROR_CODES.QUIZ_SUBMIT, error);
     }
 };

@@ -46,17 +46,28 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'x-company-id']
 }));
 
-// Basic Rate Limiting (In-memory)
-const rateLimit = new Map();
-app.use((req, res, next) => {
-  const ip = req.ip;
+// Basic Rate Limiting (In-memory) with cleanup to prevent memory leak
+const rateLimit = new Map<string, { count: number; startTime: number }>();
+const RATE_LIMIT_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
+const RATE_LIMIT_MAX_REQ = 2000; // Allow more requests for polling
+
+// Cleanup old entries every 10 minutes to prevent memory leak
+setInterval(() => {
   const now = Date.now();
-  const windowMs = 5 * 60 * 1000; // 5 minutes
-  const maxReq = 2000; // Allow more requests for polling
+  for (const [ip, record] of rateLimit.entries()) {
+    if (now - record.startTime > RATE_LIMIT_WINDOW_MS) {
+      rateLimit.delete(ip);
+    }
+  }
+}, 10 * 60 * 1000);
+
+app.use((req, res, next) => {
+  const ip = req.ip || 'unknown';
+  const now = Date.now();
 
   const record = rateLimit.get(ip) || { count: 0, startTime: now };
 
-  if (now - record.startTime > windowMs) {
+  if (now - record.startTime > RATE_LIMIT_WINDOW_MS) {
     record.count = 1;
     record.startTime = now;
   } else {
@@ -65,7 +76,7 @@ app.use((req, res, next) => {
 
   rateLimit.set(ip, record);
 
-  if (record.count > maxReq) {
+  if (record.count > RATE_LIMIT_MAX_REQ) {
     res.status(429).json({ error: 'Too many requests, please try again later.' });
     return;
   }

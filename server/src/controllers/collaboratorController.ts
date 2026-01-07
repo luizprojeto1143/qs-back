@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import * as bcrypt from 'bcryptjs';
 import prisma from '../prisma';
 import { AuthRequest } from '../middleware/authMiddleware';
+import { sendError500, ERROR_CODES } from '../utils/errorUtils';
 
 const ROLE_COLABORADOR = 'COLABORADOR';
 const DEFAULT_SHIFT = '1_TURNO';
@@ -61,7 +62,7 @@ export const listCollaborators = async (req: Request, res: Response) => {
             }
         });
     } catch (error) {
-        res.status(500).json({ error: 'Error fetching collaborators' });
+        sendError500(res, ERROR_CODES.COLAB_LIST, error);
     }
 };
 
@@ -138,8 +139,7 @@ export const createCollaborator = async (req: Request, res: Response) => {
 
         res.status(201).json(result);
     } catch (error) {
-        // console.error(error); // Removed log
-        res.status(500).json({ error: 'Error creating collaborator' });
+        sendError500(res, ERROR_CODES.COLAB_CREATE, error);
     }
 };
 
@@ -186,7 +186,7 @@ export const getCollaborator = async (req: Request, res: Response) => {
 
         res.json(collaborator);
     } catch (error) {
-        res.status(500).json({ error: 'Error fetching collaborator' });
+        sendError500(res, ERROR_CODES.COLAB_GET, error);
     }
 };
 
@@ -204,20 +204,6 @@ export const updateCollaborator = async (req: Request, res: Response) => {
             name, email, password, companyId, // User data
             matricula, areaId, shift, nextRestDay, disabilityType, needsDescription // Profile data
         } = validation.data;
-
-        // ... (existing code)
-
-        const profile = await prisma.collaboratorProfile.update({
-            where: { userId: id },
-            data: {
-                matricula,
-                areaId,
-                shift,
-                nextRestDay: nextRestDay ? new Date(nextRestDay) : undefined,
-                disabilityType,
-                needsDescription
-            }
-        });
 
         const requestingUser = (req as AuthRequest).user;
         if (!requestingUser) return res.status(401).json({ error: 'Unauthorized' });
@@ -276,7 +262,6 @@ export const updateCollaborator = async (req: Request, res: Response) => {
 
         res.json(result);
     } catch (error) {
-        // console.error('Error updating collaborator:', error);
-        res.status(500).json({ error: 'Error updating collaborator' });
+        sendError500(res, ERROR_CODES.COLAB_UPDATE, error);
     }
 };

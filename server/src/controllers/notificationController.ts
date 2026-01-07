@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import prisma from '../prisma';
+import { sendError500, ERROR_CODES } from '../utils/errorUtils';
 
 export const listNotifications = async (req: Request, res: Response) => {
     try {
@@ -11,7 +12,7 @@ export const listNotifications = async (req: Request, res: Response) => {
         });
         res.json(notifications);
     } catch (error) {
-        res.status(500).json({ error: 'Error fetching notifications' });
+        sendError500(res, ERROR_CODES.NOTIF_LIST, error);
     }
 };
 
@@ -27,7 +28,7 @@ export const markAsRead = async (req: Request, res: Response) => {
 
         res.json({ success: true });
     } catch (error) {
-        res.status(500).json({ error: 'Error updating notification' });
+        sendError500(res, ERROR_CODES.NOTIF_READ, error);
     }
 };
 
@@ -42,6 +43,6 @@ export const markAllAsRead = async (req: Request, res: Response) => {
 
         res.json({ success: true });
     } catch (error) {
-        res.status(500).json({ error: 'Error updating notifications' });
+        sendError500(res, ERROR_CODES.NOTIF_READ_ALL, error);
     }
 };

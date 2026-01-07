@@ -15,7 +15,7 @@ export interface AuthRequest extends Request {
         role: string;
         companyId: string | null;
         areaId?: string | null;
-        email?: string; // Optional for now, populated if available
+        email?: string;
     };
 }
 
@@ -37,15 +37,12 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
 
     try {
         const verified = jwt.verify(token, JWT_SECRET) as any;
-        console.log('[Auth] Detected Token Payload:', JSON.stringify(verified));
 
         if (!verified || !verified.userId) {
-            console.error('[Auth] Token missing userId');
             return res.status(403).json({ error: 'Invalid token structure' });
         }
 
         // SECURITY CHECK: Verify if user still exists and is active
-        console.log(`[Auth] Querying User ID: ${verified.userId}`);
         const userStatus = await prisma.user.findFirst({
             where: { id: verified.userId },
             select: { active: true, companyId: true, role: true, areaId: true }
@@ -76,30 +73,31 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
         (req as AuthRequest).user = verified;
         next();
     } catch (error: any) {
-        console.error('FATAL Auth Error:', error);
-
         const errorMessage = error.message || 'Unknown error';
-        console.error('Auth Error Details:', errorMessage);
 
         // Explicitly handle JWT errors
         if (errorMessage.includes('jwt') || errorMessage.includes('invalid signature')) {
             return res.status(403).json({ error: 'Invalid token' });
         }
 
-        // Return detailed error for debugging purposes (Temporary)
-        res.status(500).json({
-            error: 'Internal Auth Validation Error',
-            message: errorMessage,
-            stack: error.stack,
-            type: error.constructor.name
-        });
+        // Only expose detailed errors in development
+        if (process.env.NODE_ENV === 'development') {
+            console.error('Auth Error:', errorMessage);
+            res.status(500).json({
+                error: 'Internal Auth Validation Error',
+                message: errorMessage,
+                stack: error.stack,
+                type: error.constructor.name
+            });
+        } else {
+            res.status(500).json({ error: 'Authentication error' });
+        }
     }
 };
 
 export const requireRole = (roles: string[]) => {
     return (req: Request, res: Response, next: NextFunction) => {
         const user = (req as AuthRequest).user;
-
 
         if (!user || !roles.includes(user.role)) {
             return res.status(403).json({ error: 'Insufficient permissions' });
