@@ -23,6 +23,9 @@ interface Company {
 interface Area {
     id: string;
     name: string;
+    sector?: {
+        companyId: string;
+    };
 }
 
 export function UsersList() {
@@ -55,12 +58,15 @@ export function UsersList() {
         }
     });
 
+    // Fetch areas based on selected company
     const { data: areas } = useQuery<Area[]>({
-        queryKey: ['areas'],
+        queryKey: ['areas', formData.companyId],
         queryFn: async () => {
-            const response = await api.get('/areas');
+            if (!formData.companyId) return [];
+            const response = await api.get(`/areas?companyId=${formData.companyId}`);
             return response.data;
-        }
+        },
+        enabled: !!formData.companyId
     });
 
     const createMutation = useMutation({
@@ -291,7 +297,7 @@ export function UsersList() {
                                             <select
                                                 required
                                                 value={formData.companyId}
-                                                onChange={e => setFormData({ ...formData, companyId: e.target.value })}
+                                                onChange={e => setFormData({ ...formData, companyId: e.target.value, areaId: '' })}
                                                 className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                                             >
                                                 <option value="">Selecione uma empresa...</option>
@@ -315,11 +321,17 @@ export function UsersList() {
                                                 className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                                             >
                                                 <option value="">Selecione uma área...</option>
-                                                {areas
-                                                    ?.filter((area: any) => !formData.companyId || (area.sector && area.sector.companyId === formData.companyId))
-                                                    .map(area => (
-                                                        <option key={area.id} value={area.id}>{area.name}</option>
-                                                    ))}
+                                                {formData.companyId ? (
+                                                    areas?.length ? (
+                                                        areas.map(area => (
+                                                            <option key={area.id} value={area.id}>{area.name}</option>
+                                                        ))
+                                                    ) : (
+                                                        <option disabled>Nenhuma área nesta empresa</option>
+                                                    )
+                                                ) : (
+                                                    <option disabled>Selecione uma empresa primeiro</option>
+                                                )}
                                             </select>
                                         </div>
                                     </div>

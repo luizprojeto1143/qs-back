@@ -195,7 +195,8 @@ export const listSectors = async (req: Request, res: Response) => {
 export const listAreas = async (req: Request, res: Response) => {
     try {
         const user = (req as AuthRequest).user;
-        const companyId = req.headers['x-company-id'] as string || user?.companyId;
+        // Support query param, header, or user's company
+        const companyId = (req.query.companyId as string) || req.headers['x-company-id'] as string || user?.companyId;
 
         const where: Prisma.AreaWhereInput = {};
         if (companyId) {
