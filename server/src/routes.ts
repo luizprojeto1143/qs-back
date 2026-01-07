@@ -38,7 +38,7 @@ const router = Router();
 router.use('/auth', authRoutes);
 router.use('/', companyRoutes); // Mounts /companies, /sectors, /areas, /structure, /public/areas
 router.use('/', universityRoutes); // Mounts /courses, etc.
-router.use('/', qsInclusionRoutes); // Mounts /qs-score, /settings, /complaints, /work-schedule, /days-off
+
 
 router.get('/status', healthController.checkStatus);
 
@@ -171,5 +171,7 @@ router.post('/quizzes/:id/submit', submitQuiz);
 // AI Analysis Routes
 router.post('/ai/analyze', requireRole(['MASTER', 'RH']), aiController.analyzePatterns);
 router.get('/ai/alerts', requireRole(['MASTER', 'RH']), aiController.getSmartAlerts);
+
+router.use('/', qsInclusionRoutes); // Mounts /qs-score, /settings, /complaints, /work-schedule, /days-off
 
 export default router;
