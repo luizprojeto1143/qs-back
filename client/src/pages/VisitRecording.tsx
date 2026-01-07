@@ -324,6 +324,14 @@ const VisitRecording = () => {
                             collaborators={collaborators}
                             individualNotes={individualNotes}
                             setIndividualNotes={setIndividualNotes}
+                            onRefreshData={async () => {
+                                const [resAreas, resCollabs] = await Promise.all([
+                                    api.get('/areas'),
+                                    api.get('/collaborators')
+                                ]);
+                                setAreas(resAreas.data);
+                                setCollaborators(resCollabs.data.data || resCollabs.data);
+                            }}
                         />
                     )}
                     {activeTab === 1 && <VisitEvaluationsTab formData={formData} setFormData={setFormData} />}

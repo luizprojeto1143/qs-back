@@ -297,40 +297,6 @@ const CollaboratorsList = () => {
                                         ))}
                                     </select>
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Próxima Folga</label>
-                                    <input
-                                        type="date"
-                                        className="input-field"
-                                        value={newCollab.nextRestDay}
-                                        onChange={e => setNewCollab({ ...newCollab, nextRestDay: e.target.value })}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Deficiência</label>
-                                    <select
-                                        required
-                                        className="input-field"
-                                        value={newCollab.disabilityType}
-                                        onChange={e => setNewCollab({ ...newCollab, disabilityType: e.target.value })}
-                                    >
-                                        <option value="NENHUMA">Nenhuma</option>
-                                        <option value="FISICA">Física</option>
-                                        <option value="AUDITIVA">Auditiva</option>
-                                        <option value="VISUAL">Visual</option>
-                                        <option value="INTELECTUAL">Intelectual</option>
-                                        <option value="MULTIPLA">Múltipla</option>
-                                    </select>
-                                </div>
-                                <div className="md:col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Necessidades Específicas</label>
-                                    <textarea
-                                        className="input-field"
-                                        rows={3}
-                                        value={newCollab.needsDescription}
-                                        onChange={e => setNewCollab({ ...newCollab, needsDescription: e.target.value })}
-                                    />
-                                </div>
                             </div>
 
                             <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-100">

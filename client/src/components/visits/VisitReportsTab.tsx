@@ -1,8 +1,9 @@
 import { useState, useRef } from 'react';
-import { Mic, Square, Trash2 } from 'lucide-react';
+import { Mic, Square, Trash2, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../lib/api';
 import type { VisitFormData, IndividualNote } from '../../types/visit';
+import { QuickAddModal } from '../modals/QuickAddModal';
 
 interface VisitReportsTabProps {
     formData: VisitFormData;
@@ -11,6 +12,7 @@ interface VisitReportsTabProps {
     collaborators: any[];
     individualNotes: IndividualNote[];
     setIndividualNotes: React.Dispatch<React.SetStateAction<IndividualNote[]>>;
+    onRefreshData?: () => void;
 }
 
 export const VisitReportsTab = ({
@@ -19,13 +21,17 @@ export const VisitReportsTab = ({
     areas,
     collaborators,
     individualNotes,
-    setIndividualNotes
+    setIndividualNotes,
+    onRefreshData
 }: VisitReportsTabProps) => {
     // Recording State
     const [isRecording, setIsRecording] = useState<string | null>(null); // 'lideranca' | 'colaborador' | null
     const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
     const [recordingTime, setRecordingTime] = useState(0);
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    // Quick Add Modal State
+    const [quickAddType, setQuickAddType] = useState<'area' | 'collaborator' | null>(null);
 
     const formatTime = (seconds: number) => {
         const mins = Math.floor(seconds / 60);
@@ -85,11 +91,37 @@ export const VisitReportsTab = ({
         }
     };
 
+    const handleQuickAddSuccess = (newItem: any) => {
+        if (quickAddType === 'area') {
+            // Auto-select the new area
+            setFormData(prev => ({ ...prev, areaId: newItem.id }));
+        } else if (quickAddType === 'collaborator') {
+            // Auto-add the new collaborator
+            setFormData(prev => ({
+                ...prev,
+                collaboratorIds: [...prev.collaboratorIds, newItem.id]
+            }));
+        }
+        // Trigger parent refresh to update lists
+        if (onRefreshData) onRefreshData();
+        setQuickAddType(null);
+    };
+
     return (
         <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">Área</label>
+                    <div className="flex items-center justify-between">
+                        <label className="text-sm font-medium text-gray-700">Área</label>
+                        <button
+                            type="button"
+                            onClick={() => setQuickAddType('area')}
+                            className="p-1 text-primary hover:bg-primary/10 rounded-full transition-colors"
+                            title="Adicionar nova área"
+                        >
+                            <Plus className="h-4 w-4" />
+                        </button>
+                    </div>
                     <select
                         className="input-field"
                         onChange={e => setFormData({ ...formData, areaId: e.target.value })}
@@ -102,7 +134,17 @@ export const VisitReportsTab = ({
                     </select>
                 </div>
                 <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">Colaboradores</label>
+                    <div className="flex items-center justify-between">
+                        <label className="text-sm font-medium text-gray-700">Colaboradores</label>
+                        <button
+                            type="button"
+                            onClick={() => setQuickAddType('collaborator')}
+                            className="p-1 text-primary hover:bg-primary/10 rounded-full transition-colors"
+                            title="Adicionar novo colaborador"
+                        >
+                            <Plus className="h-4 w-4" />
+                        </button>
+                    </div>
                     <select
                         className="input-field"
                         onChange={e => {
@@ -135,6 +177,17 @@ export const VisitReportsTab = ({
                     </div>
                 </div>
             </div>
+
+            {/* Quick Add Modal */}
+            {quickAddType && (
+                <QuickAddModal
+                    type={quickAddType}
+                    companyId={formData.companyId}
+                    areaId={formData.areaId}
+                    onSuccess={handleQuickAddSuccess}
+                    onClose={() => setQuickAddType(null)}
+                />
+            )}
 
             <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-900">Relato da Liderança</label>
