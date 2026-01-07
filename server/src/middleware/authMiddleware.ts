@@ -45,17 +45,11 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
         }
 
         // SECURITY CHECK: Verify if user still exists and is active
-        // Using $queryRaw to bypass PGBouncer prepared statement issues
-        console.log(`[Auth] Querying User ID via $queryRaw: ${verified.userId}`);
-
-        const userResults = await prisma.$queryRaw<Array<{
-            active: boolean;
-            companyId: string | null;
-            role: string;
-            areaId: string | null;
-        }>>`SELECT active, "companyId", role, "areaId" FROM "User" WHERE id = ${verified.userId} LIMIT 1`;
-
-        const userStatus = userResults.length > 0 ? userResults[0] : null;
+        console.log(`[Auth] Querying User ID: ${verified.userId}`);
+        const userStatus = await prisma.user.findFirst({
+            where: { id: verified.userId },
+            select: { active: true, companyId: true, role: true, areaId: true }
+        });
 
         if (!userStatus || !userStatus.active) {
             return res.status(403).json({ error: 'Account disabled or not found' });
