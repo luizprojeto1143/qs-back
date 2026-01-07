@@ -2,32 +2,27 @@ import { useState, useEffect, useMemo } from 'react';
 import { Calendar, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import { api } from '../../lib/api';
 
-interface DayAvailability {
-    enabled: boolean;
-    start?: string;
-    end?: string;
+interface TimeSlot {
+    start: string;
+    end: string;
+}
+
+interface DaySchedule {
+    active: boolean;
+    slots: TimeSlot[];
 }
 
 interface Availability {
-    monday?: DayAvailability;
-    tuesday?: DayAvailability;
-    wednesday?: DayAvailability;
-    thursday?: DayAvailability;
-    friday?: DayAvailability;
-    saturday?: DayAvailability;
-    sunday?: DayAvailability;
+    monday?: DaySchedule;
+    tuesday?: DaySchedule;
+    wednesday?: DaySchedule;
+    thursday?: DaySchedule;
+    friday?: DaySchedule;
+    saturday?: DaySchedule;
+    sunday?: DaySchedule;
 }
 
 const DAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
-const DAY_LABELS: Record<string, string> = {
-    sunday: 'Domingo',
-    monday: 'Segunda',
-    tuesday: 'Terça',
-    wednesday: 'Quarta',
-    thursday: 'Quinta',
-    friday: 'Sexta',
-    saturday: 'Sábado',
-};
 
 const MobileSchedule = () => {
     const [selectedDate, setSelectedDate] = useState('');
@@ -43,7 +38,19 @@ const MobileSchedule = () => {
         const fetchAvailability = async () => {
             try {
                 const res = await api.get('/settings/availability');
-                setAvailability(res.data || {});
+                const data = res.data || {};
+
+                // Normalize data to ensure slots array exists
+                const normalized: Availability = {};
+                Object.keys(data).forEach(key => {
+                    const dayData = data[key];
+                    normalized[key as keyof Availability] = {
+                        active: dayData.active || false,
+                        slots: dayData.slots || (dayData.active ? [{ start: dayData.start || '08:00', end: dayData.end || '18:00' }] : [])
+                    };
+                });
+
+                setAvailability(normalized);
             } catch (error) {
                 console.error('Error fetching availability:', error);
             } finally {
@@ -65,10 +72,11 @@ const MobileSchedule = () => {
             date.setDate(today.getDate() + i);
 
             const dayIndex = date.getDay();
-            const dayKey = DAY_NAMES[dayIndex];
-            const dayConfig = availability[dayKey as keyof Availability];
+            const dayKey = DAY_NAMES[dayIndex] as keyof Availability;
+            const dayConfig = availability[dayKey];
 
-            if (dayConfig?.enabled) {
+            // Check if day is active and has slots
+            if (dayConfig?.active && dayConfig.slots && dayConfig.slots.length > 0) {
                 dates.push({
                     date: date.toISOString().split('T')[0],
                     dayName: dayKey,
@@ -84,22 +92,36 @@ const MobileSchedule = () => {
     const availableTimeSlots = useMemo(() => {
         if (!selectedDate || !availability) return [];
 
-        const date = new Date(selectedDate);
-        const dayKey = DAY_NAMES[date.getDay()];
-        const dayConfig = availability[dayKey as keyof Availability];
+        const date = new Date(selectedDate + 'T12:00:00'); // Add time to avoid timezone issues
+        const dayKey = DAY_NAMES[date.getDay()] as keyof Availability;
+        const dayConfig = availability[dayKey];
 
-        if (!dayConfig?.enabled) return [];
+        if (!dayConfig?.active || !dayConfig.slots || dayConfig.slots.length === 0) return [];
 
-        const startHour = dayConfig.start ? parseInt(dayConfig.start.split(':')[0]) : 8;
-        const endHour = dayConfig.end ? parseInt(dayConfig.end.split(':')[0]) : 18;
+        const allSlots: string[] = [];
 
-        const slots: string[] = [];
-        for (let hour = startHour; hour < endHour; hour++) {
-            slots.push(`${hour.toString().padStart(2, '0')}:00`);
-            slots.push(`${hour.toString().padStart(2, '0')}:30`);
-        }
+        // Generate 30-minute intervals for each configured time slot
+        dayConfig.slots.forEach(slot => {
+            const startHour = parseInt(slot.start.split(':')[0]);
+            const startMin = parseInt(slot.start.split(':')[1]) || 0;
+            const endHour = parseInt(slot.end.split(':')[0]);
+            const endMin = parseInt(slot.end.split(':')[1]) || 0;
 
-        return slots;
+            let currentHour = startHour;
+            let currentMin = startMin;
+
+            while (currentHour < endHour || (currentHour === endHour && currentMin < endMin)) {
+                allSlots.push(`${currentHour.toString().padStart(2, '0')}:${currentMin.toString().padStart(2, '0')}`);
+
+                currentMin += 30;
+                if (currentMin >= 60) {
+                    currentMin = 0;
+                    currentHour++;
+                }
+            }
+        });
+
+        return allSlots;
     }, [selectedDate, availability]);
 
     const handleSubmit = async (e: React.FormEvent) => {

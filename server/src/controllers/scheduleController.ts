@@ -39,21 +39,28 @@ export const createSchedule = async (req: Request, res: Response) => {
 
                 const dayConfig = availability[dayKey];
 
-                // Check if day is enabled
-                if (!dayConfig || !dayConfig.enabled) {
+                // Check if day is active (use 'active' which is the saved format)
+                if (!dayConfig || !dayConfig.active) {
                     return res.status(400).json({
                         error: 'Data não disponível para agendamento',
                         message: 'Este dia da semana não está habilitado para agendamentos.'
                     });
                 }
 
-                // Optionally check time range
-                if (dayConfig.start && dayConfig.end && time) {
-                    const requestedTime = time;
-                    if (requestedTime < dayConfig.start || requestedTime > dayConfig.end) {
+                // Check time against slots
+                if (dayConfig.slots && dayConfig.slots.length > 0 && time) {
+                    let timeInSlot = false;
+                    for (const slot of dayConfig.slots) {
+                        if (time >= slot.start && time <= slot.end) {
+                            timeInSlot = true;
+                            break;
+                        }
+                    }
+                    if (!timeInSlot) {
+                        const ranges = dayConfig.slots.map((s: any) => `${s.start}-${s.end}`).join(', ');
                         return res.status(400).json({
                             error: 'Horário não disponível',
-                            message: `Agendamentos só são permitidos entre ${dayConfig.start} e ${dayConfig.end}.`
+                            message: `Agendamentos só são permitidos nos horários: ${ranges}`
                         });
                     }
                 }
