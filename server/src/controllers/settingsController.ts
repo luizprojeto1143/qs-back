@@ -327,7 +327,16 @@ export const getAvailability = async (req: Request, res: Response) => {
             select: { availability: true }
         });
 
-        res.json(company?.availability ? JSON.parse(company.availability) : {});
+        let parsedAvailability = {};
+        try {
+            parsedAvailability = company?.availability ? JSON.parse(company.availability) : {};
+        } catch (parseError) {
+            console.error('[Settings] Failed to parse availability JSON:', parseError);
+            // Default to empty object if parsing fails, don't crash the request
+            parsedAvailability = {};
+        }
+
+        res.json(parsedAvailability);
     } catch (error) {
         console.error('Error fetching availability:', error);
         // Return empty object instead of 500 to allow UI to render default form

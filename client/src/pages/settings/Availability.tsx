@@ -62,8 +62,16 @@ const Availability = () => {
                     });
                     setAvailability(normalizedData);
                 }
-            } catch (error) {
+            } catch (error: any) {
                 console.error('Error fetching availability', error);
+
+                // EMERGENCY DEBUG: Show the exact error coming from the server
+                if (error.response?.data) {
+                    const serverError = error.response.data;
+                    const debugMessage = `AVAILABILITY CRASH: ${serverError.message || JSON.stringify(serverError)}`;
+                    alert(debugMessage); // Make sure user sees it!
+                }
+
                 toast.error('Erro ao carregar disponibilidade');
             } finally {
                 setLoading(false);
