@@ -20,6 +20,50 @@ export const createSchedule = async (req: Request, res: Response) => {
         // Combine date and time into a single DateTime string
         const scheduleDate = new Date(`${date}T${time}:00.000Z`);
 
+        // ============================================
+        // AVAILABILITY VALIDATION
+        // ============================================
+        const company = await prisma.company.findUnique({
+            where: { id: user.companyId },
+            select: { availability: true }
+        });
+
+        if (company?.availability) {
+            try {
+                const availability = JSON.parse(company.availability);
+                const dayOfWeek = scheduleDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
+
+                // Map day number to key names in availability object
+                const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                const dayKey = dayNames[dayOfWeek];
+
+                const dayConfig = availability[dayKey];
+
+                // Check if day is enabled
+                if (!dayConfig || !dayConfig.enabled) {
+                    return res.status(400).json({
+                        error: 'Data não disponível para agendamento',
+                        message: 'Este dia da semana não está habilitado para agendamentos.'
+                    });
+                }
+
+                // Optionally check time range
+                if (dayConfig.start && dayConfig.end && time) {
+                    const requestedTime = time;
+                    if (requestedTime < dayConfig.start || requestedTime > dayConfig.end) {
+                        return res.status(400).json({
+                            error: 'Horário não disponível',
+                            message: `Agendamentos só são permitidos entre ${dayConfig.start} e ${dayConfig.end}.`
+                        });
+                    }
+                }
+            } catch (parseError) {
+                console.error('Error parsing availability:', parseError);
+                // Continue without validation if there's a parsing error
+            }
+        }
+        // ============================================
+
         // TRANSACTION: Create Schedule + Notifications
         const result = await prisma.$transaction(async (prisma) => {
             // RACE CONDITION CHECK (Moved inside transaction)
