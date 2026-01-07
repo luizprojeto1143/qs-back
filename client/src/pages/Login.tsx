@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Lock, ArrowRight, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../lib/api';
+
+const SAVED_CREDENTIALS_KEY = 'qs_saved_credentials';
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -12,7 +14,21 @@ const Login = () => {
 
     const [totpCode, setTotpCode] = useState('');
     const [require2FA, setRequire2FA] = useState(false);
-    const [rememberMe, setRememberMe] = useState(true); // Default to true for better UX
+    const [rememberMe, setRememberMe] = useState(true);
+
+    // Load saved credentials on mount
+    useEffect(() => {
+        try {
+            const saved = localStorage.getItem(SAVED_CREDENTIALS_KEY);
+            if (saved) {
+                const { email: savedEmail, password: savedPassword } = JSON.parse(saved);
+                if (savedEmail) setEmail(savedEmail);
+                if (savedPassword) setPassword(savedPassword);
+            }
+        } catch (e) {
+            console.error('Error loading saved credentials', e);
+        }
+    }, []);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -34,6 +50,13 @@ const Login = () => {
 
             localStorage.setItem('token', data.token);
             localStorage.setItem('user', JSON.stringify(data.user));
+
+            // Save or clear credentials based on rememberMe
+            if (rememberMe) {
+                localStorage.setItem(SAVED_CREDENTIALS_KEY, JSON.stringify({ email, password }));
+            } else {
+                localStorage.removeItem(SAVED_CREDENTIALS_KEY);
+            }
 
             toast.success(`Bem-vindo(a), ${data.user.name}!`);
 
