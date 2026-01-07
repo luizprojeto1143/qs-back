@@ -12,13 +12,14 @@ const Login = () => {
 
     const [totpCode, setTotpCode] = useState('');
     const [require2FA, setRequire2FA] = useState(false);
+    const [rememberMe, setRememberMe] = useState(true); // Default to true for better UX
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
 
         try {
-            const payload: any = { email: email.trim().toLowerCase(), password };
+            const payload: any = { email: email.trim().toLowerCase(), password, rememberMe };
             if (require2FA && totpCode) payload.totpCode = totpCode;
 
             const response = await api.post('/auth/login', payload);
@@ -215,8 +216,13 @@ const Login = () => {
 
                             <div className="flex items-center justify-between">
                                 <label className="flex items-center gap-2 cursor-pointer">
-                                    <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                                    <span className="text-sm text-gray-600">Lembrar de mim</span>
+                                    <input
+                                        type="checkbox"
+                                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                        checked={rememberMe}
+                                        onChange={(e) => setRememberMe(e.target.checked)}
+                                    />
+                                    <span className="text-sm text-gray-600">Manter conectado</span>
                                 </label>
                                 <button
                                     type="button"

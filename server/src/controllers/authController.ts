@@ -137,7 +137,9 @@ export const login = async (req: Request, res: Response) => {
             }
         }
 
-        const jwtExpiration = process.env.JWT_EXPIRATION || '1d';
+        // Check for rememberMe option - extend session to 30 days
+        const rememberMe = req.body.rememberMe === true;
+        const jwtExpiration = rememberMe ? '30d' : (process.env.JWT_EXPIRATION || '7d');
         const token = jwt.sign(
             { userId: user.id, role: user.role, companyId: user.companyId },
             JWT_SECRET,
