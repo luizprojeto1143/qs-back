@@ -98,27 +98,7 @@ const QSScoreDashboard: React.FC = () => {
         }
     }, [selectedCompanyId, loadData]);
 
-    const loadData = async () => {
-        if (!selectedCompanyId) return;
-        setLoading(true);
-        try {
-            const [scoreRes, riskRes] = await Promise.all([
-                api.get(`/qs-score/company/${selectedCompanyId}`),
-                api.get(`/qs-score/risk-map/${selectedCompanyId}`),
-            ]);
-            setScoreData(scoreRes.data);
-            setRiskMap(riskRes.data);
-        } catch (error: any) {
-            console.error('Error loading QS Score data:', error);
-            if (error.response?.status === 403) {
-                toast.error('QS Score não está habilitado para esta empresa');
-            } else {
-                toast.error('Erro ao carregar dados do QS Score');
-            }
-        } finally {
-            setLoading(false);
-        }
-    };
+
 
     const handleRecalculate = async () => {
         if (!selectedCompanyId) return;
