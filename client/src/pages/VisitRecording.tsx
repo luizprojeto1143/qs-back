@@ -236,6 +236,7 @@ const VisitRecording = () => {
         try {
             const payload = {
                 ...formData,
+                areaId: formData.areaId || null,
                 individualNotes
             };
 
