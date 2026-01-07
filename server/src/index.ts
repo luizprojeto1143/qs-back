@@ -13,6 +13,7 @@ const PORT = process.env.PORT || 3001;
 import routes from './routes';
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './config/swagger';
+import * as healthController from './controllers/healthController';
 
 // Swagger UI
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
