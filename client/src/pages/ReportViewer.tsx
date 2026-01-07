@@ -795,76 +795,83 @@ const ReportViewer = () => {
                         )}
                     </div>
                 );
-                if (reportData.metrics) {
-                    if (Array.isArray(reportData.metrics)) {
-                        if (reportData.metrics && Array.isArray(reportData.metrics)) {
-                            const metricsArray = reportData.metrics; // Explicit reference for narrowing
-                            return (
-                                <div className="space-y-8">
-                                    <div className="grid grid-cols-3 gap-6">
-                                        {metricsArray.map((m, i) => (
-                                            <div key={i} className="p-6 bg-white rounded-xl border border-gray-200 shadow-sm text-center">
-                                                <h3 className="text-sm text-gray-500 uppercase tracking-wider mb-2">{m.label}</h3>
-                                                <p className="text-3xl font-bold text-primary">{m.value}</p>
-                                            </div>
-                                        ))}
+            default:
+                if (reportData.metrics && Array.isArray(reportData.metrics)) {
+                    return (
+                        <div className="space-y-8">
+                            <div className="grid grid-cols-3 gap-6">
+                                {reportData.metrics.map((m: any, i: number) => (
+                                    <div key={i} className="p-6 bg-white rounded-xl border border-gray-200 shadow-sm text-center">
+                                        <h3 className="text-sm text-gray-500 uppercase tracking-wider mb-2">{m.label}</h3>
+                                        <p className="text-3xl font-bold text-primary">{m.value}</p>
                                     </div>
-                                    <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
-                                        <h3 className="text-lg font-bold mb-2">Resumo Executivo</h3>
-                                        <p className="text-gray-700 leading-relaxed">{reportData.details}</p>
-                                    </div>
+                                ))}
+                            </div>
+                            {reportData.details && (
+                                <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
+                                    <h3 className="text-lg font-bold mb-2">Resumo Executivo</h3>
+                                    <p className="text-gray-700 leading-relaxed">{reportData.details}</p>
                                 </div>
-                            );
-                        }
-                        return <pre className="bg-gray-100 p-4 rounded overflow-auto">{JSON.stringify(reportData, null, 2)}</pre>;
-                    }
-                };
-
+                            )}
+                        </div>
+                    );
+                }
                 return (
-                    <div className="min-h-screen bg-white text-gray-900 font-sans">
-                        {/* No-Print Header */}
-                        <div className="print:hidden bg-gray-900 text-white p-4 flex justify-between items-center sticky top-0 z-50 shadow-md">
-                            <div className="flex items-center space-x-4">
-                                <button onClick={() => navigate(-1)} className="hover:bg-gray-700 p-2 rounded-full transition-colors">
-                                    <ArrowLeft className="h-6 w-6" />
-                                </button>
-                                <h1 className="text-lg font-bold">Visualizador de Relatório</h1>
-                            </div>
-                            <div className="flex space-x-3">
-                                <button onClick={handlePrint} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 shadow-sm font-medium">
-                                    <Printer className="h-4 w-4" />
-                                    <span>Imprimir / Salvar PDF</span>
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Printable Content */}
-                        <div className="max-w-4xl mx-auto p-8 print:p-0 print:max-w-none">
-                            {/* Report Header */}
-                            <div className="border-b-2 border-primary pb-6 mb-8 flex justify-between items-end">
-                                <div>
-                                    <h1 className="text-3xl font-bold text-primary uppercase tracking-wide">Relatório QS Inclusão</h1>
-                                    <p className="text-gray-500 mt-1 text-lg">{reportType.replace(/_/g, ' ')}</p>
-                                </div>
-                                <div className="text-right text-sm text-gray-400">
-                                    <p>Gerado em: {new Date().toLocaleDateString()} às {new Date().toLocaleTimeString()}</p>
-                                    <p>QS Inclusão - Sistema de Acompanhamento</p>
-                                </div>
-                            </div>
-
-                            {/* Report Body */}
-                            <div className="report-content">
-                                {renderContent()}
-                            </div>
-
-                            {/* Report Footer */}
-                            <div className="mt-12 pt-6 border-t border-gray-200 text-center text-gray-400 text-sm print:fixed print:bottom-0 print:w-full print:bg-white">
-                                <p>QS Inclusão - Soluções em Acessibilidade e Inclusão</p>
-                                <p>www.qsinclusao.com.br</p>
-                            </div>
-                        </div>
+                    <div className="p-8 text-center bg-gray-50 rounded-lg border border-gray-200">
+                        <p className="text-gray-500">Selecione um tipo de relatório válido para visualizar.</p>
+                        <pre className="mt-4 text-xs text-left bg-gray-100 p-4 rounded overflow-auto max-h-60">
+                            {JSON.stringify(reportData, null, 2)}
+                        </pre>
                     </div>
                 );
-        };
+        }
+    };
 
-        export default ReportViewer;
+    return (
+        <div className="min-h-screen bg-white text-gray-900 font-sans">
+            {/* No-Print Header */}
+            <div className="print:hidden bg-gray-900 text-white p-4 flex justify-between items-center sticky top-0 z-50 shadow-md">
+                <div className="flex items-center space-x-4">
+                    <button onClick={() => navigate(-1)} className="hover:bg-gray-700 p-2 rounded-full transition-colors">
+                        <ArrowLeft className="h-6 w-6" />
+                    </button>
+                    <h1 className="text-lg font-bold">Visualizador de Relatório</h1>
+                </div>
+                <div className="flex space-x-3">
+                    <button onClick={handlePrint} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 shadow-sm font-medium">
+                        <Printer className="h-4 w-4" />
+                        <span>Imprimir / Salvar PDF</span>
+                    </button>
+                </div>
+            </div>
+
+            {/* Printable Content */}
+            <div className="max-w-4xl mx-auto p-8 print:p-0 print:max-w-none">
+                {/* Report Header */}
+                <div className="border-b-2 border-primary pb-6 mb-8 flex justify-between items-end">
+                    <div>
+                        <h1 className="text-3xl font-bold text-primary uppercase tracking-wide">Relatório QS Inclusão</h1>
+                        <p className="text-gray-500 mt-1 text-lg">{reportType.replace(/_/g, ' ')}</p>
+                    </div>
+                    <div className="text-right text-sm text-gray-400">
+                        <p>Gerado em: {new Date().toLocaleDateString()} às {new Date().toLocaleTimeString()}</p>
+                        <p>QS Inclusão - Sistema de Acompanhamento</p>
+                    </div>
+                </div>
+
+                {/* Report Body */}
+                <div className="report-content">
+                    {renderContent()}
+                </div>
+
+                {/* Report Footer */}
+                <div className="mt-12 pt-6 border-t border-gray-200 text-center text-gray-400 text-sm print:fixed print:bottom-0 print:w-full print:bg-white">
+                    <p>QS Inclusão - Soluções em Acessibilidade e Inclusão</p>
+                    <p>www.qsinclusao.com.br</p>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default ReportViewer;
