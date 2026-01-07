@@ -71,22 +71,21 @@ const CollaboratorRegistration = () => {
             return;
         }
 
-        if (!avatarFile) {
-            toast.error('A foto de perfil é obrigatória.');
-            return;
-        }
+        // Photo is now optional - user can add later in the app
 
         setLoading(true);
         try {
-            // 1. Upload Photo
-            const uploadFormData = new FormData();
-            uploadFormData.append('file', avatarFile);
+            let avatarUrl = null;
 
-            const uploadRes = await api.post('/upload', uploadFormData);
+            // Upload Photo if provided
+            if (avatarFile) {
+                const uploadFormData = new FormData();
+                uploadFormData.append('file', avatarFile);
+                const uploadRes = await api.post('/upload', uploadFormData);
+                avatarUrl = uploadRes.data.url;
+            }
 
-            const avatarUrl = uploadRes.data.url;
-
-            // 2. Register User with Avatar URL
+            // Register User
             await api.post('/auth/register-collaborator', {
                 ...formData,
                 avatar: avatarUrl
@@ -155,10 +154,9 @@ const CollaboratorRegistration = () => {
                                 accept="image/*"
                                 onChange={handleFileChange}
                                 className="absolute inset-0 opacity-0 cursor-pointer"
-                                required
                             />
                         </div>
-                        <p className="text-xs text-gray-500">Toque para adicionar foto (Obrigatório)</p>
+                        <p className="text-xs text-gray-500">Toque para adicionar foto (Opcional)</p>
                     </div>
 
                     <div>
@@ -234,66 +232,47 @@ const CollaboratorRegistration = () => {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Turno</label>
-                            <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <Clock className="h-5 w-5 text-gray-400" />
-                                </div>
-                                <select
-                                    required
-                                    className="input-field pl-10"
-                                    value={formData.shift}
-                                    onChange={e => setFormData({ ...formData, shift: e.target.value })}
-                                >
-                                    <option value="">Selecione seu turno...</option>
-                                    {shifts.map(shift => (
-                                        <option key={shift.id} value={shift.name}>
-                                            {shift.name} ({shift.type} - {shift.startTime} às {shift.endTime})
-                                        </option>
-                                    ))}
-                                </select>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Turno</label>
+                        <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <Clock className="h-5 w-5 text-gray-400" />
                             </div>
+                            <select
+                                required
+                                className="input-field pl-10"
+                                value={formData.shift}
+                                onChange={e => setFormData({ ...formData, shift: e.target.value })}
+                            >
+                                <option value="">Selecione seu turno...</option>
+                                {shifts.map(shift => (
+                                    <option key={shift.id} value={shift.name}>
+                                        {shift.name} ({shift.startTime} às {shift.endTime})
+                                    </option>
+                                ))}
+                            </select>
                         </div>
+                    </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Próxima Folga (Opcional) <span className="text-xs text-gray-500 font-normal">- Para escalas rotativas</span>
-                            </label>
-                            <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <Calendar className="h-5 w-5 text-gray-400" />
-                                </div>
-                                <input
-                                    type="date"
-                                    className="input-field pl-10"
-                                    value={formData.nextRestDay}
-                                    onChange={e => setFormData({ ...formData, nextRestDay: e.target.value })}
-                                />
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Deficiência</label>
+                        <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <Accessibility className="h-5 w-5 text-gray-400" />
                             </div>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Deficiência</label>
-                            <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <Accessibility className="h-5 w-5 text-gray-400" />
-                                </div>
-                                <select
-                                    required
-                                    className="input-field pl-10"
-                                    value={formData.disabilityType}
-                                    onChange={e => setFormData({ ...formData, disabilityType: e.target.value })}
-                                >
-                                    <option value="NENHUMA">Nenhuma</option>
-                                    <option value="FISICA">Física</option>
-                                    <option value="AUDITIVA">Auditiva</option>
-                                    <option value="VISUAL">Visual</option>
-                                    <option value="INTELECTUAL">Intelectual</option>
-                                    <option value="MULTIPLA">Múltipla</option>
-                                </select>
-                            </div>
+                            <select
+                                required
+                                className="input-field pl-10"
+                                value={formData.disabilityType}
+                                onChange={e => setFormData({ ...formData, disabilityType: e.target.value })}
+                            >
+                                <option value="NENHUMA">Nenhuma</option>
+                                <option value="FISICA">Física</option>
+                                <option value="AUDITIVA">Auditiva</option>
+                                <option value="VISUAL">Visual</option>
+                                <option value="INTELECTUAL">Intelectual</option>
+                                <option value="MULTIPLA">Múltipla</option>
+                            </select>
                         </div>
                     </div>
 
