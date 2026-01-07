@@ -184,7 +184,7 @@ export const getVisit = async (req: Request, res: Response) => {
         const user = (req as AuthRequest).user;
         const companyId = req.headers['x-company-id'] as string || user?.companyId;
 
-        const visit = await prisma.visit.findUnique({
+        const visit = await prisma.visit.findFirst({
             where: { id },
             include: {
                 company: true,
@@ -239,7 +239,7 @@ export const updateVisit = async (req: Request, res: Response) => {
         const requestCompanyId = req.headers['x-company-id'] as string || user?.companyId;
 
         // Check if visit exists
-        const existingVisit = await prisma.visit.findUnique({
+        const existingVisit = await prisma.visit.findFirst({
             where: { id },
             include: { generatedPendencies: true } // Need to know existing pendencies
         });

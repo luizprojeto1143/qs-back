@@ -33,7 +33,7 @@ export const generateReport = async (req: Request, res: Response) => {
         switch (type) {
             case 'VISIT_INDIVIDUAL':
                 if (!filters?.visitId) return res.status(400).json({ error: 'Visit ID required' });
-                data = await prisma.visit.findUnique({
+                data = await prisma.visit.findFirst({
                     where: { id: filters.visitId },
                     include: {
                         company: true,
@@ -122,7 +122,7 @@ export const generateReport = async (req: Request, res: Response) => {
                 });
 
                 if (!collaborator) {
-                    collaborator = await prisma.collaboratorProfile.findUnique({
+                    collaborator = await prisma.collaboratorProfile.findFirst({
                         where: { userId: filters.collaboratorId },
                         include: {
                             user: {
@@ -174,7 +174,7 @@ export const generateReport = async (req: Request, res: Response) => {
 
             case 'AREA_REPORT':
                 if (filters?.areaId) {
-                    const area = await prisma.area.findUnique({ where: { id: filters.areaId }, include: { sector: true } });
+                    const area = await prisma.area.findFirst({ where: { id: filters.areaId }, include: { sector: true } });
                     const areaVisits = await prisma.visit.findMany({
                         where: { areaId: filters.areaId },
                         include: {
@@ -195,7 +195,7 @@ export const generateReport = async (req: Request, res: Response) => {
                 break;
 
             case 'INCLUSION_DIAGNOSIS':
-                const company = await prisma.company.findUnique({
+                const company = await prisma.company.findFirst({
                     where: { id: companyId },
                     select: { inclusionDiagnosis: true }
                 });
@@ -209,7 +209,7 @@ export const generateReport = async (req: Request, res: Response) => {
 
             case 'SECTOR_REPORT':
                 if (!filters?.sectorId) return res.status(400).json({ error: 'Sector ID required' });
-                const sector = await prisma.sector.findUnique({ where: { id: filters.sectorId }, include: { areas: true } });
+                const sector = await prisma.sector.findFirst({ where: { id: filters.sectorId }, include: { areas: true } });
                 const sectorAreas = sector?.areas.map(a => a.id) || [];
 
                 const sectorVisits = await prisma.visit.findMany({
