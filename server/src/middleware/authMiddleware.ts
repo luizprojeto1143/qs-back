@@ -45,7 +45,8 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
         }
 
         // SECURITY CHECK: Verify if user still exists and is active
-        const userStatus = await prisma.user.findUnique({
+        console.log(`[Auth] Querying User ID via findFirst: ${verified.userId}`);
+        const userStatus = await prisma.user.findFirst({
             where: { id: verified.userId },
             select: { active: true, companyId: true, role: true, areaId: true }
         });
