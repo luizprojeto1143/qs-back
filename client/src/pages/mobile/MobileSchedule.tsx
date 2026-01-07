@@ -1,15 +1,110 @@
-import { useState } from 'react';
-import { Calendar, Clock, CheckCircle } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Calendar, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import { api } from '../../lib/api';
+
+interface DayAvailability {
+    enabled: boolean;
+    start?: string;
+    end?: string;
+}
+
+interface Availability {
+    monday?: DayAvailability;
+    tuesday?: DayAvailability;
+    wednesday?: DayAvailability;
+    thursday?: DayAvailability;
+    friday?: DayAvailability;
+    saturday?: DayAvailability;
+    sunday?: DayAvailability;
+}
+
+const DAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
+const DAY_LABELS: Record<string, string> = {
+    sunday: 'Domingo',
+    monday: 'Segunda',
+    tuesday: 'Terça',
+    wednesday: 'Quarta',
+    thursday: 'Quinta',
+    friday: 'Sexta',
+    saturday: 'Sábado',
+};
 
 const MobileSchedule = () => {
     const [selectedDate, setSelectedDate] = useState('');
     const [selectedTime, setSelectedTime] = useState('');
     const [reason, setReason] = useState('');
     const [submitted, setSubmitted] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [availability, setAvailability] = useState<Availability | null>(null);
+    const [loadingAvailability, setLoadingAvailability] = useState(true);
+
+    // Fetch availability settings
+    useEffect(() => {
+        const fetchAvailability = async () => {
+            try {
+                const res = await api.get('/settings/availability');
+                setAvailability(res.data || {});
+            } catch (error) {
+                console.error('Error fetching availability:', error);
+            } finally {
+                setLoadingAvailability(false);
+            }
+        };
+        fetchAvailability();
+    }, []);
+
+    // Generate available dates for the next 30 days
+    const availableDates = useMemo(() => {
+        if (!availability) return [];
+
+        const dates: { date: string; dayName: string; label: string }[] = [];
+        const today = new Date();
+
+        for (let i = 1; i <= 30; i++) {
+            const date = new Date(today);
+            date.setDate(today.getDate() + i);
+
+            const dayIndex = date.getDay();
+            const dayKey = DAY_NAMES[dayIndex];
+            const dayConfig = availability[dayKey as keyof Availability];
+
+            if (dayConfig?.enabled) {
+                dates.push({
+                    date: date.toISOString().split('T')[0],
+                    dayName: dayKey,
+                    label: `${date.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' })}`
+                });
+            }
+        }
+
+        return dates;
+    }, [availability]);
+
+    // Get available time slots for selected date
+    const availableTimeSlots = useMemo(() => {
+        if (!selectedDate || !availability) return [];
+
+        const date = new Date(selectedDate);
+        const dayKey = DAY_NAMES[date.getDay()];
+        const dayConfig = availability[dayKey as keyof Availability];
+
+        if (!dayConfig?.enabled) return [];
+
+        const startHour = dayConfig.start ? parseInt(dayConfig.start.split(':')[0]) : 8;
+        const endHour = dayConfig.end ? parseInt(dayConfig.end.split(':')[0]) : 18;
+
+        const slots: string[] = [];
+        for (let hour = startHour; hour < endHour; hour++) {
+            slots.push(`${hour.toString().padStart(2, '0')}:00`);
+            slots.push(`${hour.toString().padStart(2, '0')}:30`);
+        }
+
+        return slots;
+    }, [selectedDate, availability]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setLoading(true);
 
         try {
             await api.post('/schedules', {
@@ -18,9 +113,12 @@ const MobileSchedule = () => {
                 reason
             });
             setSubmitted(true);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error scheduling:', error);
-            alert('Erro de conexão ou ao agendar.');
+            const msg = error.response?.data?.message || error.response?.data?.error || 'Erro ao agendar.';
+            alert(msg);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -47,6 +145,26 @@ const MobileSchedule = () => {
         );
     }
 
+    if (loadingAvailability) {
+        return (
+            <div className="flex items-center justify-center h-[60vh]">
+                <p className="text-gray-500">Carregando disponibilidade...</p>
+            </div>
+        );
+    }
+
+    if (availableDates.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center h-[60vh] text-center px-6">
+                <div className="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mb-6">
+                    <AlertCircle className="h-10 w-10 text-yellow-600" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900 mb-2">Nenhuma data disponível</h2>
+                <p className="text-gray-500">No momento não há dias habilitados para agendamento. Entre em contato com o RH.</p>
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-6 pb-24">
             <div>
@@ -55,42 +173,62 @@ const MobileSchedule = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Date Selection */}
                 <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">Data Desejada</label>
-                    <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Calendar className="h-5 w-5 text-gray-400" />
-                        </div>
-                        <input
-                            type="date"
-                            required
-                            className="pl-10 input-field w-full p-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                            value={selectedDate}
-                            onChange={(e) => setSelectedDate(e.target.value)}
-                        />
+                    <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        Escolha uma Data
+                    </label>
+                    <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
+                        {availableDates.map(({ date, label }) => (
+                            <button
+                                key={date}
+                                type="button"
+                                onClick={() => {
+                                    setSelectedDate(date);
+                                    setSelectedTime(''); // Reset time when date changes
+                                }}
+                                className={`p-3 rounded-xl text-sm font-medium transition-all ${selectedDate === date
+                                        ? 'bg-blue-600 text-white shadow-lg'
+                                        : 'bg-white border border-gray-200 text-gray-700 hover:border-blue-300'
+                                    }`}
+                            >
+                                {label}
+                            </button>
+                        ))}
                     </div>
                 </div>
 
-                <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">Horário Preferencial</label>
-                    <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Clock className="h-5 w-5 text-gray-400" />
+                {/* Time Selection */}
+                {selectedDate && (
+                    <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
+                        <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                            <Clock className="h-4 w-4" />
+                            Escolha um Horário
+                        </label>
+                        <div className="grid grid-cols-4 gap-2 max-h-32 overflow-y-auto">
+                            {availableTimeSlots.map((time) => (
+                                <button
+                                    key={time}
+                                    type="button"
+                                    onClick={() => setSelectedTime(time)}
+                                    className={`p-2 rounded-lg text-sm font-medium transition-all ${selectedTime === time
+                                            ? 'bg-blue-600 text-white shadow-lg'
+                                            : 'bg-white border border-gray-200 text-gray-700 hover:border-blue-300'
+                                        }`}
+                                >
+                                    {time}
+                                </button>
+                            ))}
                         </div>
-                        <input
-                            type="time"
-                            required
-                            className="pl-10 input-field w-full p-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                            value={selectedTime}
-                            onChange={(e) => setSelectedTime(e.target.value)}
-                        />
                     </div>
-                </div>
+                )}
 
+                {/* Reason */}
                 <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700">Motivo do Agendamento</label>
                     <textarea
-                        rows={4}
+                        rows={3}
                         required
                         className="input-field w-full p-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                         placeholder="Descreva brevemente o motivo..."
@@ -99,8 +237,12 @@ const MobileSchedule = () => {
                     />
                 </div>
 
-                <button type="submit" className="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-blue-600/20 active:scale-95 transition-all">
-                    Confirmar Solicitação
+                <button
+                    type="submit"
+                    disabled={!selectedDate || !selectedTime || loading}
+                    className="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-blue-600/20 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100"
+                >
+                    {loading ? 'Enviando...' : 'Confirmar Solicitação'}
                 </button>
             </form>
         </div>
