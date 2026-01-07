@@ -73,6 +73,7 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 
+app.get('/status', healthController.checkStatus);
 app.use('/api', routes);
 app.use('/uploads', express.static('uploads'));
 
@@ -109,10 +110,6 @@ app.get('/health', async (req, res) => {
 app.get('/', (req, res) => {
   res.send('QS Inclusão API is running');
 });
-
-// Deep Diagnostic Endpoint (Public)
-import * as healthController from './controllers/healthController';
-app.get('/api/status', healthController.checkStatus);
 
 import { createServer } from 'http';
 import { Server } from 'socket.io';
