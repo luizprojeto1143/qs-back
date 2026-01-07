@@ -242,7 +242,8 @@ export const qsScoreController = {
 
             // Verificar se QS Score está habilitado
             const settings = await prisma.systemSettings.findUnique({ where: { companyId } });
-            if (!settings?.qsScoreEnabled) return res.status(403).json({ error: 'QS Score não está habilitado' });
+            // MODIFIED: Only block if explicitly disabled
+            if (settings && settings.qsScoreEnabled === false) return res.status(403).json({ error: 'QS Score não está habilitado' });
 
             // 1. Buscar Score Atual ou Recalcular
             let currentScore = await prisma.qSScore.findFirst({
@@ -352,7 +353,8 @@ export const qsScoreController = {
             const { companyId } = req.params;
             // Validar se feature enabled
             const settings = await prisma.systemSettings.findUnique({ where: { companyId } });
-            if (!settings?.riskMapEnabled) return res.status(403).json({ error: 'Mapa de risco não está habilitado' });
+            // MODIFIED: Only block if explicitly disabled
+            if (settings && settings.riskMapEnabled === false) return res.status(403).json({ error: 'Mapa de risco não está habilitado' });
 
             // Re-use logic: fetch latest scores from DB (fast) instead of recalculating (slow)
             const areas = await prisma.area.findMany({

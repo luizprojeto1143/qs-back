@@ -74,7 +74,7 @@ const RHLayout = () => {
             {/* Sidebar Desktop */}
             <aside className="hidden md:flex flex-col w-64 bg-[#0A192F] border-r border-gray-800 fixed h-full z-10 text-white">
                 <div className="p-6 flex items-center justify-center">
-                    <img src="/logo.png" alt="QS Inclusão" className="h-12 w-auto object-contain" />
+                    <img src="/logo-new.jpg" alt="QS Inclusão" className="h-12 w-auto object-contain" />
                 </div>
 
                 <nav className="flex-1 px-4 space-y-2 overflow-y-auto py-4">
@@ -119,7 +119,7 @@ const RHLayout = () => {
             {/* Mobile Header */}
             <div className="md:hidden fixed w-full bg-[#0A192F] border-b border-gray-800 z-[200] px-4 py-3 flex items-center justify-between text-white">
                 <div className="flex items-center space-x-3">
-                    <img src="/logo.png" alt="QS Inclusão" className="h-8 w-auto object-contain bg-white/10 rounded p-1" />
+                    <img src="/logo-new.jpg" alt="QS Inclusão" className="h-8 w-auto object-contain bg-white/10 rounded p-1" />
                     <span className="text-lg font-bold text-white">Portal RH</span>
                 </div>
                 <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
