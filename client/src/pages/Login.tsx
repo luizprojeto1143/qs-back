@@ -84,7 +84,7 @@ const Login = () => {
 
                 <div className="relative z-10">
                     <div className="flex items-center gap-3">
-                        <img src="/logo.png" alt="QS Inclusão" className="h-12 w-auto" />
+                        <img src="/logo-new.jpg" alt="QS Inclusão" className="h-12 w-auto" />
                     </div>
                 </div>
 

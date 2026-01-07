@@ -57,7 +57,7 @@ const MobileLayout = () => {
             {/* Mobile Header */}
             <header className="bg-white px-4 py-3 shadow-sm flex items-center justify-between sticky top-0 z-50">
                 <div className="flex items-center space-x-2">
-                    <img src="/logo.png" alt="QS Inclusão" className="h-8 w-auto object-contain" />
+                    <img src="/logo-new.jpg" alt="QS Inclusão" className="h-8 w-auto object-contain" />
                     <span className="font-bold text-gray-900">QS Inclusão <span className="text-xs text-gray-400 font-normal">v7.2</span></span>
                 </div>
                 <button onClick={() => setIsMenuOpen(true)} className="p-2 text-gray-600 hover:bg-gray-100 rounded-full shrink-0" aria-label="Abrir menu">
