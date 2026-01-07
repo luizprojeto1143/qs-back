@@ -29,12 +29,10 @@ export const checkTermsStatus = async (req: Request, res: Response) => {
             return res.json({ accepted: true }); // No terms to accept
         }
 
-        const acceptance = await prisma.userTermsAcceptance.findUnique({
+        const acceptance = await prisma.userTermsAcceptance.findFirst({
             where: {
-                userId_termId: {
-                    userId: user.userId,
-                    termId: latestTerm.id
-                }
+                userId: user.userId,
+                termId: latestTerm.id
             }
         });
 
@@ -69,12 +67,10 @@ export const acceptTerms = async (req: Request, res: Response) => {
         const ipAddress = req.ip || req.socket.remoteAddress;
 
         // Check if already accepted
-        const existing = await prisma.userTermsAcceptance.findUnique({
+        const existing = await prisma.userTermsAcceptance.findFirst({
             where: {
-                userId_termId: {
-                    userId: user.userId,
-                    termId
-                }
+                userId: user.userId,
+                termId
             }
         });
 
@@ -321,7 +317,7 @@ export const getAvailability = async (req: Request, res: Response) => {
             return res.status(400).json({ error: 'User or Company not found' });
         }
 
-        const company = await prisma.company.findUnique({
+        const company = await prisma.company.findFirst({
             where: { id: user.companyId },
             select: { availability: true }
         });

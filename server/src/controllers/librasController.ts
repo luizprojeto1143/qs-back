@@ -31,7 +31,7 @@ export const checkAvailability = async (req: Request, res: Response) => {
             return res.status(400).json({ error: 'User or Company not found' });
         }
 
-        const company = await prisma.company.findUnique({
+        const company = await prisma.company.findFirst({
             where: { id: user.companyId },
             select: { librasAvailability: true }
         });
@@ -93,7 +93,7 @@ export const getSettings = async (req: Request, res: Response) => {
             return res.status(400).json({ error: 'User or Company not found' });
         }
 
-        const company = await prisma.company.findUnique({
+        const company = await prisma.company.findFirst({
             where: { id: user.companyId },
             select: { librasAvailability: true }
         });

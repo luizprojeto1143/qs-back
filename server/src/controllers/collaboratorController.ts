@@ -87,7 +87,7 @@ export const createCollaborator = async (req: Request, res: Response) => {
         }
 
         // Check email existence BEFORE transaction
-        const existingUser = await prisma.user.findUnique({ where: { email } });
+        const existingUser = await prisma.user.findFirst({ where: { email } });
         if (existingUser) {
             return res.status(400).json({ error: 'Email already registered' });
         }
@@ -149,7 +149,7 @@ export const getCollaborator = async (req: Request, res: Response) => {
         const user = (req as AuthRequest).user;
         const companyId = req.headers['x-company-id'] as string || user?.companyId;
 
-        const collaborator = await prisma.user.findUnique({
+        const collaborator = await prisma.user.findFirst({
             where: { id },
             include: {
                 collaboratorProfile: {
@@ -223,7 +223,7 @@ export const updateCollaborator = async (req: Request, res: Response) => {
         if (!requestingUser) return res.status(401).json({ error: 'Unauthorized' });
 
         // Verify existence and ownership
-        const existingUser = await prisma.user.findUnique({ where: { id } });
+        const existingUser = await prisma.user.findFirst({ where: { id } });
         if (!existingUser) return res.status(404).json({ error: 'Collaborator not found' });
 
         if (requestingUser.role !== 'MASTER' && existingUser.companyId !== requestingUser.companyId) {
@@ -232,7 +232,7 @@ export const updateCollaborator = async (req: Request, res: Response) => {
 
         // Check email uniqueness if changing
         if (email && email !== existingUser.email) {
-            const emailCheck = await prisma.user.findUnique({ where: { email } });
+            const emailCheck = await prisma.user.findFirst({ where: { email } });
             if (emailCheck) {
                 return res.status(400).json({ error: 'Email already in use' });
             }

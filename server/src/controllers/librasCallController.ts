@@ -53,7 +53,7 @@ export const checkCallStatus = async (req: Request, res: Response) => {
 
         const callId = req.params.id;
 
-        const call = await prisma.librasCall.findUnique({
+        const call = await prisma.librasCall.findFirst({
             where: { id: callId }
         });
 
@@ -163,7 +163,7 @@ export const inviteToCall = async (req: Request, res: Response) => {
         const callId = req.params.id;
         const { email, name } = req.body;
 
-        const call = await prisma.librasCall.findUnique({
+        const call = await prisma.librasCall.findFirst({
             where: { id: callId },
             include: {
                 requester: {

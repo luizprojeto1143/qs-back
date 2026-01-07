@@ -97,7 +97,7 @@ export const createArea = async (req: Request, res: Response) => {
         if (!user) return res.status(401).json({ error: 'Unauthorized' });
 
         // Verify sector ownership
-        const sector = await prisma.sector.findUnique({ where: { id: sectorId } });
+        const sector = await prisma.sector.findFirst({ where: { id: sectorId } });
         if (!sector) return res.status(404).json({ error: 'Sector not found' });
 
         if (user.role !== 'MASTER' && sector.companyId !== user.companyId) {
@@ -300,7 +300,7 @@ export const updateSector = async (req: Request, res: Response) => {
 
         if (!user) return res.status(401).json({ error: 'Unauthorized' });
 
-        const existingSector = await prisma.sector.findUnique({ where: { id } });
+        const existingSector = await prisma.sector.findFirst({ where: { id } });
         if (!existingSector) return res.status(404).json({ error: 'Sector not found' });
 
         if (user.role !== 'MASTER' && existingSector.companyId !== user.companyId) {
@@ -325,7 +325,7 @@ export const updateArea = async (req: Request, res: Response) => {
 
         if (!user) return res.status(401).json({ error: 'Unauthorized' });
 
-        const existingArea = await prisma.area.findUnique({ where: { id }, include: { sector: true } });
+        const existingArea = await prisma.area.findFirst({ where: { id }, include: { sector: true } });
         if (!existingArea) return res.status(404).json({ error: 'Area not found' });
 
         if (user.role !== 'MASTER' && existingArea.sector.companyId !== user.companyId) {
