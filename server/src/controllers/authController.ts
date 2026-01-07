@@ -116,8 +116,24 @@ export const login = async (req: Request, res: Response) => {
         const { totpCode } = req.body;
 
         console.log(`[Auth] Login Attempt for: ${email}`);
-        console.log('[Login] Step 1: Searching user...');
-        const user = await prisma.user.findFirst({ where: { email } });
+        console.log('[Login] Step 1: Searching user with $queryRaw...');
+
+        // Using $queryRaw to bypass PGBouncer prepared statement issues
+        const users = await prisma.$queryRaw<Array<{
+            id: string;
+            name: string;
+            email: string;
+            password: string;
+            role: string;
+            companyId: string | null;
+            avatar: string | null;
+            active: boolean;
+            twoFactorEnabled: boolean;
+            twoFactorSecret: string | null;
+        }>>`SELECT id, name, email, password, role, "companyId", avatar, active, "twoFactorEnabled", "twoFactorSecret" FROM "User" WHERE email = ${email} LIMIT 1`;
+
+        const user = users.length > 0 ? users[0] : null;
+
         if (!user) {
             console.log('[Login] User not found');
             await logAction(null, ACTIONS.LOGIN_FAIL, 'AUTH', { email, reason: 'User not found' }, null, getIp(req), getUserAgent(req));
