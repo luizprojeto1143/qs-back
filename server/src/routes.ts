@@ -142,6 +142,7 @@ router.get('/users', requireRole(['MASTER', 'RH', 'LIDER']), userController.list
 
 // Days Off Routes
 router.post('/days-off', workScheduleController.dayOffController.create);
+router.get('/days-off/my-requests', workScheduleController.dayOffController.myRequests);
 router.get('/days-off/pending', requireRole(['MASTER', 'RH', 'LIDER']), workScheduleController.dayOffController.listPending);
 router.post('/days-off/:id/review', requireRole(['MASTER', 'RH', 'LIDER']), workScheduleController.dayOffController.review);
 router.get('/collaborators/:collaboratorId/days-off', workScheduleController.dayOffController.listByCollaborator);

@@ -357,4 +357,45 @@ export const dayOffController = {
             sendError500(res, ERROR_CODES.WORK_REVIEW, error);
         }
     },
+
+    // List my own day off requests (for collaborators)
+    async myRequests(req: Request, res: Response) {
+        try {
+            const user = (req as any).user;
+
+            // Find the collaborator profile for this user
+            const profile = await prisma.collaboratorProfile.findUnique({
+                where: { userId: user.userId }
+            });
+
+            if (!profile) {
+                return res.json([]);
+            }
+
+            const daysOff = await prisma.dayOff.findMany({
+                where: { collaboratorId: profile.id },
+                orderBy: { date: 'desc' },
+                take: 10, // Limit to last 10 requests
+                select: {
+                    id: true,
+                    date: true,
+                    type: true,
+                    reason: true,
+                    approved: true,
+                    createdAt: true,
+                    approvedBy: { select: { name: true } }
+                }
+            });
+
+            // Map to include status field
+            const result = daysOff.map(d => ({
+                ...d,
+                status: d.approved ? 'APPROVED' : 'PENDING'
+            }));
+
+            res.json(result);
+        } catch (error) {
+            sendError500(res, ERROR_CODES.WORK_DAY_OFF_LIST, error);
+        }
+    },
 };
