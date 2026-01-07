@@ -24,7 +24,7 @@ export const registerCollaboratorSchema = z.object({
     nextRestDay: z.string().optional(),
     disabilityType: z.string().optional(),
     needsDescription: z.string().optional(),
-    avatar: z.string().min(1, "Foto é obrigatória")
+    avatar: z.string().optional().nullable() // Photo is now optional
 });
 
 export const createUserSchema = z.object({
