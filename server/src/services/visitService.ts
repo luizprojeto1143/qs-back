@@ -6,7 +6,7 @@ interface CreateVisitData {
     date: string | Date;
     time?: string;
     companyId: string;
-    areaId: string;
+    areaId?: string;
     collaboratorIds: string[];
     masterId: string;
     relatos: {

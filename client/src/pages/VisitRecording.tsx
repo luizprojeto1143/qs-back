@@ -264,6 +264,8 @@ const VisitRecording = () => {
             const payload = {
                 ...formData,
                 areaId: formData.areaId || null,
+                masterId: user?.id,
+                date: new Date().toISOString(),
                 individualNotes
             };
 

@@ -9,7 +9,7 @@ const createVisitSchema = z.object({
     date: z.string().or(z.date()),
     time: z.string().optional(),
     companyId: z.string(),
-    areaId: z.string(),
+    areaId: z.string().nullable().optional(),
     masterId: z.string(),
     collaboratorIds: z.array(z.string()),
     relatos: z.object({
