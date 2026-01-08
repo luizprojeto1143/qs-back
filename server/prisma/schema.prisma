@@ -5,7 +5,6 @@ generator client {
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
 }
 
 // Enums are not supported in SQLite, so we use String with validation in code
@@ -199,6 +198,7 @@ model CollaboratorProfile {
 model Visit {
   id        String   @id @default(uuid())
   date      DateTime @default(now())
+  time      String?
   
   companyId String
   company   Company @relation(fields: [companyId], references: [id])
@@ -218,16 +218,29 @@ model Visit {
   audioColaboradorUrl  String?
   observacoesMaster    String?
 
-  avaliacaoArea        String? // JSON
-  avaliacaoLideranca   String? // JSON
-  avaliacaoColaborador String? // JSON
+  // Normalization: Replaced JSON columns with Relation
+  evaluations          VisitEvaluation[]
 
   generatedPendencies  PendingItem[]
   attachments          VisitAttachment[]
   notes                VisitNote[]
+  schedules            Schedule[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model VisitEvaluation {
+  id        String   @id @default(uuid())
+  visitId   String
+  visit     Visit    @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  
+  type      String   // AREA, LIDERANCA, COLABORADOR
+  criteria  String   // Nome do critério (ex: Pontualidade, Organização)
+  rating    Float    // Nota (pode ser 0-5, 0-10, ou booleano 0/1)
+  comment   String?
+  
+  createdAt DateTime @default(now())
 }
 
 model VisitNote {
@@ -294,6 +307,9 @@ model Schedule {
   collaboratorId String?
   collaborator   CollaboratorProfile? @relation("CollaboratorSchedules", fields: [collaboratorId], references: [id])
   
+  visitId   String?
+  visit     Visit?   @relation(fields: [visitId], references: [id])
+
   notes     String?
   createdAt DateTime @default(now())
 

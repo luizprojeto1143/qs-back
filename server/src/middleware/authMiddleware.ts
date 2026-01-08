@@ -78,7 +78,7 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
 
         // Explicitly handle JWT errors
         if (errorMessage.includes('jwt') || errorMessage.includes('invalid signature')) {
-            return res.status(403).json({ error: 'Invalid token' });
+            return res.status(401).json({ error: 'Invalid token' });
         }
 
         // Only expose detailed errors in development

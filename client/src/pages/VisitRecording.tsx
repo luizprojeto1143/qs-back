@@ -64,35 +64,62 @@ const VisitRecording = () => {
             setFormData(prev => ({ ...prev, companyId: selectedCompanyId }));
 
             const fetchData = async () => {
+                setLoading(true);
                 try {
-                    if (contextCompanies.length > 0) {
-                        setCompanies(contextCompanies);
-                    } else {
-                        const resStructure = await api.get('/structure');
-                        const structure = resStructure.data;
-                        if (structure.company) setCompanies([structure.company]);
+                    // Prepare all promises for parallel execution
+                    const promises: Record<string, Promise<any>> = {
+                        areas: api.get('/areas'),
+                        collaborators: api.get('/collaborators'),
+                    };
+
+                    // Conditionally add promises
+                    if (contextCompanies.length === 0) {
+                        promises.structure = api.get('/structure');
                     }
 
-                    const [resAreas, resCollabs] = await Promise.all([
-                        api.get('/areas'),
-                        api.get('/collaborators')
-                    ]);
+                    if (location.state?.scheduleId) {
+                        promises.schedules = api.get('/schedules');
+                    }
 
-                    setAreas(resAreas.data);
-                    setCollaborators(resCollabs.data.data || resCollabs.data);
+                    if (location.state?.visitId) {
+                        promises.visit = api.get(`/visits/${location.state.visitId}`);
+                    }
 
-                    if (location.state && location.state.scheduleId) {
+                    // Execute all requests in parallel
+                    // Using Promise.all to fail fast if critical data (areas/collabs) fails
+                    // In a more advanced scenario, we could use allSettled
+                    const results = await Promise.all(Object.values(promises));
+                    const keys = Object.keys(promises);
+
+                    // Map results back to keys
+                    const data: Record<string, any> = {};
+                    keys.forEach((key, index) => {
+                        data[key] = results[index]?.data;
+                    });
+
+                    // 1. Handle Companies/Structure
+                    if (data.structure) {
+                        if (data.structure.company) setCompanies([data.structure.company]);
+                    } else if (contextCompanies.length > 0) {
+                        setCompanies(contextCompanies);
+                    }
+
+                    // 2. Handle Areas & Collaborators
+                    if (data.areas) setAreas(data.areas);
+                    if (data.collaborators) setCollaborators(data.collaborators.data || data.collaborators);
+
+                    // 3. Handle Schedule Linking Logic
+                    if (location.state?.scheduleId && data.schedules) {
                         const { scheduleId, companyId, areaName, date } = location.state;
 
                         if (companyId) setFormData(prev => ({ ...prev, companyId }));
 
-                        if (areaName) {
-                            const area = resAreas.data.find((a: any) => a.name === areaName);
+                        if (areaName && data.areas) {
+                            const area = data.areas.find((a: any) => a.name === areaName);
                             if (area) {
                                 setFormData(prev => ({ ...prev, areaId: area.id }));
 
-                                const resSchedules = await api.get('/schedules');
-                                const allSchedules = resSchedules.data;
+                                const allSchedules = data.schedules;
                                 const targetDate = new Date(date).toISOString().split('T')[0];
 
                                 const relatedSchedules = allSchedules.filter((s: any) => {
@@ -108,15 +135,17 @@ const VisitRecording = () => {
                                 setLinkedScheduleIds(ids);
 
                                 const collaboratorsToAdd: string[] = [];
+                                const collabsList = data.collaborators.data || data.collaborators;
+
                                 relatedSchedules.forEach((s: any) => {
-                                    const collab = resCollabs.data.data ? resCollabs.data.data.find((c: any) => c.name === s.collaborator) : resCollabs.data.find((c: any) => c.name === s.collaborator);
+                                    const collab = collabsList.find((c: any) => c.name === s.collaborator);
                                     if (collab && !collaboratorsToAdd.includes(collab.id)) {
                                         collaboratorsToAdd.push(collab.id);
                                     }
                                 });
 
                                 if (location.state.collaboratorName) {
-                                    const initialCollab = resCollabs.data.data ? resCollabs.data.data.find((c: any) => c.name === location.state.collaboratorName) : resCollabs.data.find((c: any) => c.name === location.state.collaboratorName);
+                                    const initialCollab = collabsList.find((c: any) => c.name === location.state.collaboratorName);
                                     if (initialCollab && !collaboratorsToAdd.includes(initialCollab.id)) {
                                         collaboratorsToAdd.push(initialCollab.id);
                                     }
@@ -131,47 +160,45 @@ const VisitRecording = () => {
                         }
                     }
 
-                    if (location.state && location.state.visitId) {
-                        const { visitId } = location.state;
-                        try {
-                            const resVisit = await api.get(`/visits/${visitId}`);
-                            const visit = resVisit.data;
+                    // 4. Handle Edit Visit Logic
+                    if (data.visit) {
+                        const visit = data.visit;
 
-                            setFormData({
-                                companyId: visit.companyId,
-                                areaId: visit.areaId || '',
-                                collaboratorIds: visit.collaborators.map((c: any) => c.id),
-                                relatos: {
-                                    lideranca: visit.relatoLideranca || '',
-                                    colaborador: visit.relatoColaborador || '',
-                                    consultoria: visit.relatoConsultoria || '',
-                                    observacoes: visit.observacoesMaster || '',
-                                    audioLideranca: visit.audioLiderancaUrl || null,
-                                    audioColaborador: visit.audioColaboradorUrl || null
-                                },
-                                avaliacoes: {
-                                    area: typeof visit.avaliacaoArea === 'string' ? JSON.parse(visit.avaliacaoArea) : visit.avaliacaoArea || {},
-                                    lideranca: typeof visit.avaliacaoLideranca === 'string' ? JSON.parse(visit.avaliacaoLideranca) : visit.avaliacaoLideranca || {},
-                                    colaborador: typeof visit.avaliacaoColaborador === 'string' ? JSON.parse(visit.avaliacaoColaborador) : visit.avaliacaoColaborador || {}
-                                },
-                                pendencias: visit.generatedPendencies || [],
-                                anexos: visit.attachments || []
-                            });
+                        setFormData({
+                            companyId: visit.companyId,
+                            areaId: visit.areaId || '',
+                            collaboratorIds: visit.collaborators.map((c: any) => c.id),
+                            relatos: {
+                                lideranca: visit.relatoLideranca || '',
+                                colaborador: visit.relatoColaborador || '',
+                                consultoria: visit.relatoConsultoria || '',
+                                observacoes: visit.observacoesMaster || '',
+                                audioLideranca: visit.audioLiderancaUrl || null,
+                                audioColaborador: visit.audioColaboradorUrl || null
+                            },
+                            avaliacoes: {
+                                area: typeof visit.avaliacaoArea === 'string' ? JSON.parse(visit.avaliacaoArea) : visit.avaliacaoArea || {},
+                                lideranca: typeof visit.avaliacaoLideranca === 'string' ? JSON.parse(visit.avaliacaoLideranca) : visit.avaliacaoLideranca || {},
+                                colaborador: typeof visit.avaliacaoColaborador === 'string' ? JSON.parse(visit.avaliacaoColaborador) : visit.avaliacaoColaborador || {}
+                            },
+                            pendencias: visit.generatedPendencies || [],
+                            anexos: visit.attachments || []
+                        });
 
-                            if (visit.notes) {
-                                setIndividualNotes(visit.notes.map((n: any) => ({
-                                    id: n.id,
-                                    collaboratorId: n.collaboratorId,
-                                    content: n.content
-                                })));
-                            }
-                        } catch (err) {
-                            console.error("Error fetching visit for edit", err);
-                            toast.error("Erro ao carregar dados da visita");
+                        if (visit.notes) {
+                            setIndividualNotes(visit.notes.map((n: any) => ({
+                                id: n.id,
+                                collaboratorId: n.collaboratorId,
+                                content: n.content
+                            })));
                         }
                     }
+
                 } catch (error) {
                     console.error('Error fetching data', error);
+                    toast.error('Erro ao carregar dados iniciais');
+                } finally {
+                    setLoading(false);
                 }
             };
             fetchData();

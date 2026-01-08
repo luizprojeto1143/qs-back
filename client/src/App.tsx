@@ -3,6 +3,7 @@ import { Toaster } from 'sonner';
 import { Suspense, lazy } from 'react';
 import { CompanyProvider } from './contexts/CompanyContext';
 import ErrorBoundary from './components/ErrorBoundary';
+import { ReloadPrompt } from './components/ReloadPrompt';
 import { TermsEnforcer } from './components/TermsEnforcer';
 
 // Lazy Load Pages to reduce initial bundle size
@@ -81,6 +82,7 @@ function App() {
           <Toaster position="top-right" richColors />
           <ErrorBoundary>
             <Router>
+              <ReloadPrompt />
               <TermsEnforcer />
               <Suspense fallback={<PageLoader />}>
                 <Routes>
