@@ -134,11 +134,25 @@ const computeScore = (data: AreaScoreInput) => {
     // 4. Qualidade / Avaliações (Peso: 200)
     let avgEvaluation = 0;
     let evalCount = 0;
-    visits.forEach(visit => {
+    visits.forEach((visit: any) => {
         try {
-            if (visit.avaliacaoArea) {
-                const eval1 = JSON.parse(visit.avaliacaoArea);
-                if (eval1.score) { avgEvaluation += eval1.score; evalCount++; }
+            // Reconstruct logic for backward compatibility
+            if (visit.evaluations) {
+                // We need to simulate the structure { score: number } or the criteria map
+                // Looking at previous logic: `if (eval1.score)...`
+                // But wait, the previous JSON structure was variable.
+                // If the new evaluations table stores `rating`, we can average them?
+                // Or we check if there's a criteria named 'score'?
+                // Let's assume average of all criteria ratings for 'AREA' type?
+                // Or check if criteria is 'Geral' or strictly 'score'.
+                // Let's iterate and find average.
+
+                const areaEvals = visit.evaluations.filter((e: any) => e.type === 'AREA');
+                if (areaEvals.length > 0) {
+                    const total = areaEvals.reduce((sum: number, e: any) => sum + e.rating, 0);
+                    avgEvaluation += (total / areaEvals.length);
+                    evalCount++;
+                }
             }
         } catch { }
     });
@@ -195,7 +209,7 @@ const fetchAreaData = async (areaId: string): Promise<AreaScoreInput> => {
         prisma.pendingItem.count({ where: { areaId, status: 'RESOLVED' } }),
         prisma.visit.findMany({
             where: { areaId, createdAt: { gte: ninetyDaysAgo } },
-            select: { avaliacaoArea: true, avaliacaoLideranca: true, avaliacaoColaborador: true }
+            select: { evaluations: true }
         }),
         prisma.collaboratorProfile.count({ where: { areaId } }),
         prisma.complaint.findMany({
@@ -448,7 +462,7 @@ export const qsScoreController = {
             // Visits (Need raw for evaluations)
             prisma.visit.findMany({
                 where: { areaId: { in: areaIds }, createdAt: { gte: ninetyDaysAgo } },
-                select: { areaId: true, avaliacaoArea: true }
+                select: { areaId: true, evaluations: true }
             }),
             // Collaborators
             prisma.collaboratorProfile.groupBy({

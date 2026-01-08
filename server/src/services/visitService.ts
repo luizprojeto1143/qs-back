@@ -4,16 +4,16 @@ const prisma = new PrismaClient();
 
 interface CreateVisitData {
     date: string | Date;
-    time: string;
+    time?: string;
     companyId: string;
     areaId: string;
     collaboratorIds: string[];
     masterId: string;
     relatos: {
-        lideranca: string;
-        colaborador: string;
-        consultoria: string;
-        observacoes: string;
+        lideranca?: string | null;
+        colaborador?: string | null;
+        consultoria?: string | null;
+        observacoes?: string | null;
         audioLideranca?: string | null;
         audioColaborador?: string | null;
     };
@@ -113,7 +113,6 @@ export class VisitService {
                     observacoesMaster: data.relatos.observacoes,
                     audioLiderancaUrl: data.relatos.audioLideranca,
                     audioColaboradorUrl: data.relatos.audioColaborador,
-                    status: data.isFinished ? 'CONCLUIDO' : 'EM_ANDAMENTO',
                     collaborators: {
                         connect: collaborators.map(c => ({ id: c.id })) // Connect Many-to-Many
                     },
@@ -169,7 +168,7 @@ export class VisitService {
                     data: {
                         status: 'REALIZADO',
                         visitId: visit.id,
-                        observation: 'Visita realizada e vinculada automaticamente.'
+                        notes: 'Visita realizada e vinculada automaticamente.'
                     }
                 });
             }

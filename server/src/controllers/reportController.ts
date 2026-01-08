@@ -231,7 +231,7 @@ export const generateReport = async (req: Request, res: Response) => {
                 const leadershipVisits = await prisma.visit.findMany({
                     where: { companyId },
                     select: {
-                        avaliacaoLideranca: true,
+                        evaluations: true,
                         date: true,
                         area: { include: { sector: true } }
                     }
@@ -239,7 +239,7 @@ export const generateReport = async (req: Request, res: Response) => {
 
                 const groupedData: any = {};
 
-                leadershipVisits.forEach(v => {
+                leadershipVisits.forEach((v: any) => {
                     const sectorName = v.area?.sector?.name || 'Sem Setor';
                     const areaName = v.area?.name || 'Sem Área';
 
@@ -247,10 +247,14 @@ export const generateReport = async (req: Request, res: Response) => {
                     if (!groupedData[sectorName][areaName]) groupedData[sectorName][areaName] = [];
 
                     try {
-                        const ratings = v.avaliacaoLideranca ? JSON.parse(v.avaliacaoLideranca) : {};
-                        const values = Object.values(ratings).map((val: any) => Number(val)).filter(val => !isNaN(val));
-                        const avg = values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0;
-                        if (avg > 0) groupedData[sectorName][areaName].push({ id: v.date, score: avg });
+                        // Filter for LIDERANCA evaluations
+                        const leadEvals = v.evaluations?.filter((e: any) => e.type === 'LIDERANCA' || e.type === 'LIDERANÇA');
+
+                        if (leadEvals && leadEvals.length > 0) {
+                            const total = leadEvals.reduce((sum: number, e: any) => sum + e.rating, 0);
+                            const avg = total / leadEvals.length;
+                            if (avg > 0) groupedData[sectorName][areaName].push({ id: v.date, score: avg });
+                        }
                     } catch (e) { }
                 });
 
