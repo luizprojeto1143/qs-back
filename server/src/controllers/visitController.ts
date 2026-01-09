@@ -107,5 +107,51 @@ export const getVisit = async (req: Request, res: Response) => {
 // Update is usually used for editing a report later.
 // I will comment out update or provide a basic error.
 export const updateVisit = async (req: Request, res: Response) => {
-    return res.status(501).json({ error: 'Update not yet refactored to Service Layer' });
+    try {
+        const { id } = req.params;
+        const validation = createVisitSchema.partial().safeParse(req.body);
+
+        if (!validation.success) {
+            return res.status(400).json({ error: validation.error });
+        }
+
+        const data = validation.data;
+
+        // Import prisma for direct update (service layer doesn't have update yet)
+        const prisma = (await import('../prisma')).default;
+
+        // Update main visit record
+        const visit = await prisma.visit.update({
+            where: { id },
+            data: {
+                date: data.date ? new Date(data.date as string) : undefined,
+                time: data.time,
+                areaId: data.areaId,
+                relatoLideranca: data.relatos?.lideranca,
+                relatoColaborador: data.relatos?.colaborador,
+                relatoConsultoria: data.relatos?.consultoria,
+                observacoesMaster: data.relatos?.observacoes,
+                audioLiderancaUrl: data.relatos?.audioLideranca,
+                audioColaboradorUrl: data.relatos?.audioColaborador,
+            }
+        });
+
+        // Update collaborators if provided
+        if (data.collaboratorIds && data.collaboratorIds.length > 0) {
+            await prisma.visit.update({
+                where: { id },
+                data: {
+                    collaborators: {
+                        set: data.collaboratorIds.map(cId => ({ id: cId }))
+                    }
+                }
+            });
+        }
+
+        return res.json(visit);
+    } catch (error: any) {
+        console.error('Error updating visit:', error);
+        return res.status(500).json({ error: error.message || 'Error updating visit' });
+    }
 };
+

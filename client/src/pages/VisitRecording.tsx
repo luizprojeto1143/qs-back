@@ -36,6 +36,7 @@ const VisitRecording = () => {
             companyId: selectedCompanyId || '',
             areaId: '',
             collaboratorIds: [],
+            date: new Date().toISOString(), // ADD THIS - Required by schema!
             relatos: {
                 lideranca: '',
                 colaborador: '',
