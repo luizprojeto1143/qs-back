@@ -162,15 +162,30 @@ export class VisitService {
                 });
             }
 
-            // Create Individual Notes
+            // Create Individual Notes - only for valid collaborators
             if (safeData.notes && safeData.notes.length > 0) {
-                await tx.visitNote.createMany({
-                    data: safeData.notes.map(n => ({
-                        visitId: visit.id,
-                        collaboratorId: n.collaboratorId,
-                        content: n.content
-                    }))
+                // Get valid collaborator IDs from the ones we already fetched
+                const validCollaboratorIds = new Set(collaborators.map(c => c.id));
+
+                // Filter notes to only include valid collaboratorIds
+                const validNotes = safeData.notes.filter(n => {
+                    if (!n.collaboratorId || !n.content) return false;
+                    if (!validCollaboratorIds.has(n.collaboratorId)) {
+                        console.warn(`Skipping note for invalid collaboratorId: ${n.collaboratorId}`);
+                        return false;
+                    }
+                    return true;
                 });
+
+                if (validNotes.length > 0) {
+                    await tx.visitNote.createMany({
+                        data: validNotes.map(n => ({
+                            visitId: visit.id,
+                            collaboratorId: n.collaboratorId,
+                            content: n.content
+                        }))
+                    });
+                }
             }
 
             // Update Schedule if exists
