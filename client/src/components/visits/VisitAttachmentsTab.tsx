@@ -1,14 +1,19 @@
 import { Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { useFormContext, useFieldArray } from 'react-hook-form';
 import { api } from '../../lib/api';
-import type { VisitFormData } from '../../types/visit';
+import type { VisitFormData } from '../../schemas/visitSchema';
 
-interface VisitAttachmentsTabProps {
-    formData: VisitFormData;
-    setFormData: React.Dispatch<React.SetStateAction<VisitFormData>>;
-}
+export const VisitAttachmentsTab = () => {
+    const { control, watch } = useFormContext<VisitFormData>();
+    const { append, remove } = useFieldArray({
+        control,
+        name: 'anexos'
+    });
 
-export const VisitAttachmentsTab = ({ formData, setFormData }: VisitAttachmentsTabProps) => {
+    // We can use watch too if we just want to list them
+    const anexos = watch('anexos');
+
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
             const file = e.target.files[0];
@@ -25,28 +30,19 @@ export const VisitAttachmentsTab = ({ formData, setFormData }: VisitAttachmentsT
             try {
                 const res = await api.post('/upload', formDataUpload);
 
-                setFormData(prev => ({
-                    ...prev,
-                    anexos: [...prev.anexos, {
-                        name: file.name,
-                        url: res.data.url,
-                        type: file.type,
-                        size: file.size
-                    }]
-                }));
+                append({
+                    name: file.name,
+                    url: (res.data as any).url,
+                    type: file.type,
+                    // size: file.size // Not in schema, skipping
+                });
+
                 toast.success('Arquivo enviado com sucesso!');
             } catch (error) {
                 console.error('Upload error', error);
                 toast.error('Erro ao enviar arquivo');
             }
         }
-    };
-
-    const removeAttachment = (index: number) => {
-        setFormData(prev => ({
-            ...prev,
-            anexos: prev.anexos.filter((_, i) => i !== index)
-        }));
     };
 
     return (
@@ -63,22 +59,22 @@ export const VisitAttachmentsTab = ({ formData, setFormData }: VisitAttachmentsT
                 <p className="text-xs text-gray-500">PNG, JPG, PDF, MP4 até 10MB</p>
             </label>
 
-            {formData.anexos.length > 0 && (
+            {anexos.length > 0 && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {formData.anexos.map((file, index) => (
+                    {anexos.map((file, index) => (
                         <div key={index} className="flex items-center justify-between bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
                             <div className="flex items-center gap-3 overflow-hidden">
                                 <div className="bg-gray-100 p-2 rounded-lg">
                                     <Upload size={20} className="text-gray-500" />
                                 </div>
                                 <div className="truncate">
-                                    <p className="text-sm font-medium text-gray-900 truncate">{file.name}</p>
-                                    <p className="text-xs text-gray-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                                    <h4 className="text-sm font-medium text-gray-900 truncate">{file.name}</h4>
+                                    <a href={file.url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">Download</a>
                                 </div>
                             </div>
                             <button
                                 type="button"
-                                onClick={() => removeAttachment(index)}
+                                onClick={() => remove(index)}
                                 className="text-gray-400 hover:text-red-500 p-2"
                             >
                                 <X size={18} />

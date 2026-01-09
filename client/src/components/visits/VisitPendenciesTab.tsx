@@ -1,38 +1,46 @@
 import { useState } from 'react';
 import { Plus, Trash2, X } from 'lucide-react';
 import { toast } from 'sonner';
-import type { Pendency, VisitFormData } from '../../types/visit';
+import { useFormContext, useFieldArray } from 'react-hook-form';
+import type { VisitFormData } from '../../schemas/visitSchema';
 
-interface VisitPendenciesTabProps {
-    formData: VisitFormData;
-    setFormData: React.Dispatch<React.SetStateAction<VisitFormData>>;
-}
-
-export const VisitPendenciesTab = ({ formData, setFormData }: VisitPendenciesTabProps) => {
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [newPendency, setNewPendency] = useState<Pendency>({
-        description: '',
-        responsible: '',
-        priority: 'MEDIA',
-        deadline: ''
+export const VisitPendenciesTab = () => {
+    const { control } = useFormContext<VisitFormData>();
+    const { fields, append, remove } = useFieldArray({
+        control,
+        name: 'pendencias'
     });
+
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [newPendency, setNewPendency] = useState({
+        description: '',
+        responsibleId: '', // Ideally should map to a user/collab, keeping as string for now
+        responsibleName: '', // Helper to show name
+        priority: 'MEDIA',
+        deadline: '',
+        status: 'PENDENTE'
+    });
+
+    // We need a simple way to input responsible. For now, text input as before.
+    // Ideally this should be a select from collaborators.
 
     const handlePendencySubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        setFormData(prev => ({
-            ...prev,
-            pendencias: [...prev.pendencias, { ...newPendency, id: Date.now().toString() }]
-        }));
-        setNewPendency({ description: '', responsible: '', priority: 'MEDIA', deadline: '' });
+
+        append({
+            description: newPendency.description,
+            responsibleId: newPendency.responsibleName, // Using name as ID for now to match legacy behavior/schema flexibility if needed, or better: 
+            // The schema says responsibleId is string.
+            // Old code used "responsible" string.
+            // Let's assume user types a name for now.
+            priority: newPendency.priority as any,
+            deadline: newPendency.deadline,
+            status: 'PENDENTE'
+        });
+
+        setNewPendency({ description: '', responsibleId: '', responsibleName: '', priority: 'MEDIA', deadline: '', status: 'PENDENTE' });
         setIsModalOpen(false);
         toast.success('Pendência adicionada à lista!');
-    };
-
-    const removePendency = (index: number) => {
-        setFormData(prev => ({
-            ...prev,
-            pendencias: prev.pendencias.filter((_, i) => i !== index)
-        }));
     };
 
     return (
@@ -48,14 +56,14 @@ export const VisitPendenciesTab = ({ formData, setFormData }: VisitPendenciesTab
                 </button>
             </div>
 
-            {formData.pendencias.length === 0 ? (
+            {fields.length === 0 ? (
                 <div className="text-center py-10 text-gray-500">
                     <p>Nenhuma pendência registrada para este acompanhamento.</p>
                 </div>
             ) : (
                 <div className="space-y-3">
-                    {formData.pendencias.map((p, index) => (
-                        <div key={index} className="flex items-center justify-between bg-gray-50 p-4 rounded-xl border border-gray-100">
+                    {fields.map((p, index) => (
+                        <div key={p.id} className="flex items-center justify-between bg-gray-50 p-4 rounded-xl border border-gray-100">
                             <div>
                                 <h4 className="font-medium text-gray-900">{p.description}</h4>
                                 <div className="flex items-center gap-3 text-sm text-gray-500 mt-1">
@@ -65,15 +73,14 @@ export const VisitPendenciesTab = ({ formData, setFormData }: VisitPendenciesTab
                                         }`}>
                                         {p.priority === 'MEDIA' ? 'Média' : p.priority === 'ALTA' ? 'Alta' : 'Baixa'}
                                     </span>
-                                    <span>{p.responsible}</span>
+                                    <span>{p.responsibleId}</span>
                                     <span>{p.deadline ? new Date(p.deadline).toLocaleDateString('pt-BR') : 'Sem prazo'}</span>
                                 </div>
                             </div>
                             <button
                                 type="button"
-                                onClick={() => removePendency(index)}
+                                onClick={() => remove(index)}
                                 className="text-gray-400 hover:text-red-500 p-2"
-                                aria-label="Remover pendência"
                             >
                                 <Trash2 size={18} />
                             </button>
@@ -87,7 +94,7 @@ export const VisitPendenciesTab = ({ formData, setFormData }: VisitPendenciesTab
                     <div className="bg-white rounded-2xl w-full max-w-lg p-6">
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-xl font-bold">Nova Pendência</h2>
-                            <button type="button" onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600" aria-label="Fechar modal">
+                            <button type="button" onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
                                 <X className="h-6 w-6" />
                             </button>
                         </div>
@@ -110,14 +117,15 @@ export const VisitPendenciesTab = ({ formData, setFormData }: VisitPendenciesTab
                                         type="text"
                                         required
                                         className="input-field"
-                                        value={newPendency.responsible}
-                                        onChange={e => setNewPendency({ ...newPendency, responsible: e.target.value })}
+                                        value={newPendency.responsibleName}
+                                        onChange={e => setNewPendency({ ...newPendency, responsibleName: e.target.value })}
                                     />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Prazo</label>
                                     <input
                                         type="date"
+                                        required
                                         className="input-field"
                                         value={newPendency.deadline}
                                         onChange={e => setNewPendency({ ...newPendency, deadline: e.target.value })}

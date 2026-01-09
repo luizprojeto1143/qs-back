@@ -1,11 +1,10 @@
-import type { VisitFormData } from '../../types/visit';
+import { useFormContext } from 'react-hook-form';
+import type { VisitFormData } from '../../schemas/visitSchema';
 
-interface VisitEvaluationsTabProps {
-    formData: VisitFormData;
-    setFormData: React.Dispatch<React.SetStateAction<VisitFormData>>;
-}
+export const VisitEvaluationsTab = () => {
+    const { watch, setValue } = useFormContext<VisitFormData>();
+    const evaluations = watch('avaliacoes');
 
-export const VisitEvaluationsTab = ({ formData, setFormData }: VisitEvaluationsTabProps) => {
     const sections = [
         { id: 'area', label: 'Avaliação da Área' },
         { id: 'lideranca', label: 'Avaliação da Liderança' },
@@ -13,6 +12,10 @@ export const VisitEvaluationsTab = ({ formData, setFormData }: VisitEvaluationsT
     ];
 
     const criteria = ['Comunicação', 'Acolhimento', 'Acessibilidade', 'Relacionamento', 'Postura'];
+
+    const handleRating = (sectionId: string, item: string, rating: number) => {
+        setValue(`avaliacoes.${sectionId}.${item}` as any, rating);
+    };
 
     return (
         <div className="space-y-6">
@@ -24,32 +27,24 @@ export const VisitEvaluationsTab = ({ formData, setFormData }: VisitEvaluationsT
                             <div key={item} className="flex items-center justify-between bg-gray-50 p-3 rounded-xl">
                                 <span className="text-sm font-medium text-gray-700">{item}</span>
                                 <div className="flex space-x-2">
-                                    {[1, 2, 3, 4, 5].map((rating) => (
-                                        <button
-                                            type="button"
-                                            key={rating}
-                                            onClick={() => {
-                                                setFormData(prev => ({
-                                                    ...prev,
-                                                    avaliacoes: {
-                                                        ...prev.avaliacoes,
-                                                        [section.id]: {
-                                                            ...(prev.avaliacoes as any)[section.id],
-                                                            [item]: rating
-                                                        }
+                                    {[1, 2, 3, 4, 5].map((rating) => {
+                                        const currentRating = (evaluations as any)[section.id]?.[item];
+                                        return (
+                                            <button
+                                                type="button"
+                                                key={rating}
+                                                onClick={() => handleRating(section.id, item, rating)}
+                                                className={`w-8 h-8 rounded-full border flex items-center justify-center transition-all text-sm font-medium
+                                                    ${currentRating === rating
+                                                        ? 'bg-primary text-white border-primary'
+                                                        : 'border-gray-200 text-gray-600 bg-white hover:bg-blue-50 hover:border-blue-200'
                                                     }
-                                                }));
-                                            }}
-                                            className={`w-8 h-8 rounded-full border flex items-center justify-center transition-all text-sm font-medium
-                                    ${((formData.avaliacoes as any)[section.id]?.[item] === rating)
-                                                    ? 'bg-primary text-white border-primary'
-                                                    : 'border-gray-200 text-gray-600 bg-white hover:bg-blue-50 hover:border-blue-200'
-                                                }
-                                `}
-                                        >
-                                            {rating}
-                                        </button>
-                                    ))}
+                                                `}
+                                            >
+                                                {rating}
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         ))}

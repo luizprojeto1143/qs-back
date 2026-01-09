@@ -1,36 +1,43 @@
 import { useState, useRef } from 'react';
 import { Mic, Square, Trash2, Plus } from 'lucide-react';
 import { toast } from 'sonner';
+import { useFormContext, useFieldArray } from 'react-hook-form';
+
 import { api } from '../../lib/api';
-import type { VisitFormData, IndividualNote } from '../../types/visit';
+import type { VisitFormData } from '../../schemas/visitSchema';
 import { QuickAddModal } from '../modals/QuickAddModal';
 
 interface VisitReportsTabProps {
-    formData: VisitFormData;
-    setFormData: React.Dispatch<React.SetStateAction<VisitFormData>>;
     areas: any[];
     collaborators: any[];
-    individualNotes: IndividualNote[];
-    setIndividualNotes: React.Dispatch<React.SetStateAction<IndividualNote[]>>;
     onRefreshData?: () => void;
 }
 
 export const VisitReportsTab = ({
-    formData,
-    setFormData,
     areas,
     collaborators,
-    individualNotes,
-    setIndividualNotes,
     onRefreshData
 }: VisitReportsTabProps) => {
+    const { register, watch, setValue, control, formState: { errors } } = useFormContext<VisitFormData>();
+
+    // Watchers
+    const watchCompanyId = watch('companyId');
+    const watchAreaId = watch('areaId');
+    const watchCollaboratorIds = watch('collaboratorIds') || [];
+    const watchRelatos = watch('relatos');
+
+    // Individual Notes Array
+    const { fields, append, update } = useFieldArray({
+        control,
+        name: 'notes'
+    });
+
     // Recording State
-    const [isRecording, setIsRecording] = useState<string | null>(null); // 'lideranca' | 'colaborador' | null
+    const [isRecording, setIsRecording] = useState<string | null>(null);
     const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
     const [recordingTime, setRecordingTime] = useState(0);
-    const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    // Quick Add Modal State
+    const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const [quickAddType, setQuickAddType] = useState<'area' | 'collaborator' | null>(null);
 
     const formatTime = (seconds: number) => {
@@ -54,19 +61,13 @@ export const VisitReportsTab = ({
 
                 try {
                     const res = await api.post('/upload', formDataUpload);
-                    setFormData(prev => ({
-                        ...prev,
-                        relatos: {
-                            ...prev.relatos,
-                            [field === 'lideranca' ? 'audioLideranca' : 'audioColaborador']: res.data.url
-                        }
-                    }));
+                    const targetField = field === 'lideranca' ? 'relatos.audioLideranca' : 'relatos.audioColaborador';
+                    setValue(targetField, res.data.url);
                     toast.success('Áudio gravado e salvo!');
                 } catch (error) {
                     console.error('Upload error', error);
                     toast.error('Erro ao salvar áudio');
                 }
-
                 stream.getTracks().forEach(track => track.stop());
             };
 
@@ -93,18 +94,29 @@ export const VisitReportsTab = ({
 
     const handleQuickAddSuccess = (newItem: any) => {
         if (quickAddType === 'area') {
-            // Auto-select the new area
-            setFormData(prev => ({ ...prev, areaId: newItem.id }));
+            setValue('areaId', newItem.id);
         } else if (quickAddType === 'collaborator') {
-            // Auto-add the new collaborator
-            setFormData(prev => ({
-                ...prev,
-                collaboratorIds: [...prev.collaboratorIds, newItem.id]
-            }));
+            setValue('collaboratorIds', [...watchCollaboratorIds, newItem.id]);
         }
-        // Trigger parent refresh to update lists
         if (onRefreshData) onRefreshData();
         setQuickAddType(null);
+    };
+
+    // Update notes when collaborators change
+    const getNoteForCollab = (collabId: string) => {
+        const existing = fields.find(f => f.collaboratorId === collabId);
+        return existing;
+    };
+
+    const updateNote = (collabId: string, content: string) => {
+        const index = fields.findIndex(f => f.collaboratorId === collabId);
+        if (index >= 0) {
+            // Update existing
+            update(index, { collaboratorId: collabId, content });
+        } else {
+            // Add new
+            append({ collaboratorId: collabId, content });
+        }
     };
 
     return (
@@ -117,22 +129,22 @@ export const VisitReportsTab = ({
                             type="button"
                             onClick={() => setQuickAddType('area')}
                             className="p-1 text-primary hover:bg-primary/10 rounded-full transition-colors"
-                            title="Adicionar nova área"
                         >
                             <Plus className="h-4 w-4" />
                         </button>
                     </div>
                     <select
-                        className="input-field"
-                        onChange={e => setFormData({ ...formData, areaId: e.target.value })}
-                        value={formData.areaId}
+                        className={`input-field ${errors.areaId ? 'border-red-500' : ''}`}
+                        {...register('areaId')}
                     >
                         <option value="">Selecione a Área</option>
                         {areas
-                            .filter(a => !formData.companyId || (a.sector && a.sector.companyId === formData.companyId))
+                            .filter(a => !watchCompanyId || (a.sector && a.sector.companyId === watchCompanyId))
                             .map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
                     </select>
+                    {errors.areaId && <p className="text-xs text-red-500">{errors.areaId.message}</p>}
                 </div>
+
                 <div className="space-y-2">
                     <div className="flex items-center justify-between">
                         <label className="text-sm font-medium text-gray-700">Colaboradores</label>
@@ -140,34 +152,34 @@ export const VisitReportsTab = ({
                             type="button"
                             onClick={() => setQuickAddType('collaborator')}
                             className="p-1 text-primary hover:bg-primary/10 rounded-full transition-colors"
-                            title="Adicionar novo colaborador"
                         >
                             <Plus className="h-4 w-4" />
                         </button>
                     </div>
                     <select
-                        className="input-field"
+                        className={`input-field ${errors.collaboratorIds ? 'border-red-500' : ''}`}
                         onChange={e => {
                             const val = e.target.value;
-                            if (val && !formData.collaboratorIds.includes(val)) {
-                                setFormData({ ...formData, collaboratorIds: [...formData.collaboratorIds, val] })
+                            if (val && !watchCollaboratorIds.includes(val)) {
+                                setValue('collaboratorIds', [...watchCollaboratorIds, val]);
                             }
                         }}
                     >
                         <option value="">Adicionar...</option>
                         {collaborators.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                     </select>
+                    {errors.collaboratorIds && <p className="text-xs text-red-500">{errors.collaboratorIds.message}</p>}
+
                     <div className="flex flex-wrap gap-2 mt-2">
-                        {formData.collaboratorIds.map(id => {
+                        {watchCollaboratorIds.map((id: string) => {
                             const collab = collaborators.find(c => c.id === id);
                             return (
                                 <span key={id} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                                     {collab?.name}
                                     <button
                                         type="button"
-                                        onClick={() => setFormData({ ...formData, collaboratorIds: formData.collaboratorIds.filter(cid => cid !== id) })}
+                                        onClick={() => setValue('collaboratorIds', watchCollaboratorIds.filter((cid: string) => cid !== id))}
                                         className="ml-1 text-blue-600 hover:text-blue-800"
-                                        aria-label={`Remover colaborador ${collab?.name}`}
                                     >
                                         ×
                                     </button>
@@ -178,12 +190,11 @@ export const VisitReportsTab = ({
                 </div>
             </div>
 
-            {/* Quick Add Modal */}
             {quickAddType && (
                 <QuickAddModal
                     type={quickAddType}
-                    companyId={formData.companyId}
-                    areaId={formData.areaId}
+                    companyId={watchCompanyId}
+                    areaId={watchAreaId || undefined}
                     onSuccess={handleQuickAddSuccess}
                     onClose={() => setQuickAddType(null)}
                 />
@@ -194,20 +205,18 @@ export const VisitReportsTab = ({
                 <div className="relative">
                     <textarea
                         rows={4}
-                        className="block w-full rounded-xl border-gray-200 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-4"
+                        className="input-field p-4"
                         placeholder="Digite o relato..."
-                        value={formData.relatos.lideranca}
-                        onChange={e => setFormData({ ...formData, relatos: { ...formData.relatos, lideranca: e.target.value } })}
+                        {...register('relatos.lideranca')}
                     />
                     <div className="absolute bottom-3 right-3 flex items-center gap-2">
-                        {formData.relatos.audioLideranca ? (
+                        {watchRelatos.audioLideranca ? (
                             <div className="flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-full">
-                                <audio src={formData.relatos.audioLideranca} controls className="h-6 w-48" />
+                                <audio src={watchRelatos.audioLideranca} controls className="h-6 w-48" />
                                 <button
                                     type="button"
-                                    onClick={() => setFormData(prev => ({ ...prev, relatos: { ...prev.relatos, audioLideranca: null } }))}
+                                    onClick={() => setValue('relatos.audioLideranca', null)}
                                     className="text-red-500 hover:text-red-700"
-                                    aria-label="Remover áudio da liderança"
                                 >
                                     <Trash2 size={16} />
                                 </button>
@@ -219,7 +228,6 @@ export const VisitReportsTab = ({
                                     type="button"
                                     onClick={stopRecording}
                                     className="p-1.5 bg-red-600 text-white rounded-full hover:bg-red-700"
-                                    aria-label="Parar gravação"
                                 >
                                     <Square size={14} />
                                 </button>
@@ -229,8 +237,6 @@ export const VisitReportsTab = ({
                                 type="button"
                                 onClick={() => startRecording('lideranca')}
                                 className="p-2 bg-primary text-white rounded-full hover:bg-blue-700 transition-colors"
-                                title="Gravar áudio"
-                                aria-label="Iniciar gravação de áudio da liderança"
                             >
                                 <Mic className="h-4 w-4" />
                             </button>
@@ -244,20 +250,18 @@ export const VisitReportsTab = ({
                 <div className="relative">
                     <textarea
                         rows={4}
-                        className="block w-full rounded-xl border-gray-200 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-4"
+                        className="input-field p-4"
                         placeholder="Digite o relato..."
-                        value={formData.relatos.colaborador}
-                        onChange={e => setFormData({ ...formData, relatos: { ...formData.relatos, colaborador: e.target.value } })}
+                        {...register('relatos.colaborador')}
                     />
                     <div className="absolute bottom-3 right-3 flex items-center gap-2">
-                        {formData.relatos.audioColaborador ? (
+                        {watchRelatos.audioColaborador ? (
                             <div className="flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-full">
-                                <audio src={formData.relatos.audioColaborador} controls className="h-6 w-48" />
+                                <audio src={watchRelatos.audioColaborador} controls className="h-6 w-48" />
                                 <button
                                     type="button"
-                                    onClick={() => setFormData(prev => ({ ...prev, relatos: { ...prev.relatos, audioColaborador: null } }))}
+                                    onClick={() => setValue('relatos.audioColaborador', null)}
                                     className="text-red-500 hover:text-red-700"
-                                    aria-label="Remover áudio do colaborador"
                                 >
                                     <Trash2 size={16} />
                                 </button>
@@ -269,7 +273,6 @@ export const VisitReportsTab = ({
                                     type="button"
                                     onClick={stopRecording}
                                     className="p-1.5 bg-red-600 text-white rounded-full hover:bg-red-700"
-                                    aria-label="Parar gravação"
                                 >
                                     <Square size={14} />
                                 </button>
@@ -279,8 +282,6 @@ export const VisitReportsTab = ({
                                 type="button"
                                 onClick={() => startRecording('colaborador')}
                                 className="p-2 bg-primary text-white rounded-full hover:bg-blue-700 transition-colors"
-                                title="Gravar áudio"
-                                aria-label="Iniciar gravação de áudio do colaborador"
                             >
                                 <Mic className="h-4 w-4" />
                             </button>
@@ -291,27 +292,23 @@ export const VisitReportsTab = ({
 
             <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-900">Relato da Consultoria</label>
-                <div className="relative">
-                    <textarea
-                        rows={4}
-                        className="block w-full rounded-xl border-gray-200 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-4"
-                        placeholder="Digite o relato da consultoria..."
-                        value={formData.relatos.consultoria}
-                        onChange={e => setFormData({ ...formData, relatos: { ...formData.relatos, consultoria: e.target.value } })}
-                    />
-                </div>
+                <textarea
+                    rows={4}
+                    className="input-field p-4"
+                    placeholder="Digite o relato da consultoria..."
+                    {...register('relatos.consultoria')}
+                />
             </div>
 
-            {/* Individual Notes Section */}
             <div className="space-y-4 pt-4 border-t border-gray-100">
                 <h3 className="text-lg font-medium text-gray-900">Observações Individuais</h3>
-                {formData.collaboratorIds.length === 0 ? (
+                {watchCollaboratorIds.length === 0 ? (
                     <p className="text-sm text-gray-500">Selecione colaboradores para adicionar observações individuais.</p>
                 ) : (
                     <div className="grid gap-4">
-                        {formData.collaboratorIds.map(collabId => {
+                        {watchCollaboratorIds.map((collabId: string) => {
                             const collab = collaborators.find(c => c.id === collabId);
-                            const note = individualNotes.find(n => n.collaboratorId === collabId)?.content || '';
+                            const note = getNoteForCollab(collabId)?.content || '';
 
                             return (
                                 <div key={collabId} className="space-y-2">
@@ -323,16 +320,7 @@ export const VisitReportsTab = ({
                                         rows={2}
                                         placeholder={`Observação sobre ${collab?.name?.split(' ')[0]}...`}
                                         value={note}
-                                        onChange={e => {
-                                            const newContent = e.target.value;
-                                            setIndividualNotes(prev => {
-                                                const existing = prev.find(n => n.collaboratorId === collabId);
-                                                if (existing) {
-                                                    return prev.map(n => n.collaboratorId === collabId ? { ...n, content: newContent } : n);
-                                                }
-                                                return [...prev, { collaboratorId: collabId, content: newContent }];
-                                            });
-                                        }}
+                                        onChange={e => updateNote(collabId, e.target.value)}
                                     />
                                 </div>
                             );
