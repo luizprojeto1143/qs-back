@@ -5,6 +5,7 @@ generator client {
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL") // Required for migrations with Supabase pooler
 }
 
 // Enums are not supported in SQLite, so we use String with validation in code
