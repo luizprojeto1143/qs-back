@@ -3,9 +3,9 @@ import { z } from 'zod';
 
 export const visitSchema = z.object({
     companyId: z.string().min(1, 'Selecione uma empresa'),
-    areaId: z.string().nullable().optional(), // Can be empty if needed, but usually linked to area
-    collaboratorIds: z.array(z.string()).min(1, 'Selecione pelo menos um colaborador'),
-    date: z.string().or(z.date()),
+    areaId: z.string().nullable().optional(), // Can be empty if needed
+    collaboratorIds: z.array(z.string()).optional().default([]), // Now optional!
+    date: z.string().or(z.date()).optional(), // Made optional - will be injected
     masterId: z.string().optional(), // Injected automatically
 
     relatos: z.object({
