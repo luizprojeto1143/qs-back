@@ -1,6 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '../prisma'; // Use global configured instance
 
 interface CreateVisitData {
     date?: string | Date; // Now optional - will default to current date
