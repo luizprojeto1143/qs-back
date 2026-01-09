@@ -249,17 +249,34 @@ const VisitRecording = () => {
     }, [watchedAreaId, watchedCompanyId, areas, collaborators, setValue, methods]);
 
 
+    // Handle validation errors from react-hook-form
+    const onError = (errors: any) => {
+        console.error('Form Validation Errors:', errors);
+        // Show first error as toast
+        const firstError = Object.values(errors)[0] as any;
+        if (firstError?.message) {
+            toast.error(firstError.message);
+        } else if (firstError?.root?.message) {
+            toast.error(firstError.root.message);
+        } else {
+            toast.error('Verifique os campos obrigatórios');
+        }
+    };
+
     const onSubmit = async (data: VisitFormData) => {
+        console.log('Form submitted with data:', data); // DEBUG
         setLoading(true);
         try {
             // Inject system fields
             const payload = {
                 ...data,
                 // Ensure date/masterId are set if not present (though schema should catch/default)
-                date: data.date || new Date(),
+                date: data.date || new Date().toISOString(),
                 masterId: user?.id,
                 // Zod handles other transformations
             };
+
+            console.log('Sending payload to API:', payload); // DEBUG
 
             let response;
             if (location.state?.visitId) {
@@ -267,6 +284,8 @@ const VisitRecording = () => {
             } else {
                 response = await api.post('/visits', payload);
             }
+
+            console.log('API Response:', response); // DEBUG
 
             if (response.status === 200 || response.status === 201) {
                 if (linkedScheduleIds.length > 0) {
@@ -285,6 +304,8 @@ const VisitRecording = () => {
                 error.response.data.error.issues.forEach((issue: any) => {
                     toast.error(`${issue.path.join('.')}: ${issue.message}`);
                 });
+            } else if (error.message) {
+                toast.error(error.message);
             } else {
                 toast.error('Erro ao salvar. Verifique os campos.');
             }
@@ -302,7 +323,7 @@ const VisitRecording = () => {
 
     return (
         <FormProvider {...methods}>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={handleSubmit(onSubmit, onError)} className="space-y-6">
                 <div className="flex items-center justify-between">
                     <h1 className="text-2xl font-bold text-gray-900">Registrar Acompanhamento</h1>
                     <div className="flex space-x-3 items-center">
