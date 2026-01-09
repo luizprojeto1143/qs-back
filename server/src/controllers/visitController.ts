@@ -6,12 +6,12 @@ const visitService = new VisitService();
 
 // Validation Schemas
 const createVisitSchema = z.object({
-    date: z.string().or(z.date()),
+    date: z.string().or(z.date()).optional(), // Now optional - will use current date
     time: z.string().optional(),
     companyId: z.string(),
     areaId: z.string().nullable().optional(),
-    masterId: z.string(),
-    collaboratorIds: z.array(z.string()),
+    masterId: z.string().optional(), // Now optional - will be injected from auth
+    collaboratorIds: z.array(z.string()).optional().default([]), // Now optional with default
     relatos: z.object({
         lideranca: z.string().nullable().optional(),
         colaborador: z.string().nullable().optional(),
@@ -19,15 +19,15 @@ const createVisitSchema = z.object({
         observacoes: z.string().nullable().optional(),
         audioLideranca: z.string().nullable().optional(),
         audioColaborador: z.string().nullable().optional()
-    }),
+    }).optional().default({}), // Now optional with default
     avaliacoes: z.object({
-        area: z.any(),
-        lideranca: z.any(),
-        colaborador: z.any()
-    }),
-    pendencias: z.array(z.any()), // Array of PendingItem data
-    anexos: z.array(z.any()), // Array of Attachment data
-    notes: z.array(z.any()).optional(), // Array of Note data
+        area: z.any().optional(),
+        lideranca: z.any().optional(),
+        colaborador: z.any().optional()
+    }).optional().default({}), // Now optional with default
+    pendencias: z.array(z.any()).optional().default([]), // Now optional with default
+    anexos: z.array(z.any()).optional().default([]), // Now optional with default
+    notes: z.array(z.any()).optional().default([]), // Array of Note data
     isFinished: z.boolean().optional(),
     scheduleId: z.string().optional()
 });

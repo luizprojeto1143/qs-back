@@ -3,13 +3,13 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 interface CreateVisitData {
-    date: string | Date;
+    date?: string | Date; // Now optional - will default to current date
     time?: string;
     companyId: string;
     areaId?: string | null;
-    collaboratorIds: string[];
-    masterId: string;
-    relatos: {
+    collaboratorIds?: string[]; // Now optional with default []
+    masterId?: string; // Now optional - will be extracted from auth
+    relatos?: {
         lideranca?: string | null;
         colaborador?: string | null;
         consultoria?: string | null;
@@ -17,19 +17,19 @@ interface CreateVisitData {
         audioLideranca?: string | null;
         audioColaborador?: string | null;
     };
-    avaliacoes: {
-        area: any;
-        lideranca: any;
-        colaborador: any;
+    avaliacoes?: {
+        area?: any;
+        lideranca?: any;
+        colaborador?: any;
     };
-    pendencias: Array<{
+    pendencias?: Array<{
         responsibleId: string;
         description: string;
         deadline: string | Date;
         priority: 'BAIXA' | 'MEDIA' | 'ALTA';
         status: 'PENDENTE' | 'CONCLUIDO';
     }>;
-    anexos: Array<{
+    anexos?: Array<{
         url: string;
         type: string;
         name: string;
@@ -53,27 +53,40 @@ interface VisitFilters {
 
 export class VisitService {
     async create(data: CreateVisitData) {
-        // 1. Resolve Master Profile (User)
-        const masterUser = await prisma.user.findUnique({
-            where: { id: data.masterId }
-        });
+        // Apply defaults for optional fields
+        const safeData = {
+            date: data.date || new Date(),
+            masterId: data.masterId,
+            collaboratorIds: data.collaboratorIds || [],
+            relatos: data.relatos || {},
+            avaliacoes: data.avaliacoes || { area: {}, lideranca: {}, colaborador: {} },
+            pendencias: data.pendencias || [],
+            anexos: data.anexos || [],
+            notes: data.notes || [],
+        };
 
-        if (!masterUser || masterUser.role !== 'MASTER') {
-            // Note: Depending on logic, maybe any user can create? But stick to master check if needed.
-            // For now just allow if user exists.
+        // 1. Resolve Master Profile (User) - only if masterId is provided
+        let masterUser = null;
+        if (safeData.masterId) {
+            masterUser = await prisma.user.findUnique({
+                where: { id: safeData.masterId }
+            });
             if (!masterUser) throw new Error('Usuário Master não encontrado');
         }
 
-        // 2. Resolve Collaborators
-        const collaborators = await prisma.collaboratorProfile.findMany({
-            where: { id: { in: data.collaboratorIds } }
-        });
+        // 2. Resolve Collaborators (skip if empty)
+        let collaborators: any[] = [];
+        if (safeData.collaboratorIds.length > 0) {
+            collaborators = await prisma.collaboratorProfile.findMany({
+                where: { id: { in: safeData.collaboratorIds } }
+            });
 
-        if (collaborators.length !== data.collaboratorIds.length) {
-            throw new Error('Um ou mais colaboradores não encontrados');
+            if (collaborators.length !== safeData.collaboratorIds.length) {
+                throw new Error('Um ou mais colaboradores não encontrados');
+            }
         }
 
-        const visitDate = new Date(data.date);
+        const visitDate = new Date(safeData.date);
 
         // 3. Transaction for Consistency
         return await prisma.$transaction(async (tx) => {
@@ -93,10 +106,10 @@ export class VisitService {
                 }
             };
 
-            processEvaluations('AREA', data.avaliacoes.area);
-            processEvaluations('LIDERANCA', data.avaliacoes.lideranca);
-            processEvaluations('LIDERANCA', data.avaliacoes.colaborador); // Typos in original? Assuming COLABORADOR
-            processEvaluations('COLABORADOR', data.avaliacoes.colaborador);
+            processEvaluations('AREA', safeData.avaliacoes?.area);
+            processEvaluations('LIDERANCA', safeData.avaliacoes?.lideranca);
+            processEvaluations('LIDERANCA', safeData.avaliacoes?.colaborador); // Typos in original? Assuming COLABORADOR
+            processEvaluations('COLABORADOR', safeData.avaliacoes?.colaborador);
 
 
             // Create Visit
@@ -106,13 +119,13 @@ export class VisitService {
                     time: data.time,
                     companyId: data.companyId,
                     areaId: data.areaId,
-                    masterId: masterUser.id, // Direct User ID associated with "MasterVisits"
-                    relatoLideranca: data.relatos.lideranca,
-                    relatoColaborador: data.relatos.colaborador,
-                    relatoConsultoria: data.relatos.consultoria,
-                    observacoesMaster: data.relatos.observacoes,
-                    audioLiderancaUrl: data.relatos.audioLideranca,
-                    audioColaboradorUrl: data.relatos.audioColaborador,
+                    masterId: masterUser?.id || safeData.masterId || '', // Direct User ID associated with "MasterVisits"
+                    relatoLideranca: safeData.relatos?.lideranca,
+                    relatoColaborador: safeData.relatos?.colaborador,
+                    relatoConsultoria: safeData.relatos?.consultoria,
+                    observacoesMaster: safeData.relatos?.observacoes,
+                    audioLiderancaUrl: safeData.relatos?.audioLideranca,
+                    audioColaboradorUrl: safeData.relatos?.audioColaborador,
                     collaborators: {
                         connect: collaborators.map(c => ({ id: c.id })) // Connect Many-to-Many
                     },
@@ -123,9 +136,9 @@ export class VisitService {
             });
 
             // Create Pendencies
-            if (data.pendencias.length > 0) {
+            if (safeData.pendencias.length > 0) {
                 await tx.pendingItem.createMany({
-                    data: data.pendencias.map(p => ({
+                    data: safeData.pendencias.map(p => ({
                         visitId: visit.id,
                         responsibleId: p.responsibleId,
                         description: p.description,
@@ -139,9 +152,9 @@ export class VisitService {
             }
 
             // Create Attachments
-            if (data.anexos.length > 0) {
+            if (safeData.anexos.length > 0) {
                 await tx.visitAttachment.createMany({
-                    data: data.anexos.map(a => ({
+                    data: safeData.anexos.map(a => ({
                         visitId: visit.id,
                         url: a.url,
                         type: a.type,
@@ -151,9 +164,9 @@ export class VisitService {
             }
 
             // Create Individual Notes
-            if (data.notes && data.notes.length > 0) {
+            if (safeData.notes && safeData.notes.length > 0) {
                 await tx.visitNote.createMany({
-                    data: data.notes.map(n => ({
+                    data: safeData.notes.map(n => ({
                         visitId: visit.id,
                         collaboratorId: n.collaboratorId,
                         content: n.content
