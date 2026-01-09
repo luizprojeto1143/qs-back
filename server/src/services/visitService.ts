@@ -81,8 +81,9 @@ export class VisitService {
                 where: { id: { in: safeData.collaboratorIds } }
             });
 
+            // Log warning if some collaborators not found, but continue
             if (collaborators.length !== safeData.collaboratorIds.length) {
-                throw new Error('Um ou mais colaboradores não encontrados');
+                console.warn(`Warning: Only found ${collaborators.length} of ${safeData.collaboratorIds.length} collaborators`);
             }
         }
 
