@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { VisitService } from '../services/visitService';
 import { z } from 'zod';
+import { AuthRequest } from '../middleware/authMiddleware';
 
 const visitService = new VisitService();
 
@@ -39,7 +40,21 @@ export const createVisit = async (req: Request, res: Response) => {
             return res.status(400).json({ error: validation.error });
         }
 
-        const visit = await visitService.create(validation.data);
+        // Extract masterId from authenticated user (from JWT token)
+        const authReq = req as AuthRequest;
+        const masterId = authReq.user?.userId || validation.data.masterId;
+
+        if (!masterId) {
+            return res.status(400).json({ error: 'MasterId is required (user must be authenticated)' });
+        }
+
+        // Inject masterId from auth
+        const visitData = {
+            ...validation.data,
+            masterId
+        };
+
+        const visit = await visitService.create(visitData);
         return res.status(201).json(visit);
     } catch (error: any) {
         console.error('Error creating visit:', error);
