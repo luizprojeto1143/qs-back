@@ -3,12 +3,18 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Printer, TrendingUp, AlertCircle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import type { ReportData } from '../types/report';
+import { useCompany } from '../contexts/CompanyContext';
 
 const ReportViewer = () => {
     const location = useLocation();
     const navigate = useNavigate();
+    const { companies } = useCompany();
     const { reportType, data } = location.state || {};
     const [reportData] = useState<ReportData>(data);
+
+    // Check if complaints/ouvidoria is enabled for the company
+    const currentCompany = companies[0];
+    const isComplaintsEnabled = currentCompany?.systemSettings?.complaintsEnabled;
 
     useEffect(() => {
         if (!reportData) {
@@ -86,81 +92,83 @@ const ReportViewer = () => {
                             </div>
                         </div>
 
-                        {/* Seção de Ouvidoria */}
-                        <div>
-                            <h3 className="text-xl font-bold mb-4 border-b pb-2 flex items-center gap-2">
-                                <AlertCircle className="h-5 w-5 text-orange-600" />
-                                Indicadores de Ouvidoria
-                            </h3>
+                        {/* Seção de Ouvidoria - Only show if complaints/ouvidoria is enabled */}
+                        {isComplaintsEnabled && (
+                            <div>
+                                <h3 className="text-xl font-bold mb-4 border-b pb-2 flex items-center gap-2">
+                                    <AlertCircle className="h-5 w-5 text-orange-600" />
+                                    Indicadores de Ouvidoria
+                                </h3>
 
-                            <div className="grid grid-cols-3 gap-4 mb-6">
-                                <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
-                                    <h4 className="text-sm font-bold text-orange-800">Total de Relatos</h4>
-                                    <p className="text-2xl font-bold text-orange-900">{reportData.stats?.totalComplaints || 0}</p>
+                                <div className="grid grid-cols-3 gap-4 mb-6">
+                                    <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
+                                        <h4 className="text-sm font-bold text-orange-800">Total de Relatos</h4>
+                                        <p className="text-2xl font-bold text-orange-900">{reportData.stats?.totalComplaints || 0}</p>
+                                    </div>
+                                    <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                                        <h4 className="text-sm font-bold text-green-800">Resolvidos</h4>
+                                        <p className="text-2xl font-bold text-green-900">{reportData.stats?.resolvedComplaints || 0}</p>
+                                    </div>
+                                    <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                                        <h4 className="text-sm font-bold text-blue-800">Taxa de Resolução</h4>
+                                        <p className="text-2xl font-bold text-blue-900">
+                                            {reportData.stats?.totalComplaints ?
+                                                Math.round(((reportData.stats.resolvedComplaints || 0) / reportData.stats.totalComplaints) * 100) : 0}%
+                                        </p>
+                                    </div>
                                 </div>
-                                <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-                                    <h4 className="text-sm font-bold text-green-800">Resolvidos</h4>
-                                    <p className="text-2xl font-bold text-green-900">{reportData.stats?.resolvedComplaints || 0}</p>
-                                </div>
-                                <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                                    <h4 className="text-sm font-bold text-blue-800">Taxa de Resolução</h4>
-                                    <p className="text-2xl font-bold text-blue-900">
-                                        {reportData.stats?.totalComplaints ?
-                                            Math.round((reportData.stats.resolvedComplaints / reportData.stats.totalComplaints) * 100) : 0}%
-                                    </p>
-                                </div>
-                            </div>
 
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm text-left">
-                                    <thead className="bg-gray-100">
-                                        <tr>
-                                            <th className="p-2">Data Abertura</th>
-                                            <th className="p-2">Categoria</th>
-                                            <th className="p-2">Status</th>
-                                            <th className="p-2">Tratativa / Resolução</th>
-                                            <th className="p-2">Tempo de Resolução</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {reportData.complaints?.map((c) => {
-                                            const resolvedAt = c.resolvedAt;
-                                            const resTime = resolvedAt
-                                                ? Math.ceil((new Date(resolvedAt).getTime() - new Date(c.createdAt).getTime()) / (1000 * 3600 * 24))
-                                                : '-';
-
-                                            return (
-                                                <tr key={c.id} className="border-b">
-                                                    <td className="p-2">{new Date(c.createdAt).toLocaleDateString()}</td>
-                                                    <td className="p-2">{c.category || 'Geral'}</td>
-                                                    <td className="p-2">
-                                                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${c.status === 'RESOLVIDO' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                                                            }`}>
-                                                            {c.status.replace('_', ' ')}
-                                                        </span>
-                                                    </td>
-                                                    <td className="p-2">
-                                                        {c.resolution ? (
-                                                            <div className="max-w-xs whitespace-pre-wrap text-xs">{c.resolution}</div>
-                                                        ) : (
-                                                            <span className="text-gray-400 italic">Pendente</span>
-                                                        )}
-                                                    </td>
-                                                    <td className="p-2 text-center">
-                                                        {resolutionTime !== '-' ? `${resolutionTime} dias` : '-'}
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                        {(!reportData.complaints || reportData.complaints.length === 0) && (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm text-left">
+                                        <thead className="bg-gray-100">
                                             <tr>
-                                                <td colSpan={5} className="p-4 text-center text-gray-500 italic">Nenhum relato no período.</td>
+                                                <th className="p-2">Data Abertura</th>
+                                                <th className="p-2">Categoria</th>
+                                                <th className="p-2">Status</th>
+                                                <th className="p-2">Tratativa / Resolução</th>
+                                                <th className="p-2">Tempo de Resolução</th>
                                             </tr>
-                                        )}
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody>
+                                            {reportData.complaints?.map((c) => {
+                                                const resolvedAt = c.resolvedAt;
+                                                const resTime = resolvedAt
+                                                    ? Math.ceil((new Date(resolvedAt).getTime() - new Date(c.createdAt).getTime()) / (1000 * 3600 * 24))
+                                                    : '-';
+
+                                                return (
+                                                    <tr key={c.id} className="border-b">
+                                                        <td className="p-2">{new Date(c.createdAt).toLocaleDateString()}</td>
+                                                        <td className="p-2">{c.category || 'Geral'}</td>
+                                                        <td className="p-2">
+                                                            <span className={`px-2 py-1 rounded-full text-xs font-bold ${c.status === 'RESOLVIDO' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                                                                }`}>
+                                                                {c.status.replace('_', ' ')}
+                                                            </span>
+                                                        </td>
+                                                        <td className="p-2">
+                                                            {c.resolution ? (
+                                                                <div className="max-w-xs whitespace-pre-wrap text-xs">{c.resolution}</div>
+                                                            ) : (
+                                                                <span className="text-gray-400 italic">Pendente</span>
+                                                            )}
+                                                        </td>
+                                                        <td className="p-2 text-center">
+                                                            {resTime !== '-' ? `${resTime} dias` : '-'}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                            {(!reportData.complaints || reportData.complaints.length === 0) && (
+                                                <tr>
+                                                    <td colSpan={5} className="p-4 text-center text-gray-500 italic">Nenhum relato no período.</td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </div>
                 );
 
