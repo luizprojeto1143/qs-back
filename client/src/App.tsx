@@ -147,6 +147,7 @@ function App() {
                     <Route path="pendencies" element={<Pendencies />} />
                     <Route path="inclusion" element={<RHInclusion />} />
                     <Route path="complaints" element={<RHComplaints />} />
+                    <Route path="feed" element={<Feed />} />
                   </Route>
                   {/* Mobile App Routes */}
                   <Route path="/app" element={<MobileLayout />}>

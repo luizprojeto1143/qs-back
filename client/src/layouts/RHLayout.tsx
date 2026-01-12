@@ -13,7 +13,8 @@ import {
     GraduationCap,
     AlertTriangle,
     Activity,
-    Megaphone
+    Megaphone,
+    Rss
 } from 'lucide-react';
 import { useLibrasAvailability } from '../hooks/useLibrasAvailability';
 
@@ -79,6 +80,7 @@ const RHLayout = () => {
         { icon: Users, label: 'Colaboradores', path: '/rh/collaborators' },
         { icon: ClipboardList, label: 'Histórico de Visitas', path: '/rh/visits' },
         { icon: AlertTriangle, label: 'Pendências', path: '/rh/pendencies' },
+        { icon: Rss, label: 'Feed Acessível', path: '/rh/feed' },
         ...(currentCompany?.systemSettings?.rhCanSeeQSScore ? [{ icon: Activity, label: 'Diagnóstico & Score', path: '/rh/inclusion' }] : []),
         ...(currentCompany?.systemSettings?.complaintsEnabled ? [{ icon: Megaphone, label: 'Ouvidoria', path: '/rh/complaints' }] : []),
         { icon: FileText, label: 'Relatórios', path: '/rh/reports' },
