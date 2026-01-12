@@ -73,11 +73,20 @@ export class VisitService {
         }
 
         // 2. Resolve Collaborators (skip if empty)
+        // NOTE: Frontend sends User IDs, but we need CollaboratorProfile IDs
         let collaborators: any[] = [];
         if (safeData.collaboratorIds.length > 0) {
+            // First try to find by userId (since frontend sends user.id)
             collaborators = await prisma.collaboratorProfile.findMany({
-                where: { id: { in: safeData.collaboratorIds } }
+                where: { userId: { in: safeData.collaboratorIds } }
             });
+
+            // If not found by userId, try by id directly (for backwards compatibility)
+            if (collaborators.length === 0) {
+                collaborators = await prisma.collaboratorProfile.findMany({
+                    where: { id: { in: safeData.collaboratorIds } }
+                });
+            }
 
             // Log warning if some collaborators not found, but continue
             if (collaborators.length !== safeData.collaboratorIds.length) {

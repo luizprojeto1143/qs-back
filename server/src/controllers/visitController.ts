@@ -154,10 +154,19 @@ export const updateVisit = async (req: Request, res: Response) => {
         // Update collaborators if provided
         if (data.collaboratorIds && Array.isArray(data.collaboratorIds)) {
             // Verify collaborators exist before connecting
-            const existingCollaborators = await prisma.collaboratorProfile.findMany({
-                where: { id: { in: data.collaboratorIds } },
+            // NOTE: Frontend sends User IDs, but we need CollaboratorProfile IDs
+            let existingCollaborators = await prisma.collaboratorProfile.findMany({
+                where: { userId: { in: data.collaboratorIds } },
                 select: { id: true }
             });
+
+            // If not found by userId, try by id directly (for backwards compatibility)
+            if (existingCollaborators.length === 0 && data.collaboratorIds.length > 0) {
+                existingCollaborators = await prisma.collaboratorProfile.findMany({
+                    where: { id: { in: data.collaboratorIds } },
+                    select: { id: true }
+                });
+            }
 
             const validIds = existingCollaborators.map(c => c.id);
 
