@@ -179,7 +179,9 @@ const VisitHistory = () => {
                                             </span>
                                             <span className="flex items-center">
                                                 <User className="h-4 w-4 mr-1" />
-                                                {visit.collaborators?.map((c: any) => c.user?.name).join(', ') || 'Sem colaboradores'}
+                                                {visit.collaborators?.length > 0
+                                                    ? visit.collaborators.map((c: any) => c.user?.name || c.name).filter(Boolean).join(', ') || 'Sem nomes'
+                                                    : 'Sem colaboradores'}
                                             </span>
                                         </div>
                                     </div>
