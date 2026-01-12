@@ -341,7 +341,7 @@ const RHComplaints = () => {
                                     autoFocus
                                 />
                                 <p className="text-xs text-gray-400 mt-2">
-                                    Esta informação será visível para a Consultoria Master e constará nos relatórios de auditoria.
+                                    Esta informação será visível para a Consultoria QS e constará nos relatórios de auditoria.
                                 </p>
                             </div>
                         </div>

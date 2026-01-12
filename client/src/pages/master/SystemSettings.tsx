@@ -205,7 +205,7 @@ const SystemSettings: React.FC = () => {
                     Visibilidade para RH
                 </h2>
                 <p className="text-sm text-gray-500">
-                    Controle o que o RH pode visualizar (somente após validação do Master)
+                    Controle o que o RH pode visualizar (somente após validação da Consultoria)
                 </p>
 
                 <SettingsToggle

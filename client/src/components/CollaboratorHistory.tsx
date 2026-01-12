@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { X, Calendar, Clock, AlertCircle, MessageSquare, CheckCircle } from 'lucide-react';
 import { api } from '../lib/api';
 import { formatShift } from '../utils/formatters';
+import { useNavigate } from 'react-router-dom';
 
 interface CollaboratorHistoryProps {
     collaboratorId: string;
@@ -9,6 +10,7 @@ interface CollaboratorHistoryProps {
 }
 
 const CollaboratorHistory = ({ collaboratorId, onClose }: CollaboratorHistoryProps) => {
+    const navigate = useNavigate();
     const [collaborator, setCollaborator] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'timeline' | 'pendencies'>('timeline');
@@ -26,6 +28,14 @@ const CollaboratorHistory = ({ collaboratorId, onClose }: CollaboratorHistoryPro
         };
         fetchHistory();
     }, [collaboratorId]);
+
+    const handleNavigateToVisit = (visitId: string) => {
+        const userStr = localStorage.getItem('user');
+        const userRole = userStr ? JSON.parse(userStr).role : '';
+        const basePath = userRole === 'RH' ? '/rh' : '/dashboard';
+
+        navigate(`${basePath}/visits/new`, { state: { visitId, mode: 'edit' } });
+    };
 
     if (loading) return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -107,7 +117,10 @@ const CollaboratorHistory = ({ collaboratorId, onClose }: CollaboratorHistoryPro
                                     </div>
 
                                     {/* Card */}
-                                    <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-200 group">
+                                    <div
+                                        className={`bg-white p-4 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-200 group ${item.type === 'VISIT' ? 'cursor-pointer hover:border-blue-300 ring-blue-100 hover:ring-2' : ''}`}
+                                        onClick={() => item.type === 'VISIT' && handleNavigateToVisit(item.data.id)}
+                                    >
                                         <div className="flex items-center justify-between mb-2">
                                             <span className={`text-[10px] tracking-wider font-bold px-2 py-1 rounded-full uppercase ${item.type === 'VISIT' ? 'bg-blue-50 text-blue-700 border border-blue-100' : 'bg-amber-50 text-amber-700 border border-amber-100'}`}>
                                                 {item.type === 'VISIT' ? 'Visita' : 'Observação'}
@@ -122,7 +135,7 @@ const CollaboratorHistory = ({ collaboratorId, onClose }: CollaboratorHistoryPro
                                             <div className="text-sm text-gray-600 space-y-3">
                                                 <div className="flex items-center gap-2 text-gray-900 border-b border-gray-50 pb-2">
                                                     <div className="w-1 h-4 bg-blue-500 rounded-full"></div>
-                                                    <span className="font-semibold">Master:</span> {item.data.master?.name}
+                                                    <span className="font-semibold">Consultoria QS:</span> {item.data.master?.name}
                                                 </div>
                                                 {item.data.observacoesMaster ? (
                                                     <div className="bg-slate-50 p-3 rounded-lg text-slate-700 italic border border-slate-100 relative">
@@ -131,6 +144,12 @@ const CollaboratorHistory = ({ collaboratorId, onClose }: CollaboratorHistoryPro
                                                 ) : (
                                                     <span className="text-gray-400 italic text-xs">Sem observações registradas</span>
                                                 )}
+
+                                                <div className="pt-1 flex justify-end">
+                                                    <span className="text-xs text-blue-500 font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        Clique para ver detalhes &rarr;
+                                                    </span>
+                                                </div>
                                             </div>
                                         ) : (
                                             <div className="text-sm text-gray-600">

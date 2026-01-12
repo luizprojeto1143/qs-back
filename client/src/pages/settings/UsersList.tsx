@@ -285,7 +285,7 @@ export function UsersList() {
                                     >
                                         <option value="RH">RH</option>
                                         <option value="LIDER">Líder</option>
-                                        <option value="MASTER">Master</option>
+                                        <option value="MASTER">Consultoria</option>
                                     </select>
                                 </div>
 

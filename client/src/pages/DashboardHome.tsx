@@ -46,7 +46,7 @@ const DashboardHome = () => {
     return (
         <div className="space-y-8">
             <div className="flex items-center justify-between relative z-50">
-                <h1 className="text-2xl font-bold text-gray-900">Painel Master</h1>
+                <h1 className="text-2xl font-bold text-gray-900">Painel Consultoria</h1>
                 <div className="relative z-[100]">
                     <div className="relative z-[100]">
                         <button

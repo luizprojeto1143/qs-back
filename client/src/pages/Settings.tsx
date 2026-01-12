@@ -16,7 +16,7 @@ const Settings = () => {
         { label: 'Configurar Central de Libras', path: '/dashboard/libras-availability' },
         { label: 'Cadastro de Especialistas', path: '/dashboard/specialists' },
         { label: 'Histórico de Empresas', path: '/dashboard/history' },
-        { label: 'Universidade Corporativa (Master)', path: '/dashboard/university' },
+        { label: 'Universidade Corporativa (Consultoria)', path: '/dashboard/university' },
         { label: 'Gerador de QR Code', path: '/dashboard/qrcode' },
     ];
 

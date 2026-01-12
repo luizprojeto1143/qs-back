@@ -130,7 +130,7 @@ export const VisitDetailsModal = ({ visitId, isOpen, onClose }: VisitDetailsModa
                                     <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-100">
                                         <h3 className="flex items-center space-x-2 font-semibold text-gray-900 mb-2">
                                             <FileText className="h-4 w-4" />
-                                            <span>Observações do Master</span>
+                                            <span>Observações da Consultoria</span>
                                         </h3>
                                         <p className="text-gray-700 whitespace-pre-wrap">{visit.observacoesMaster}</p>
                                     </div>

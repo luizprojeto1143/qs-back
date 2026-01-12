@@ -588,7 +588,7 @@ const ReportViewer = () => {
                                             <div className="flex justify-between items-start mb-4">
                                                 <div>
                                                     <p className="font-bold text-lg text-gray-900">Visita de Acompanhamento</p>
-                                                    <p className="text-sm text-gray-500">Realizada por: {visit.master?.name || 'Master QS'}</p>
+                                                    <p className="text-sm text-gray-500">Realizada por: {visit.master?.name || 'Consultor QS'}</p>
                                                 </div>
                                                 <span className="text-sm font-medium text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
                                                     {new Date(visit.date).toLocaleDateString()} às {new Date(visit.date).toLocaleTimeString()}
@@ -621,7 +621,7 @@ const ReportViewer = () => {
                                                 )}
                                                 {visit.observacoesMaster && (
                                                     <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                                        <p className="text-xs font-bold text-gray-500 uppercase mb-1">Observações do Master</p>
+                                                        <p className="text-xs font-bold text-gray-500 uppercase mb-1">Observações da Consultoria</p>
                                                         <p className="text-gray-700 text-sm">{visit.observacoesMaster}</p>
                                                     </div>
                                                 )}
@@ -688,8 +688,8 @@ const ReportViewer = () => {
                                     <p className="text-lg font-medium">{reportData.area?.name} / {reportData.area?.sector?.name || '-'}</p>
                                 </div>
                                 <div>
-                                    <p className="text-sm text-gray-500 uppercase font-bold">Master Responsável</p>
-                                    <p className="text-lg font-medium">{reportData.master?.name || 'Master QS'}</p>
+                                    <p className="text-sm text-gray-500 uppercase font-bold">Consultor Responsável</p>
+                                    <p className="text-lg font-medium">{reportData.master?.name || 'Consultor QS'}</p>
                                 </div>
                                 <div>
                                     <p className="text-sm text-gray-500 uppercase font-bold">Empresa</p>
