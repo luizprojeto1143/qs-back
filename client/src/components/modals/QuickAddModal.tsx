@@ -69,8 +69,7 @@ export const QuickAddModal = ({ type, companyId, areaId, onSuccess, onClose }: Q
         ? sectors.length > 0
         : areas.length > 0 && sectors.length > 0;
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSubmit = async () => {
         setLoading(true);
 
         try {
@@ -118,7 +117,7 @@ export const QuickAddModal = ({ type, companyId, areaId, onSuccess, onClose }: Q
                         </div>
                     </div>
                 ) : (
-                    <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="space-y-4">
                         {type === 'area' ? (
                             <>
                                 {!dataLoading && sectors.length === 0 && (
@@ -285,7 +284,8 @@ export const QuickAddModal = ({ type, companyId, areaId, onSuccess, onClose }: Q
                                 Cancelar
                             </button>
                             <button
-                                type="submit"
+                                type="button"
+                                onClick={handleSubmit}
                                 disabled={loading || !canCreate}
                                 className="btn-primary flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
@@ -297,7 +297,7 @@ export const QuickAddModal = ({ type, companyId, areaId, onSuccess, onClose }: Q
                                 <span>Criar</span>
                             </button>
                         </div>
-                    </form>
+                    </div>
                 )}
             </div>
         </div>
