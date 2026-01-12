@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Video, Plus, MoreHorizontal, X, Image as ImageIcon, Edit, Trash2 } from 'lucide-react';
+import { Video, Plus, MoreHorizontal, X, Image as ImageIcon, Edit, Trash2, Upload } from 'lucide-react';
 import { useCompany } from '../contexts/CompanyContext';
 import { toast } from 'sonner';
 import { api } from '../lib/api';
@@ -11,6 +11,7 @@ const Feed = () => {
     const [loading, setLoading] = useState(true);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
 
     const [categories, setCategories] = useState<any[]>([]);
 
@@ -110,6 +111,28 @@ const Feed = () => {
         setActiveMenuId(null);
     };
 
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const response = await api.post('/upload', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            setNewPost(prev => ({ ...prev, imageUrl: response.data.url }));
+            toast.success('Imagem enviada com sucesso!');
+        } catch (error) {
+            console.error('Error uploading image', error);
+            toast.error('Erro ao enviar imagem');
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
     return (
         <div className="space-y-6" onClick={() => setActiveMenuId(null)}>
             <div className="flex items-center justify-between">
@@ -132,7 +155,14 @@ const Feed = () => {
                         <div key={post.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow relative">
                             {post.imageUrl && (
                                 <div className="h-48 w-full relative">
-                                    <img src={post.imageUrl} alt={post.title} className="w-full h-full object-cover" />
+                                    <img
+                                        src={post.imageUrl}
+                                        alt={post.title}
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                            (e.target as HTMLImageElement).src = 'https://placehold.co/600x400?text=Imagem+Indisponível';
+                                        }}
+                                    />
                                     {post.videoLibrasUrl && (
                                         <div className="absolute inset-0 flex items-center justify-center bg-black/20">
                                             <div className="w-12 h-12 bg-white/90 rounded-full flex items-center justify-center backdrop-blur-sm">
@@ -252,12 +282,33 @@ const Feed = () => {
                                     </span>
                                     <input
                                         type="url"
-                                        className="input-field rounded-l-none"
+                                        className="input-field rounded-l-none rounded-r-none border-r-0"
                                         placeholder="https://..."
                                         value={newPost.imageUrl}
                                         onChange={e => setNewPost({ ...newPost, imageUrl: e.target.value })}
+                                        disabled={isUploading}
                                     />
+                                    <label className={`inline-flex items-center px-4 rounded-r-xl border border-l-0 border-gray-200 bg-gray-50 text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                        <input
+                                            type="file"
+                                            className="hidden"
+                                            accept="image/*"
+                                            onChange={handleImageUpload}
+                                            disabled={isUploading}
+                                        />
+                                        <Upload className={`h-4 w-4 ${isUploading ? 'animate-bounce' : ''}`} />
+                                    </label>
                                 </div>
+                                {newPost.imageUrl && (
+                                    <div className="mt-2 h-32 w-full rounded-lg overflow-hidden relative border border-gray-200">
+                                        <img
+                                            src={newPost.imageUrl}
+                                            alt="Preview"
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => (e.target as HTMLImageElement).src = 'https://placehold.co/600x400?text=Erro+na+URL'}
+                                        />
+                                    </div>
+                                )}
                             </div>
 
                             <div>
