@@ -161,6 +161,7 @@ export const getMasterDashboardStats = async (req: Request, res: Response) => {
         const totalCollaborators = await prisma.user.count({
             where: {
                 role: 'COLABORADOR',
+                active: true,
                 ...whereClause
             }
         });
