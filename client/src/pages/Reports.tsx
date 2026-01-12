@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { FileText, BarChart2, Users, Building, AlertCircle, PieChart, TrendingUp, ClipboardList, Loader, X } from 'lucide-react';
 import { api } from '../lib/api';
 import { toast } from 'sonner';
@@ -21,6 +21,7 @@ const reportTypes = [
 
 const Reports = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     // const { selectedCompanyId } = useCompany();
     const [generating, setGenerating] = useState<string | null>(null);
     const [modalOpen, setModalOpen] = useState(false);
@@ -33,6 +34,9 @@ const Reports = () => {
     const [areas, setAreas] = useState<any[]>([]);
     const [sectors, setSectors] = useState<any[]>([]);
     const [loadingData, setLoadingData] = useState(false);
+
+    // Determine base path based on current location
+    const basePath = location.pathname.startsWith('/rh') ? '/rh' : '/dashboard';
 
     useEffect(() => {
         if (modalOpen && selectedReport?.param) {
@@ -91,7 +95,7 @@ const Reports = () => {
             const response = await api.post('/reports', { type, filters });
 
             if (response.data.success) {
-                navigate('/dashboard/report-viewer', { state: { reportType: type, data: response.data.data } });
+                navigate(`${basePath}/report-viewer`, { state: { reportType: type, data: response.data.data } });
                 setModalOpen(false);
             } else {
                 toast.error('Erro ao gerar relatório: ' + response.data.error);
