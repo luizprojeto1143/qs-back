@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Calendar, MapPin, User, Download, Pencil } from 'lucide-react';
+import { Search, Calendar, MapPin, User, Download, Pencil, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { SkeletonRow } from '../components/Skeleton';
@@ -77,7 +77,32 @@ const VisitHistory = () => {
         }
         return '/dashboard';
     };
+
+    const getUserRole = () => {
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+            const user = JSON.parse(userStr);
+            return user.role;
+        }
+        return '';
+    };
+
     const basePath = getBasePath();
+    const userRole = getUserRole();
+
+    const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+    const handleDelete = async (id: string) => {
+        try {
+            await api.delete(`/visits/${id}`);
+            setVisits(prev => prev.filter(v => v.id !== id));
+            toast.success('Acompanhamento excluído com sucesso!');
+            setDeleteConfirmId(null);
+        } catch (error: any) {
+            console.error('Error deleting visit', error);
+            toast.error(error.response?.data?.error || 'Erro ao excluir acompanhamento');
+        }
+    };
 
     return (
         <div className="space-y-6">
@@ -170,10 +195,42 @@ const VisitHistory = () => {
                                     >
                                         <Pencil className="h-4 w-4" />
                                     </button>
+                                    {userRole === 'MASTER' && (
+                                        <button
+                                            onClick={() => setDeleteConfirmId(visit.id)}
+                                            className="ml-1 p-1 text-gray-400 hover:text-red-500 inline-block align-middle"
+                                            title="Excluir"
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </button>
+                                    )}
                                     <p className="text-xs text-gray-400 mt-2">Registrado por {visit.master?.name}</p>
                                     <p className="text-xs text-gray-400">{new Date(visit.date).toLocaleDateString()}</p>
                                 </div>
                             </div>
+
+                            {/* Modal de confirmação inline */}
+                            {deleteConfirmId === visit.id && (
+                                <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                                    <p className="text-sm text-red-800 font-medium mb-3">
+                                        Tem certeza que deseja excluir este acompanhamento? Esta ação não pode ser desfeita.
+                                    </p>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => handleDelete(visit.id)}
+                                            className="px-3 py-1.5 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors"
+                                        >
+                                            Sim, excluir
+                                        </button>
+                                        <button
+                                            onClick={() => setDeleteConfirmId(null)}
+                                            className="px-3 py-1.5 bg-gray-200 text-gray-700 text-sm rounded-lg hover:bg-gray-300 transition-colors"
+                                        >
+                                            Cancelar
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     ))}
                 </div>

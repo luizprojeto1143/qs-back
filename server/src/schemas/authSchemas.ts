@@ -39,8 +39,8 @@ export const createUserSchema = z.object({
 export const updateUserSchema = z.object({
     name: z.string().min(2).optional(),
     role: z.enum(['MASTER', 'RH', 'LIDER', 'COLABORADOR']).optional(),
-    companyId: z.string().uuid().optional().nullable(),
-    areaId: z.string().uuid().optional().nullable(),
+    companyId: z.string().optional().nullable().transform(val => val === '' ? null : val),
+    areaId: z.string().optional().nullable().transform(val => val === '' ? null : val),
     active: z.boolean().optional(),
-    password: z.string().min(6).optional()
+    password: z.string().min(6).optional().or(z.literal(''))
 });

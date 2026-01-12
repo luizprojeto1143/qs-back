@@ -170,3 +170,48 @@ export const updateVisit = async (req: Request, res: Response) => {
     }
 };
 
+export const deleteVisit = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const authReq = req as AuthRequest;
+
+        if (!authReq.user) {
+            return res.status(401).json({ error: 'Não autorizado' });
+        }
+
+        const prisma = (await import('../prisma')).default;
+
+        // Verify visit exists and user has permission
+        const visit = await prisma.visit.findUnique({
+            where: { id },
+            include: { company: true }
+        });
+
+        if (!visit) {
+            return res.status(404).json({ error: 'Acompanhamento não encontrado' });
+        }
+
+        // Only MASTER can delete, or the creator
+        if (authReq.user.role !== 'MASTER' && visit.masterId !== authReq.user.userId) {
+            return res.status(403).json({ error: 'Sem permissão para excluir este acompanhamento' });
+        }
+
+        // Delete related records first (cascade doesn't work for all relations)
+        await prisma.visitNote.deleteMany({ where: { visitId: id } });
+        await prisma.visitEvaluation.deleteMany({ where: { visitId: id } });
+        await prisma.visitAttachment.deleteMany({ where: { visitId: id } });
+        await prisma.pendingItem.updateMany({
+            where: { visitId: id },
+            data: { visitId: null }
+        });
+
+        // Delete the visit
+        await prisma.visit.delete({ where: { id } });
+
+        return res.status(204).send();
+    } catch (error: any) {
+        console.error('Error deleting visit:', error);
+        return res.status(500).json({ error: error.message || 'Erro ao excluir acompanhamento' });
+    }
+};
+

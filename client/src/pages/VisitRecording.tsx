@@ -28,6 +28,7 @@ const VisitRecording = () => {
     const [collaborators, setCollaborators] = useState<any[]>([]);
     const [linkedScheduleIds, setLinkedScheduleIds] = useState<string[]>([]);
     const [loading, setLoading] = useState(false);
+    const [dataLoaded, setDataLoaded] = useState(false); // Flag to prevent re-fetching
 
     // Form Setup
     const methods = useForm<VisitFormData>({
@@ -71,6 +72,9 @@ const VisitRecording = () => {
 
     // Fetch Initial Data
     useEffect(() => {
+        // Skip re-fetch if already loaded (prevents overwriting user edits)
+        if (dataLoaded) return;
+
         if (selectedCompanyId) {
             setValue('companyId', selectedCompanyId);
         }
@@ -190,6 +194,9 @@ const VisitRecording = () => {
                     });
                 }
 
+                // Mark as loaded to prevent re-fetching
+                setDataLoaded(true);
+
             } catch (error) {
                 console.error('Error fetching data', error);
                 toast.error('Erro ao carregar dados iniciais');
@@ -199,7 +206,8 @@ const VisitRecording = () => {
         };
 
         fetchData();
-    }, [selectedCompanyId, contextCompanies, location.state, reset, setValue]); // Note: watchedCompanyId omitted to prevent loops, relying on selectedCompanyId
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [location.state?.visitId]); // Only re-run on visitId change (for navigation between edits)
 
     // Pull Logic
     useEffect(() => {

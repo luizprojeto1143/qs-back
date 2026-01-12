@@ -123,7 +123,7 @@ export const updateUser = async (req: Request, res: Response) => {
             active
         };
 
-        if (password) {
+        if (password && password.length >= 6) {
             data.password = await bcrypt.hash(password, 10);
         }
 
