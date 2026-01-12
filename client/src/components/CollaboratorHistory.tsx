@@ -97,40 +97,42 @@ const CollaboratorHistory = ({ collaboratorId, onClose }: CollaboratorHistoryPro
             {/* Content */}
             <div className="p-6">
                 {activeTab === 'timeline' ? (
-                    <div className="space-y-8 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-300 before:to-transparent">
+                    <div className="space-y-6 pl-8 relative border-l-2 border-slate-200 ml-4 my-2">
                         {timelineItems.length === 0 && (
-                            <p className="text-center text-gray-500 py-8">Nenhum histórico registrado.</p>
+                            <p className="text-gray-500 py-4 italic text-sm -ml-8 text-center">Nenhum histórico registrado.</p>
                         )}
                         {timelineItems.map((item, idx) => (
-                            <div key={idx} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                            <div key={idx} className="relative">
                                 {/* Icon */}
-                                <div className="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-slate-300 group-[.is-active]:bg-white text-slate-500 group-[.is-active]:text-emerald-500 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
-                                    {item.type === 'VISIT' ? <Calendar className="h-5 w-5 text-blue-500" /> : <MessageSquare className="h-5 w-5 text-amber-500" />}
+                                <div className="absolute -left-[41px] top-0 flex items-center justify-center w-8 h-8 rounded-full bg-white border-2 border-slate-200 shadow-sm z-10">
+                                    {item.type === 'VISIT' ? <Calendar className="h-4 w-4 text-blue-500" /> : <MessageSquare className="h-4 w-4 text-amber-500" />}
                                 </div>
 
                                 {/* Card */}
-                                <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white p-4 rounded border border-slate-200 shadow">
-                                    <div className="flex items-center justify-between space-x-2 mb-1">
-                                        <div className="font-bold text-slate-900">
-                                            {item.type === 'VISIT' ? 'Visita de Acompanhamento' : 'Observação Individual'}
-                                        </div>
-                                        <time className="font-caveat font-medium text-indigo-500 text-xs">
+                                <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${item.type === 'VISIT' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'}`}>
+                                            {item.type === 'VISIT' ? 'VISITA' : 'OBSERVAÇÃO'}
+                                        </span>
+                                        <time className="text-xs text-gray-400 font-medium">
                                             {item.date.toLocaleDateString()}
                                         </time>
                                     </div>
 
                                     {item.type === 'VISIT' ? (
-                                        <div className="text-slate-500 text-sm">
-                                            <p><span className="font-medium">Master:</span> {item.data.master?.name}</p>
+                                        <div className="text-sm text-gray-600 space-y-2">
+                                            <p><span className="font-semibold text-gray-900">Master:</span> {item.data.master?.name}</p>
                                             {item.data.observacoesMaster && (
-                                                <p className="mt-2 italic">"{item.data.observacoesMaster}"</p>
+                                                <div className="bg-gray-50 p-3 rounded-lg text-gray-700 italic border border-gray-100">
+                                                    "{item.data.observacoesMaster}"
+                                                </div>
                                             )}
                                         </div>
                                     ) : (
-                                        <div className="text-slate-600 text-sm bg-amber-50 p-3 rounded-lg border border-amber-100">
+                                        <div className="text-sm text-gray-600 bg-amber-50/50 p-3 rounded-lg border border-amber-100">
                                             <p className="italic">"{item.data.content}"</p>
-                                            <p className="text-xs text-amber-600 mt-2 text-right">
-                                                Registrado na visita de {new Date(item.data.visit?.date || item.data.createdAt).toLocaleDateString()}
+                                            <p className="text-xs text-amber-600/70 mt-2 text-right">
+                                                Registrado em {new Date(item.data.visit?.date || item.data.createdAt).toLocaleDateString()}
                                             </p>
                                         </div>
                                     )}
