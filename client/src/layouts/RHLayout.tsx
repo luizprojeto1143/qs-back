@@ -47,6 +47,23 @@ const RHLayout = () => {
     const { companies } = useCompany();
     const navigate = useNavigate();
 
+    // Protect Route based on Role
+    React.useEffect(() => {
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+            try {
+                const user = JSON.parse(userStr);
+                if (user.role === 'MASTER') {
+                    navigate('/dashboard', { replace: true });
+                } else if (user.role === 'COLABORADOR' || user.role === 'LIDER') {
+                    navigate('/app', { replace: true });
+                }
+            } catch (e) {
+                console.error('Invalid user data', e);
+            }
+        }
+    }, [navigate]);
+
     // Assuming single company for RH user
     const currentCompany = companies[0];
     const isUniversityEnabled = currentCompany?.universityEnabled;

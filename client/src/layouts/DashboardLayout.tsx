@@ -68,6 +68,23 @@ const DashboardLayout = () => {
     const { theme, toggleTheme } = useTheme();
     const navigate = useNavigate();
 
+    // Protect Route based on Role
+    React.useEffect(() => {
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+            try {
+                const user = JSON.parse(userStr);
+                if (user.role === 'RH') {
+                    navigate('/rh', { replace: true });
+                } else if (user.role === 'COLABORADOR' || user.role === 'LIDER') {
+                    navigate('/app', { replace: true });
+                }
+            } catch (e) {
+                console.error('Invalid user data', e);
+            }
+        }
+    }, [navigate]);
+
     // Notification State
     const [notifications, setNotifications] = React.useState<any[]>([]);
     const [unreadCount, setUnreadCount] = React.useState(0);
