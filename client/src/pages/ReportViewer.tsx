@@ -738,9 +738,15 @@ const ReportViewer = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {reportData.collaborators?.map((c) => (
                                     <div key={c.id} className="p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
-                                        <p className="font-bold text-lg">{c.user.name}</p>
+                                        <div className="flex items-center gap-3 mb-2">
+                                            {c.user?.avatar && <img src={c.user.avatar} className="w-10 h-10 rounded-full object-cover" alt="" />}
+                                            <div>
+                                                <p className="font-bold text-lg">{c.user?.name || 'Colaborador'}</p>
+                                                <p className="text-xs text-gray-400">{c.user?.email}</p>
+                                            </div>
+                                        </div>
                                         <p className="text-sm text-gray-500">Matrícula: {c.matricula || '-'}</p>
-                                        <p className="text-sm text-gray-500">Turno: {c.shift}</p>
+                                        <p className="text-sm text-gray-500">Turno: {c.shift || '-'}</p>
                                     </div>
                                 ))}
                             </div>
