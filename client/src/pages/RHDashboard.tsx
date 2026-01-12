@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Users, ClipboardList, AlertTriangle, CheckCircle } from 'lucide-react';
 import { api } from '../lib/api';
 import { SkeletonCard, Skeleton } from '../components/Skeleton';
-import { SkeletonCard, Skeleton } from '../components/Skeleton';
 import { toast } from 'sonner';
 import { useCompany } from '../contexts/CompanyContext';
 
