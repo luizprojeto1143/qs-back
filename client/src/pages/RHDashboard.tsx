@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Users, ClipboardList, AlertTriangle, CheckCircle } from 'lucide-react';
 import { api } from '../lib/api';
 import { SkeletonCard, Skeleton } from '../components/Skeleton';
-import { VisitDetailsModal } from '../components/modals/VisitDetailsModal';
+import { SkeletonCard, Skeleton } from '../components/Skeleton';
 import { toast } from 'sonner';
 import { useCompany } from '../contexts/CompanyContext';
 
@@ -46,6 +47,7 @@ const StatCard = ({ icon: Icon, label, value, color }: any) => (
 );
 
 const RHDashboard = () => {
+    const navigate = useNavigate();
     const { companies } = useCompany();
     const currentCompany = companies[0];
     const isUniversityEnabled = currentCompany?.universityEnabled;
@@ -63,9 +65,6 @@ const RHDashboard = () => {
     const [mostWatchedCourses, setMostWatchedCourses] = useState<CourseWatched[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
-
-    const [selectedVisitId, setSelectedVisitId] = useState<string | null>(null);
-    const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -199,8 +198,13 @@ const RHDashboard = () => {
                                 <div
                                     key={item.id}
                                     onClick={() => {
-                                        setSelectedVisitId(item.id);
-                                        setIsDetailsModalOpen(true);
+                                        // Navigate to ReportViewer
+                                        navigate('/rh/report-viewer', {
+                                            state: {
+                                                reportType: 'VISIT_INDIVIDUAL',
+                                                visitId: item.id
+                                            }
+                                        });
                                     }}
                                     className="flex items-start space-x-3 pb-4 border-b border-gray-50 last:border-0 hover:bg-gray-50 p-2 -mx-2 rounded-lg cursor-pointer transition-colors"
                                 >
@@ -261,12 +265,7 @@ const RHDashboard = () => {
                     </div>
                 )}
             </div>
-            {/* Visit Details Modal */}
-            <VisitDetailsModal
-                visitId={selectedVisitId}
-                isOpen={isDetailsModalOpen}
-                onClose={() => setIsDetailsModalOpen(false)}
-            />
+
         </div>
     );
 };
