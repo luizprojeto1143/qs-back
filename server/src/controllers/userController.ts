@@ -113,9 +113,10 @@ export const updateUser = async (req: Request, res: Response) => {
         if (!validation.success) {
             return res.status(400).json({ error: 'Validation error', details: validation.error.format() });
         }
-        const { name, role, companyId, areaId, active, password } = validation.data;
+        const { email, name, role, companyId, areaId, active, password } = validation.data;
 
         const data: any = {
+            email,
             name,
             role,
             companyId,

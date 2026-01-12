@@ -32,11 +32,12 @@ export const createUserSchema = z.object({
     password: z.string().min(6),
     name: z.string().min(2),
     role: z.enum(['MASTER', 'RH', 'LIDER', 'COLABORADOR']),
-    companyId: z.string().uuid().optional(),
-    areaId: z.string().uuid().optional()
+    companyId: z.string().optional().nullable().transform(val => val === '' ? null : val),
+    areaId: z.string().optional().nullable().transform(val => val === '' ? null : val)
 });
 
 export const updateUserSchema = z.object({
+    email: z.string().email().optional(),
     name: z.string().min(2).optional(),
     role: z.enum(['MASTER', 'RH', 'LIDER', 'COLABORADOR']).optional(),
     companyId: z.string().optional().nullable().transform(val => val === '' ? null : val),
