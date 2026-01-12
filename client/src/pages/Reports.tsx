@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FileText, BarChart2, Users, Building, AlertCircle, PieChart, TrendingUp, ClipboardList, Loader, X } from 'lucide-react';
+import { FileText, BarChart2, Users, Building, AlertCircle, PieChart, ClipboardList, Loader, X } from 'lucide-react';
 import { api } from '../lib/api';
 import { toast } from 'sonner';
 
@@ -11,8 +11,6 @@ const reportTypes = [
     { id: 'AREA_REPORT', label: 'Relatório de Área', icon: BarChart2, desc: 'Desempenho e pendências por área.', param: 'areaId' },
     { id: 'SECTOR_REPORT', label: 'Relatório de Setor', icon: PieChart, desc: 'Comparativo entre áreas do mesmo setor.', param: 'sectorId' },
     { id: 'PENDENCIES_REPORT', label: 'Relatório de Pendências', icon: AlertCircle, desc: 'Status de todas as pendências e prazos.', param: null },
-    { id: 'COLLABORATOR_EVOLUTION', label: 'Evolução do Colaborador', icon: TrendingUp, desc: 'Gráficos de desempenho e adaptação.', param: 'collaboratorId' },
-    { id: 'AREA_EVOLUTION', label: 'Evolução da Área', icon: TrendingUp, desc: 'Impacto do trabalho no ambiente.', param: 'areaId' },
     { id: 'LEADERSHIP_REPORT', label: 'Relatório da Liderança', icon: Users, desc: 'Avaliação e desempenho dos líderes.', param: null },
     { id: 'EXECUTIVE_SUMMARY', label: 'Relatório Executivo (Anual)', icon: FileText, desc: 'Painel estratégico para diretoria.', param: null },
     { id: 'INCLUSION_DIAGNOSIS', label: 'Diagnóstico de Inclusão', icon: ClipboardList, desc: 'Mapeamento de barreiras e acessibilidade.', param: null },
