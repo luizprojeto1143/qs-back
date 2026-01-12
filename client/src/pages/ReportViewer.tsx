@@ -5,27 +5,58 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import type { ReportData } from '../types/report';
 import { useCompany } from '../contexts/CompanyContext';
 import { useAuth } from '../contexts/AuthContext';
+import { api } from '../lib/api';
 
 const ReportViewer = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const { companies } = useCompany();
     const { user } = useAuth();
-    const { reportType, data } = location.state || {};
-    const [reportData] = useState<ReportData>(data);
+    const { reportType, data, visitId } = location.state || {}; // Add visitId support
+    const [reportData, setReportData] = useState<ReportData | null>(data || null); // Allow null initially
+    const [loading, setLoading] = useState(false);
 
     // Check if complaints/ouvidoria is enabled for the company
     const currentCompany = companies[0];
     const isComplaintsEnabled = currentCompany?.systemSettings?.complaintsEnabled;
 
     useEffect(() => {
-        if (!reportData) {
-            // If accessed directly without state, redirect back
-            navigate('/dashboard/reports');
-        }
-    }, [reportData, navigate]);
+        const loadVisitData = async () => {
+            if (!reportData && visitId && reportType === 'VISIT_INDIVIDUAL') {
+                setLoading(true);
+                try {
+                    const response = await api.get(`/visits/${visitId}`);
+                    // Transform response to match ReportData structure if needed, or use as is if matches
+                    const visit = response.data;
+                    setReportData({
+                        ...visit,
+                        // Ensure generatedPendencies are populated if backend returns them
+                        generatedPendencies: visit.generatedPendencies || [],
+                        notes: visit.notes || [],
+                        attachments: visit.attachments || []
+                    });
+                } catch (error) {
+                    console.error('Error loading visit details:', error);
+                    navigate(-1); // Go back on error
+                } finally {
+                    setLoading(false);
+                }
+            } else if (!reportData && !visitId) {
+                // If accessed directly without state or ID, redirect back
+                navigate('/dashboard/reports');
+            }
+        };
 
-    if (!reportData) return <div>Carregando...</div>;
+        loadVisitData();
+    }, [reportData, navigate, visitId, reportType]);
+
+    if (loading) return (
+        <div className="min-h-screen flex items-center justify-center bg-white">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+    );
+
+    if (!reportData) return null;
 
     console.log('DEBUG REPORT DATA:', reportData);
     console.log('AVATAR URL:', reportData.collaborator?.user?.avatar);

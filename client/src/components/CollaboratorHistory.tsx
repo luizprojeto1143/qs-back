@@ -32,9 +32,17 @@ const CollaboratorHistory = ({ collaboratorId, onClose }: CollaboratorHistoryPro
     const handleNavigateToVisit = (visitId: string) => {
         const userStr = localStorage.getItem('user');
         const userRole = userStr ? JSON.parse(userStr).role : '';
-        const basePath = userRole === 'RH' ? '/rh' : '/dashboard';
 
-        navigate(`${basePath}/visits/new`, { state: { visitId, mode: 'edit' } });
+        if (userRole === 'RH') {
+            navigate('/rh/report-viewer', {
+                state: {
+                    reportType: 'VISIT_INDIVIDUAL',
+                    visitId: visitId
+                }
+            });
+        } else {
+            navigate('/dashboard/visits/new', { state: { visitId, mode: 'edit' } });
+        }
     };
 
     if (loading) return (
