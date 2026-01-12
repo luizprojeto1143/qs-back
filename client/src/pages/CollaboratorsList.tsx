@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Plus, ChevronRight, User, X, Clock } from 'lucide-react';
+import { Search, Plus, ChevronRight, User, X, Clock, Trash2 } from 'lucide-react';
 import { useCompany } from '../contexts/CompanyContext';
 import { api } from '../lib/api';
 import CollaboratorHistory from '../components/CollaboratorHistory';
@@ -110,6 +110,19 @@ const CollaboratorsList = () => {
         setIsModalOpen(true);
     };
 
+    const handleDelete = async (id: string, name: string) => {
+        if (window.confirm(`Tem certeza que deseja excluir o colaborador "${name}"? Esta ação não pode ser desfeita.`)) {
+            try {
+                await api.delete(`/collaborators/${id}`);
+                fetchData();
+                alert('Colaborador excluído com sucesso!');
+            } catch (error: any) {
+                console.error('Error deleting collaborator', error);
+                alert(error.response?.data?.error || 'Erro ao excluir colaborador.');
+            }
+        }
+    };
+
     // Filter collaborators based on selectedCompanyId
     const filteredCollaborators = collaborators.filter(collab => !selectedCompanyId || collab.companyId === selectedCompanyId);
 
@@ -178,14 +191,23 @@ const CollaboratorsList = () => {
                                         </p>
                                     </div>
                                 </div>
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); setViewingHistoryId(collab.id); }}
-                                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-full transition-colors mr-2"
-                                    title="Ver Histórico"
-                                >
-                                    <Clock className="h-5 w-5 text-blue-500" />
-                                </button>
-                                <ChevronRight className="h-5 w-5 text-gray-300 dark:text-gray-600 group-hover:text-primary transition-colors" />
+                                <div className="flex items-center">
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); setViewingHistoryId(collab.id); }}
+                                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-full transition-colors mr-2"
+                                        title="Ver Histórico"
+                                    >
+                                        <Clock className="h-5 w-5 text-blue-500" />
+                                    </button>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); handleDelete(collab.id, collab.name); }}
+                                        className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-colors mr-2 group-hover:opacity-100 opacity-0 transition-opacity"
+                                        title="Excluir Colaborador"
+                                    >
+                                        <Trash2 className="h-5 w-5 text-red-500" />
+                                    </button>
+                                    <ChevronRight className="h-5 w-5 text-gray-300 dark:text-gray-600 group-hover:text-primary transition-colors" />
+                                </div>
                             </div>
                         ))}
                     </div>

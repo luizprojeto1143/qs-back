@@ -53,6 +53,7 @@ router.get('/collaborators', collaboratorController.listCollaborators);
 router.post('/collaborators', requireRole(['MASTER', 'RH']), collaboratorController.createCollaborator);
 router.get('/collaborators/:id', collaboratorController.getCollaborator);
 router.put('/collaborators/:id', requireRole(['MASTER', 'RH']), collaboratorController.updateCollaborator);
+router.delete('/collaborators/:id', requireRole(['MASTER', 'RH']), collaboratorController.deleteCollaborator);
 
 // Feed Routes
 router.get('/feed', feedController.listPosts);

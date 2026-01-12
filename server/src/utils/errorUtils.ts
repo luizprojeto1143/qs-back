@@ -35,6 +35,7 @@ export const ERROR_CODES = {
     COLAB_CREATE: 'COLAB_002',
     COLAB_GET: 'COLAB_003',
     COLAB_UPDATE: 'COLAB_004',
+    COLAB_DELETE: 'COLAB_005',
 
     // Company errors (COMP_xxx)
     COMP_STRUCTURE: 'COMP_001',
@@ -235,6 +236,7 @@ export const ERROR_MESSAGES: Record<string, string> = {
     [ERROR_CODES.COLAB_CREATE]: 'Erro ao criar colaborador',
     [ERROR_CODES.COLAB_GET]: 'Erro ao buscar colaborador',
     [ERROR_CODES.COLAB_UPDATE]: 'Erro ao atualizar colaborador',
+    [ERROR_CODES.COLAB_DELETE]: 'Erro ao excluir colaborador',
 
     // Company
     [ERROR_CODES.COMP_STRUCTURE]: 'Erro ao buscar estrutura organizacional',

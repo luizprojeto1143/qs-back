@@ -265,3 +265,44 @@ export const updateCollaborator = async (req: Request, res: Response) => {
         sendError500(res, ERROR_CODES.COLAB_UPDATE, error);
     }
 };
+
+export const deleteCollaborator = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const requestingUser = (req as AuthRequest).user;
+
+        if (!requestingUser) return res.status(401).json({ error: 'Unauthorized' });
+
+        // Verify existence and ownership
+        const existingUser = await prisma.user.findFirst({ where: { id } });
+        if (!existingUser) return res.status(404).json({ error: 'Collaborator not found' });
+
+        if (requestingUser.role !== 'MASTER' && existingUser.companyId !== requestingUser.companyId) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        // Soft delete transaction
+        await prisma.$transaction(async (prisma) => {
+            // Update User to inactive and set deletedAt
+            await prisma.user.update({
+                where: { id },
+                data: {
+                    active: false,
+                    deletedAt: new Date()
+                }
+            });
+
+            // Update Profile to inactive
+            await prisma.collaboratorProfile.update({
+                where: { userId: id },
+                data: {
+                    isActive: false
+                }
+            });
+        });
+
+        res.json({ message: 'Collaborator deleted successfully' });
+    } catch (error) {
+        sendError500(res, ERROR_CODES.COLAB_DELETE, error);
+    }
+};
