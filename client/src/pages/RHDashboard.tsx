@@ -4,6 +4,7 @@ import { api } from '../lib/api';
 import { SkeletonCard, Skeleton } from '../components/Skeleton';
 import { VisitDetailsModal } from '../components/modals/VisitDetailsModal';
 import { toast } from 'sonner';
+import { useCompany } from '../contexts/CompanyContext';
 
 // Interfaces para tipagem forte
 interface RHStats {
@@ -45,6 +46,10 @@ const StatCard = ({ icon: Icon, label, value, color }: any) => (
 );
 
 const RHDashboard = () => {
+    const { companies } = useCompany();
+    const currentCompany = companies[0];
+    const isUniversityEnabled = currentCompany?.universityEnabled;
+
     const [stats, setStats] = useState<RHStats>({
         totalCollaborators: 0,
         visitsThisMonth: 0,
@@ -166,12 +171,14 @@ const RHDashboard = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard
-                    icon={CheckCircle}
-                    label="Cursos Concluídos"
-                    value={stats.completedCourses}
-                    color="bg-green-600"
-                />
+                {isUniversityEnabled && (
+                    <StatCard
+                        icon={CheckCircle}
+                        label="Cursos Concluídos"
+                        value={stats.completedCourses}
+                        color="bg-green-600"
+                    />
+                )}
                 <StatCard
                     icon={Users}
                     label="% PCDs"
@@ -230,25 +237,27 @@ const RHDashboard = () => {
                     </div>
                 </div>
 
-                {/* Most Watched Courses */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 lg:col-span-1">
-                    <h3 className="text-lg font-bold text-gray-900 mb-4">Cursos Mais Assistidos</h3>
-                    <div className="space-y-4">
-                        {mostWatchedCourses.length === 0 ? (
-                            <p className="text-gray-500 text-sm">Nenhum curso assistido ainda.</p>
-                        ) : (
-                            mostWatchedCourses.map((course: any) => (
-                                <div key={course.id} className="flex items-center justify-between pb-2 border-b border-gray-50 last:border-0">
-                                    <span className="text-sm font-medium text-gray-700 truncate max-w-[180px]" title={course.title}>{course.title}</span>
-                                    <div className="text-right">
-                                        <p className="text-sm font-bold text-purple-600">{course.views}</p>
-                                        <p className="text-xs text-gray-400">alunos</p>
+                {/* Most Watched Courses - Only show if University is enabled */}
+                {isUniversityEnabled && (
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 lg:col-span-1">
+                        <h3 className="text-lg font-bold text-gray-900 mb-4">Cursos Mais Assistidos</h3>
+                        <div className="space-y-4">
+                            {mostWatchedCourses.length === 0 ? (
+                                <p className="text-gray-500 text-sm">Nenhum curso assistido ainda.</p>
+                            ) : (
+                                mostWatchedCourses.map((course: any) => (
+                                    <div key={course.id} className="flex items-center justify-between pb-2 border-b border-gray-50 last:border-0">
+                                        <span className="text-sm font-medium text-gray-700 truncate max-w-[180px]" title={course.title}>{course.title}</span>
+                                        <div className="text-right">
+                                            <p className="text-sm font-bold text-purple-600">{course.views}</p>
+                                            <p className="text-xs text-gray-400">alunos</p>
+                                        </div>
                                     </div>
-                                </div>
-                            ))
-                        )}
+                                ))
+                            )}
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
             {/* Visit Details Modal */}
             <VisitDetailsModal
