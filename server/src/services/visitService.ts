@@ -239,6 +239,9 @@ export class VisitService {
             prisma.visit.findMany({
                 where,
                 include: {
+                    company: {
+                        select: { id: true, name: true }
+                    },
                     area: true,
                     master: {
                         select: {
@@ -247,12 +250,15 @@ export class VisitService {
                             email: true
                         }
                     },
-                    collaborators: true,
+                    collaborators: {
+                        include: {
+                            user: {
+                                select: { id: true, name: true }
+                            }
+                        }
+                    },
                     attachments: true,
-                    generatedPendencies: { // Correct relation name
-                        // responsible: true // Responsible is a String in schema, not a relation? Schema says `responsible String`. So no include needed or it is a relation? Schema says `responsible String`. Wait, looking at VisitController legacy: `userToProfileMap` suggested relation. But schema says `responsible String`. I will remove include for now to be safe.
-                    }
-                    ,
+                    generatedPendencies: true,
                     _count: {
                         select: { generatedPendencies: true, attachments: true }
                     }
