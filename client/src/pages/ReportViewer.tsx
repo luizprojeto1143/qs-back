@@ -275,7 +275,7 @@ const ReportViewer = () => {
                                 </h3>
                                 <textarea
                                     className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent min-h-[100px] print:border-none print:p-0 print:resize-none disabled:bg-gray-50 disabled:text-gray-500"
-                                    placeholder={canEditExecutive ? "Descreva as oportunidades identificadas..." : "Aguardando preenchimento pelo Master."}
+                                    placeholder={canEditExecutive ? "Descreva as oportunidades identificadas..." : "Aguardando preenchimento pela consultoria."}
                                     defaultValue={reportData.opportunities}
                                     disabled={!canEditExecutive}
                                 />
@@ -286,7 +286,7 @@ const ReportViewer = () => {
                                     <h3 className="text-lg font-bold text-gray-900 mb-4">Tratativa</h3>
                                     <textarea
                                         className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent min-h-[100px] print:border-none print:p-0 print:resize-none disabled:bg-gray-50 disabled:text-gray-500"
-                                        placeholder={canEditExecutive ? "Ações propostas..." : "Aguardando preenchimento."}
+                                        placeholder={canEditExecutive ? "Ações propostas..." : "Aguardando preenchimento pela consultoria."}
                                         disabled={!canEditExecutive}
                                     />
                                 </div>
@@ -294,7 +294,7 @@ const ReportViewer = () => {
                                     <h3 className="text-lg font-bold text-gray-900 mb-4">Justificativa</h3>
                                     <textarea
                                         className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent min-h-[100px] print:border-none print:p-0 print:resize-none disabled:bg-gray-50 disabled:text-gray-500"
-                                        placeholder={canEditExecutive ? "Por que essa tratativa foi escolhida?" : "Aguardando preenchimento."}
+                                        placeholder={canEditExecutive ? "Por que essa tratativa foi escolhida?" : "Aguardando preenchimento pela consultoria."}
                                         disabled={!canEditExecutive}
                                     />
                                 </div>
@@ -305,7 +305,7 @@ const ReportViewer = () => {
                                     <h3 className="text-lg font-bold text-gray-900 mb-4">Situação Atual</h3>
                                     <textarea
                                         className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent min-h-[100px] print:border-none print:p-0 print:resize-none disabled:bg-gray-50 disabled:text-gray-500"
-                                        placeholder={canEditExecutive ? "Status atual..." : "Aguardando atualização."}
+                                        placeholder={canEditExecutive ? "Status atual..." : "Aguardando preenchimento pela consultoria."}
                                         disabled={!canEditExecutive}
                                     />
                                 </div>
@@ -314,7 +314,7 @@ const ReportViewer = () => {
                                     <input
                                         type="text"
                                         className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent print:border-none print:p-0 disabled:bg-gray-50 disabled:text-gray-500"
-                                        placeholder={canEditExecutive ? "Ex: 30 dias, Até Dezembro/2024..." : "Aguardando definição."}
+                                        placeholder={canEditExecutive ? "Ex: 30 dias, Até Dezembro/2024..." : "Aguardando preenchimento pela consultoria."}
                                         disabled={!canEditExecutive}
                                     />
                                 </div>
