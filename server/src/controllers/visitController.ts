@@ -135,33 +135,51 @@ export const updateVisit = async (req: Request, res: Response) => {
         // Import prisma for direct update (service layer doesn't have update yet)
         const prisma = (await import('../prisma')).default;
 
+        // Build update data object - only include defined fields
+        const updateData: any = {};
+
+        if (data.date) updateData.date = new Date(data.date as string);
+        if (data.time !== undefined) updateData.time = data.time;
+        if (data.areaId !== undefined) updateData.areaId = data.areaId || null;
+
+        if (data.relatos) {
+            if (data.relatos.lideranca !== undefined) updateData.relatoLideranca = data.relatos.lideranca;
+            if (data.relatos.colaborador !== undefined) updateData.relatoColaborador = data.relatos.colaborador;
+            if (data.relatos.consultoria !== undefined) updateData.relatoConsultoria = data.relatos.consultoria;
+            if (data.relatos.observacoes !== undefined) updateData.observacoesMaster = data.relatos.observacoes;
+            if (data.relatos.audioLideranca !== undefined) updateData.audioLiderancaUrl = data.relatos.audioLideranca;
+            if (data.relatos.audioColaborador !== undefined) updateData.audioColaboradorUrl = data.relatos.audioColaborador;
+        }
+
+        // Update collaborators if provided
+        if (data.collaboratorIds && Array.isArray(data.collaboratorIds)) {
+            // Verify collaborators exist before connecting
+            const existingCollaborators = await prisma.collaboratorProfile.findMany({
+                where: { id: { in: data.collaboratorIds } },
+                select: { id: true }
+            });
+
+            const validIds = existingCollaborators.map(c => c.id);
+
+            if (validIds.length > 0) {
+                updateData.collaborators = {
+                    set: validIds.map(cId => ({ id: cId }))
+                };
+            } else if (data.collaboratorIds.length === 0) {
+                // Empty array means disconnect all
+                updateData.collaborators = { set: [] };
+            }
+            // If no valid IDs found but array wasn't empty, log warning
+            if (validIds.length !== data.collaboratorIds.length) {
+                console.warn(`Warning: Some collaboratorIds not found. Sent: ${data.collaboratorIds.length}, Found: ${validIds.length}`);
+            }
+        }
+
         // Update main visit record
         const visit = await prisma.visit.update({
             where: { id },
-            data: {
-                date: data.date ? new Date(data.date as string) : undefined,
-                time: data.time,
-                areaId: data.areaId,
-                relatoLideranca: data.relatos?.lideranca,
-                relatoColaborador: data.relatos?.colaborador,
-                relatoConsultoria: data.relatos?.consultoria,
-                observacoesMaster: data.relatos?.observacoes,
-                audioLiderancaUrl: data.relatos?.audioLideranca,
-                audioColaboradorUrl: data.relatos?.audioColaborador,
-            }
+            data: updateData
         });
-
-        // Update collaborators if provided
-        if (data.collaboratorIds && data.collaboratorIds.length > 0) {
-            await prisma.visit.update({
-                where: { id },
-                data: {
-                    collaborators: {
-                        set: data.collaboratorIds.map(cId => ({ id: cId }))
-                    }
-                }
-            });
-        }
 
         return res.json(visit);
     } catch (error: any) {
