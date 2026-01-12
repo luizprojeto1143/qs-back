@@ -138,6 +138,7 @@ function App() {
                     <Route index element={<RHDashboard />} />
                     <Route path="collaborators" element={<CollaboratorsList />} />
                     <Route path="reports" element={<Reports />} />
+                    <Route path="report-viewer" element={<ReportViewer />} />
                     <Route path="visits" element={<VisitHistory />} />
                     <Route path="visits/new" element={<VisitRecording />} />
                     <Route path="schedules" element={<Schedules />} />
