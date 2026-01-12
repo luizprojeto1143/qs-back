@@ -51,9 +51,9 @@ const CollaboratorHistory = ({ collaboratorId, onClose }: CollaboratorHistoryPro
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-end z-50">
-            <div className="bg-white w-full max-w-2xl h-full shadow-2xl overflow-y-auto animate-slide-in-right">
+            <div className="bg-white w-full max-w-2xl h-full shadow-2xl overflow-y-auto animate-slide-in flex flex-col">
                 {/* Header */}
-                <div className="p-6 border-b border-gray-100 sticky top-0 bg-white z-10 flex justify-between items-start">
+                <div className="p-6 border-b border-gray-100 sticky top-0 bg-white z-10 flex justify-between items-start shrink-0">
                     <div className="flex items-center space-x-4">
                         <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden text-gray-400 shrink-0">
                             {collaborator.avatar ? (
@@ -73,7 +73,7 @@ const CollaboratorHistory = ({ collaboratorId, onClose }: CollaboratorHistoryPro
                         <X className="h-6 w-6 text-gray-400" />
                     </button>
                 </div>
-                <div className="px-6 pb-2">
+                <div className="px-6 pb-2 shrink-0">
                     <div className="flex space-x-4">
                         <button
                             onClick={() => setActiveTab('timeline')}
@@ -89,83 +89,90 @@ const CollaboratorHistory = ({ collaboratorId, onClose }: CollaboratorHistoryPro
                         </button>
                     </div>
                 </div>
-                <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                    <X className="h-6 w-6 text-gray-400" />
-                </button>
-            </div>
 
-            {/* Content */}
-            <div className="p-6">
-                {activeTab === 'timeline' ? (
-                    <div className="space-y-6 pl-8 relative border-l-2 border-slate-200 ml-4 my-2">
-                        {timelineItems.length === 0 && (
-                            <p className="text-gray-500 py-4 italic text-sm -ml-8 text-center">Nenhum histórico registrado.</p>
-                        )}
-                        {timelineItems.map((item, idx) => (
-                            <div key={idx} className="relative">
-                                {/* Icon */}
-                                <div className="absolute -left-[41px] top-0 flex items-center justify-center w-8 h-8 rounded-full bg-white border-2 border-slate-200 shadow-sm z-10">
-                                    {item.type === 'VISIT' ? <Calendar className="h-4 w-4 text-blue-500" /> : <MessageSquare className="h-4 w-4 text-amber-500" />}
-                                </div>
-
-                                {/* Card */}
-                                <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${item.type === 'VISIT' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'}`}>
-                                            {item.type === 'VISIT' ? 'VISITA' : 'OBSERVAÇÃO'}
-                                        </span>
-                                        <time className="text-xs text-gray-400 font-medium">
-                                            {item.date.toLocaleDateString()}
-                                        </time>
+                {/* Content */}
+                <div className="p-6 flex-1 bg-gray-50/30">
+                    {activeTab === 'timeline' ? (
+                        <div className="space-y-8 pl-8 relative border-l-2 border-slate-200 ml-6 my-2">
+                            {timelineItems.length === 0 && (
+                                <p className="text-gray-500 py-4 italic text-sm -ml-8 text-center bg-white p-4 rounded-xl border border-dashed border-gray-200">
+                                    Nenhum histórico registrado.
+                                </p>
+                            )}
+                            {timelineItems.map((item, idx) => (
+                                <div key={idx} className="relative">
+                                    {/* Icon */}
+                                    <div className="absolute -left-[49px] top-0 flex items-center justify-center w-8 h-8 rounded-full bg-white border-2 border-slate-200 shadow-sm z-10 transition-transform hover:scale-110">
+                                        {item.type === 'VISIT' ? <Calendar className="h-4 w-4 text-blue-500" /> : <MessageSquare className="h-4 w-4 text-amber-500" />}
                                     </div>
 
-                                    {item.type === 'VISIT' ? (
-                                        <div className="text-sm text-gray-600 space-y-2">
-                                            <p><span className="font-semibold text-gray-900">Master:</span> {item.data.master?.name}</p>
-                                            {item.data.observacoesMaster && (
-                                                <div className="bg-gray-50 p-3 rounded-lg text-gray-700 italic border border-gray-100">
-                                                    "{item.data.observacoesMaster}"
-                                                </div>
-                                            )}
-                                        </div>
-                                    ) : (
-                                        <div className="text-sm text-gray-600 bg-amber-50/50 p-3 rounded-lg border border-amber-100">
-                                            <p className="italic">"{item.data.content}"</p>
-                                            <p className="text-xs text-amber-600/70 mt-2 text-right">
-                                                Registrado em {new Date(item.data.visit?.date || item.data.createdAt).toLocaleDateString()}
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                ) : (
-                    <div className="space-y-4">
-                        {collaborator.collaboratorProfile?.pendingItems?.length === 0 && (
-                            <p className="text-center text-gray-500 py-8">Nenhuma pendência registrada.</p>
-                        )}
-                        {collaborator.collaboratorProfile?.pendingItems?.map((pendency: any) => (
-                            <div key={pendency.id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex items-start space-x-4">
-                                <div className={`p-2 rounded-lg ${pendency.status === 'RESOLVIDA' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                                    {pendency.status === 'RESOLVIDA' ? <CheckCircle className="h-5 w-5" /> : <AlertCircle className="h-5 w-5" />}
-                                </div>
-                                <div className="flex-1">
-                                    <h4 className="font-medium text-gray-900">{pendency.description}</h4>
-                                    <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
-                                        <span>Prioridade: {pendency.priority}</span>
-                                        {pendency.deadline && (
-                                            <span className="flex items-center">
-                                                <Clock className="h-3 w-3 mr-1" />
-                                                {new Date(pendency.deadline).toLocaleDateString()}
+                                    {/* Card */}
+                                    <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-200 group">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <span className={`text-[10px] tracking-wider font-bold px-2 py-1 rounded-full uppercase ${item.type === 'VISIT' ? 'bg-blue-50 text-blue-700 border border-blue-100' : 'bg-amber-50 text-amber-700 border border-amber-100'}`}>
+                                                {item.type === 'VISIT' ? 'Visita' : 'Observação'}
                                             </span>
+                                            <time className="text-xs text-gray-400 font-medium flex items-center gap-1">
+                                                <Clock className="w-3 h-3" />
+                                                {item.date.toLocaleDateString()}
+                                            </time>
+                                        </div>
+
+                                        {item.type === 'VISIT' ? (
+                                            <div className="text-sm text-gray-600 space-y-3">
+                                                <div className="flex items-center gap-2 text-gray-900 border-b border-gray-50 pb-2">
+                                                    <div className="w-1 h-4 bg-blue-500 rounded-full"></div>
+                                                    <span className="font-semibold">Master:</span> {item.data.master?.name}
+                                                </div>
+                                                {item.data.observacoesMaster ? (
+                                                    <div className="bg-slate-50 p-3 rounded-lg text-slate-700 italic border border-slate-100 relative">
+                                                        "{item.data.observacoesMaster}"
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-gray-400 italic text-xs">Sem observações registradas</span>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <div className="text-sm text-gray-600">
+                                                <div className="bg-amber-50 p-3 rounded-lg border border-amber-100 text-amber-900/80">
+                                                    <p className="italic">"{item.data.content}"</p>
+                                                </div>
+                                                <p className="text-xs text-gray-400 mt-2 text-right flex justify-end items-center gap-1">
+                                                    Registrado em {new Date(item.data.visit?.date || item.data.createdAt).toLocaleDateString()}
+                                                </p>
+                                            </div>
                                         )}
                                     </div>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            {collaborator.collaboratorProfile?.pendingItems?.length === 0 && (
+                                <p className="text-center text-gray-500 py-8">Nenhuma pendência registrada.</p>
+                            )}
+                            {collaborator.collaboratorProfile?.pendingItems?.map((pendency: any) => (
+                                <div key={pendency.id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex items-start space-x-4">
+                                    <div className={`p-2 rounded-lg ${pendency.status === 'RESOLVIDA' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                                        {pendency.status === 'RESOLVIDA' ? <CheckCircle className="h-5 w-5" /> : <AlertCircle className="h-5 w-5" />}
+                                    </div>
+                                    <div className="flex-1">
+                                        <h4 className="font-medium text-gray-900">{pendency.description}</h4>
+                                        <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
+                                            <span>Prioridade: {pendency.priority}</span>
+                                            {pendency.deadline && (
+                                                <span className="flex items-center">
+                                                    <Clock className="h-3 w-3 mr-1" />
+                                                    {new Date(pendency.deadline).toLocaleDateString()}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
