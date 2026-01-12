@@ -67,7 +67,7 @@ export const QuickAddModal = ({ type, companyId, areaId, onSuccess, onClose }: Q
     // Validação - verificar se pode criar
     const canCreate = type === 'area'
         ? sectors.length > 0
-        : areas.length > 0;
+        : areas.length > 0 && sectors.length > 0;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -151,13 +151,18 @@ export const QuickAddModal = ({ type, companyId, areaId, onSuccess, onClose }: Q
                         </>
                     ) : (
                         <>
-                            {!dataLoading && areas.length === 0 && (
+                            {!dataLoading && (areas.length === 0 || sectors.length === 0) && (
                                 <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-xl flex items-start gap-3">
                                     <AlertTriangle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
                                     <div>
-                                        <p className="text-sm font-medium text-yellow-800">Nenhuma área cadastrada</p>
+                                        <p className="text-sm font-medium text-yellow-800">
+                                            {sectors.length === 0 ? 'Nenhum setor cadastrado' : 'Nenhuma área cadastrada'}
+                                        </p>
                                         <p className="text-xs text-yellow-700 mt-1">
-                                            Para criar um colaborador, primeiro cadastre uma área clicando no "+" ao lado de Área.
+                                            {sectors.length === 0
+                                                ? 'Para criar um colaborador, primeiro cadastre um setor em Configurações → Estrutura.'
+                                                : 'Para criar um colaborador, primeiro cadastre uma área clicando no "+" ao lado de Área.'
+                                            }
                                         </p>
                                     </div>
                                 </div>
