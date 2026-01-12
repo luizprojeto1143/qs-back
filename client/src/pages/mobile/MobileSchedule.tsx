@@ -50,6 +50,9 @@ const MobileSchedule = () => {
                     };
                 });
 
+                console.log('[MobileSchedule] Raw Availability:', data);
+                console.log('[MobileSchedule] Normalized Availability:', normalized);
+
                 setAvailability(normalized);
             } catch (error) {
                 console.error('Error fetching availability:', error);
@@ -211,8 +214,8 @@ const MobileSchedule = () => {
                                     setSelectedTime(''); // Reset time when date changes
                                 }}
                                 className={`p-3 rounded-xl text-sm font-medium transition-all ${selectedDate === date
-                                        ? 'bg-blue-600 text-white shadow-lg'
-                                        : 'bg-white border border-gray-200 text-gray-700 hover:border-blue-300'
+                                    ? 'bg-blue-600 text-white shadow-lg'
+                                    : 'bg-white border border-gray-200 text-gray-700 hover:border-blue-300'
                                     }`}
                             >
                                 {label}
@@ -235,8 +238,8 @@ const MobileSchedule = () => {
                                     type="button"
                                     onClick={() => setSelectedTime(time)}
                                     className={`p-2 rounded-lg text-sm font-medium transition-all ${selectedTime === time
-                                            ? 'bg-blue-600 text-white shadow-lg'
-                                            : 'bg-white border border-gray-200 text-gray-700 hover:border-blue-300'
+                                        ? 'bg-blue-600 text-white shadow-lg'
+                                        : 'bg-white border border-gray-200 text-gray-700 hover:border-blue-300'
                                         }`}
                                 >
                                     {time}
