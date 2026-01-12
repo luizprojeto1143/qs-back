@@ -217,25 +217,27 @@ const RHDashboard = () => {
                     </div>
                 </div>
 
-                {/* Sector Engagement */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 lg:col-span-1">
-                    <h3 className="text-lg font-bold text-gray-900 mb-4">Engajamento por Setor</h3>
-                    <div className="space-y-4">
-                        {sectorEngagement.length === 0 ? (
-                            <p className="text-gray-500 text-sm">Nenhum dado disponível.</p>
-                        ) : (
-                            sectorEngagement.map((sector: any, index: number) => (
-                                <div key={index} className="flex items-center justify-between pb-2 border-b border-gray-50 last:border-0">
-                                    <span className="text-sm font-medium text-gray-700">{sector.name}</span>
-                                    <div className="text-right">
-                                        <p className="text-sm font-bold text-blue-600">{sector.enrollments}</p>
-                                        <p className="text-xs text-gray-400">matrículas</p>
+                {/* Sector Engagement - Only show if University is enabled */}
+                {isUniversityEnabled && (
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 lg:col-span-1">
+                        <h3 className="text-lg font-bold text-gray-900 mb-4">Engajamento por Setor</h3>
+                        <div className="space-y-4">
+                            {sectorEngagement.length === 0 ? (
+                                <p className="text-gray-500 text-sm">Nenhum dado disponível.</p>
+                            ) : (
+                                sectorEngagement.map((sector: any, index: number) => (
+                                    <div key={index} className="flex items-center justify-between pb-2 border-b border-gray-50 last:border-0">
+                                        <span className="text-sm font-medium text-gray-700">{sector.name}</span>
+                                        <div className="text-right">
+                                            <p className="text-sm font-bold text-blue-600">{sector.enrollments}</p>
+                                            <p className="text-xs text-gray-400">matrículas</p>
+                                        </div>
                                     </div>
-                                </div>
-                            ))
-                        )}
+                                ))
+                            )}
+                        </div>
                     </div>
-                </div>
+                )}
 
                 {/* Most Watched Courses - Only show if University is enabled */}
                 {isUniversityEnabled && (
