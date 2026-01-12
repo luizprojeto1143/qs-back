@@ -4,11 +4,13 @@ import { ArrowLeft, Printer, TrendingUp, AlertCircle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import type { ReportData } from '../types/report';
 import { useCompany } from '../contexts/CompanyContext';
+import { useAuth } from '../contexts/AuthContext';
 
 const ReportViewer = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const { companies } = useCompany();
+    const { user } = useAuth();
     const { reportType, data } = location.state || {};
     const [reportData] = useState<ReportData>(data);
 
@@ -236,8 +238,7 @@ const ReportViewer = () => {
                 );
 
             case 'EXECUTIVE_SUMMARY':
-                const userExec = JSON.parse(localStorage.getItem('user') || '{}');
-                const canEditExecutive = userExec.role === 'MASTER';
+                const canEditExecutive = user?.role === 'MASTER';
 
                 // Narrowing type for Executive Summary metrics (Object shape)
                 const execMetrics = !Array.isArray(reportData.metrics) ? reportData.metrics : { totalVisits: 0, resolutionRate: 0, satisfaction: 'N/A' };
@@ -323,9 +324,8 @@ const ReportViewer = () => {
                 );
 
             case 'INCLUSION_DIAGNOSIS':
-                const user = JSON.parse(localStorage.getItem('user') || '{}');
-                const isRH = user.role === 'RH';
-                const isMaster = user.role === 'MASTER';
+                const isRH = user?.role === 'RH';
+                const isMaster = user?.role === 'MASTER';
 
                 return (
                     <div className="space-y-6">
