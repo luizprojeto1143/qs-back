@@ -120,9 +120,7 @@ const Feed = () => {
         formData.append('file', file);
 
         try {
-            const response = await api.post('/upload', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
+            const response = await api.post('/upload', formData);
             setNewPost(prev => ({ ...prev, imageUrl: response.data.url }));
             toast.success('Imagem enviada com sucesso!');
         } catch (error) {
