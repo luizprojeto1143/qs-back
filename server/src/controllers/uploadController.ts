@@ -1,15 +1,8 @@
 import { Request, Response } from 'express';
 import multer from 'multer';
-import { v2 as cloudinary } from 'cloudinary';
+import cloudinary from '../config/cloudinary';
 import stream from 'stream';
 import { sendError500, ERROR_CODES } from '../utils/errorUtils';
-
-// Configure Cloudinary
-cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET
-});
 
 // Configure storage: Memory storage to allow buffer inspection
 const storage = multer.memoryStorage();

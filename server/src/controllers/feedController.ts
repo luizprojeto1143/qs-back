@@ -3,6 +3,7 @@ import prisma from '../prisma';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { sendError500, ERROR_CODES } from '../utils/errorUtils';
 import { createFeedPostSchema } from '../schemas/dataSchemas';
+import cloudinary from '../config/cloudinary';
 
 export const createPost = async (req: Request, res: Response) => {
     try {
@@ -142,6 +143,22 @@ export const deletePost = async (req: Request, res: Response) => {
 
         if (!existingPost) {
             return res.status(404).json({ error: 'Post not found or access denied' });
+        }
+
+        // Delete Image from Cloudinary if exists
+        if (existingPost.imageUrl && existingPost.imageUrl.includes('cloudinary.com')) {
+            try {
+                // Extract public_id: upload/(v123/)?(folder/filename).ext
+                const regex = /upload\/(?:v\d+\/)?(.+)\.\w+$/;
+                const match = existingPost.imageUrl.match(regex);
+                if (match && match[1]) {
+                    const publicId = match[1];
+                    await cloudinary.uploader.destroy(publicId);
+                }
+            } catch (err) {
+                console.error('Error deleting image from Cloudinary', err);
+                // Continue to delete post even if image deletion fails
+            }
         }
 
         await prisma.feedPost.delete({
