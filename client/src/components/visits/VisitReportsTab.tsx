@@ -96,7 +96,11 @@ export const VisitReportsTab = ({
         if (quickAddType === 'area') {
             setValue('areaId', newItem.id);
         } else if (quickAddType === 'collaborator') {
-            setValue('collaboratorIds', [...watchCollaboratorIds, newItem.id]);
+            // A API retorna { user: {...}, profile: {...} } para colaboradores
+            const newId = newItem.user?.id || newItem.id;
+            if (newId) {
+                setValue('collaboratorIds', [...watchCollaboratorIds, newId]);
+            }
         }
         if (onRefreshData) onRefreshData();
         setQuickAddType(null);
