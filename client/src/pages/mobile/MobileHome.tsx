@@ -69,8 +69,8 @@ const MobileHome = () => {
                     api.get('/schedules')
                 ]);
 
-                const feedData = resFeed.data;
-                const scheduleData = resSchedule.data;
+                const feedData = resFeed.data as any;
+                const scheduleData = resSchedule.data as any;
 
                 if (feedData.data && Array.isArray(feedData.data)) {
                     setFeedItems(feedData.data.map((item: any) => ({
@@ -204,44 +204,41 @@ const MobileHome = () => {
                 </div>
             </div>
 
-            {/* Feed Section - Only for non-Leaders */}
-            {
-                user.role !== 'LIDER' && (
-                    <div className="space-y-4">
-                        <h2 className="text-lg font-bold text-gray-900">Feed Acessível</h2>
-                        <div className="space-y-4">
-                            {feedItems.map((item) => (
-                                <button
-                                    type="button"
-                                    key={item.id}
-                                    onClick={() => setSelectedPost(item)}
-                                    className="w-full text-left bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex space-x-4 active:scale-95 transition-transform cursor-pointer"
-                                >
-                                    <div className={`w-24 h-24 rounded-xl ${item.thumbnail} flex items-center justify-center flex-shrink-0`}>
-                                        {item.type === 'video' ? (
-                                            <div className="w-8 h-8 bg-white/90 rounded-full flex items-center justify-center shadow-sm">
-                                                <Play className="h-4 w-4 text-primary ml-1" />
-                                            </div>
-                                        ) : (
-                                            <span className="text-2xl">📄</span>
-                                        )}
+            {/* Feed Section - Accessible to Everyone */}
+            <div className="space-y-4">
+                <h2 className="text-lg font-bold text-gray-900">Feed Acessível</h2>
+                <div className="space-y-4">
+                    {feedItems.map((item) => (
+                        <button
+                            type="button"
+                            key={item.id}
+                            onClick={() => setSelectedPost(item)}
+                            className="w-full text-left bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex space-x-4 active:scale-95 transition-transform cursor-pointer"
+                        >
+                            <div className={`w-24 h-24 rounded-xl ${item.thumbnail} flex items-center justify-center flex-shrink-0`}>
+                                {item.type === 'video' ? (
+                                    <div className="w-8 h-8 bg-white/90 rounded-full flex items-center justify-center shadow-sm">
+                                        <Play className="h-4 w-4 text-primary ml-1" />
                                     </div>
-                                    <div className="flex-1 py-1">
-                                        <span className="inline-block px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-[10px] font-bold uppercase tracking-wide mb-2">
-                                            {item.type === 'video' ? 'Vídeo em Libras' : 'Artigo'}
-                                        </span>
-                                        <h3 className="font-bold text-gray-900 leading-tight mb-1">{item.title}</h3>
-                                        <p className="text-xs text-gray-500">{item.author}</p>
-                                        <p className="text-xs text-gray-400 mt-2">
-                                            {item.type === 'video' ? item.duration : item.readTime}
-                                        </p>
-                                    </div>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                )
-            }
+                                ) : (
+                                    <span className="text-2xl">📄</span>
+                                )}
+                            </div>
+                            <div className="flex-1 py-1">
+                                <span className="inline-block px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-[10px] font-bold uppercase tracking-wide mb-2">
+                                    {item.type === 'video' ? 'Vídeo em Libras' : 'Artigo'}
+                                </span>
+                                <h3 className="font-bold text-gray-900 leading-tight mb-1">{item.title}</h3>
+                                <p className="text-xs text-gray-500">{item.author}</p>
+                                <p className="text-xs text-gray-400 mt-2">
+                                    {item.type === 'video' ? item.duration : item.readTime}
+                                </p>
+                            </div>
+                        </button>
+                    ))}
+                </div>
+            </div>
+
 
             {/* Post Details Modal */}
             {
@@ -318,7 +315,7 @@ const MobileHome = () => {
                     </div>
                 )
             }
-        </div >
+        </div>
     );
 };
 
