@@ -67,7 +67,21 @@ export const generateReport = async (req: Request, res: Response) => {
                             companyId,
                             date: { gte: startDate, lte: endDate }
                         },
-                        include: { area: true }
+                        orderBy: { date: 'desc' },
+                        include: {
+                            area: true,
+                            master: { select: { name: true } },
+                            collaborators: { include: { user: true } },
+                            generatedPendencies: true,
+                            attachments: true,
+                            notes: {
+                                include: {
+                                    collaborator: {
+                                        include: { user: { select: { name: true } } }
+                                    }
+                                }
+                            }
+                        }
                     }),
                     prisma.pendingItem.findMany({
                         where: {

@@ -6,6 +6,7 @@ import type { ReportData } from '../types/report';
 import { useCompany } from '../contexts/CompanyContext';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../lib/api';
+import { VisitDetailView } from '../components/visits/VisitDetailView';
 
 const ReportViewer = () => {
     const location = useLocation();
@@ -102,26 +103,16 @@ const ReportViewer = () => {
                         </div>
 
                         <div>
-                            <h3 className="text-xl font-bold mb-4 border-b pb-2">Detalhamento de Visitas</h3>
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm text-left">
-                                    <thead className="bg-gray-100">
-                                        <tr>
-                                            <th className="p-2">Data</th>
-                                            <th className="p-2">Área</th>
-                                            <th className="p-2">Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {reportData.visits?.map((v) => (
-                                            <tr key={v.id} className="border-b">
-                                                <td className="p-2">{new Date(v.date).toLocaleDateString()}</td>
-                                                <td className="p-2">{v.area?.name || '-'}</td>
-                                                <td className="p-2">Realizada</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                            <h3 className="text-xl font-bold mb-8 border-b pb-2 text-center text-gray-800 uppercase tracking-wide">Detalhamento Completo das Visitas</h3>
+                            <div className="space-y-4">
+                                {reportData.visits
+                                    ?.sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                                    .map((visit: any, index: number) => (
+                                        <VisitDetailView key={visit.id} data={visit} index={index + 1} />
+                                    ))}
+                                {(!reportData.visits || reportData.visits.length === 0) && (
+                                    <p className="text-center text-gray-500 py-10">Nenhuma visita registrada neste período.</p>
+                                )}
                             </div>
                         </div>
 
