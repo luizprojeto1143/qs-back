@@ -7,9 +7,9 @@ interface VisitDetailViewProps {
 
 export const VisitDetailView = ({ data, index }: VisitDetailViewProps) => {
     return (
-        <div className="space-y-8 print:break-inside-avoid print:break-after-auto mb-12 border-b-4 border-gray-100 pb-12 last:border-0">
+        <div className="space-y-8 print:break-after-auto mb-12 border-b-4 border-gray-100 pb-12 last:border-0">
             {/* Header com Index se existir */}
-            <div className={`bg-gray-50 p-6 rounded-xl border border-gray-200 ${index !== undefined ? 'flex items-start gap-4' : ''}`}>
+            <div className={`bg-gray-50 p-6 rounded-xl border border-gray-200 print:break-inside-avoid ${index !== undefined ? 'flex items-start gap-4' : ''}`}>
                 {index !== undefined && (
                     <div className="bg-primary text-white h-10 w-10 flex items-center justify-center rounded-lg font-bold text-lg shrink-0">
                         #{index}
@@ -67,28 +67,28 @@ export const VisitDetailView = ({ data, index }: VisitDetailViewProps) => {
             {/* Relatos */}
             <div className="space-y-6">
                 {data.relatoLideranca && (
-                    <div className="bg-blue-50 p-6 rounded-xl border border-blue-100">
+                    <div className="bg-blue-50 p-6 rounded-xl border border-blue-100 print:break-inside-avoid">
                         <h3 className="text-lg font-bold text-blue-900 mb-2">Relato da Liderança</h3>
                         <p className="text-blue-800 whitespace-pre-wrap">{data.relatoLideranca}</p>
                     </div>
                 )}
 
                 {data.relatoColaborador && (
-                    <div className="bg-green-50 p-6 rounded-xl border border-green-100">
+                    <div className="bg-green-50 p-6 rounded-xl border border-green-100 print:break-inside-avoid">
                         <h3 className="text-lg font-bold text-green-900 mb-2">Relato do Colaborador (Geral)</h3>
                         <p className="text-green-800 whitespace-pre-wrap">{data.relatoColaborador}</p>
                     </div>
                 )}
 
                 {data.relatoConsultoria && (
-                    <div className="bg-purple-50 p-6 rounded-xl border border-purple-200">
+                    <div className="bg-purple-50 p-6 rounded-xl border border-purple-200 print:break-inside-avoid">
                         <h3 className="text-lg font-bold text-purple-900 mb-2">Relato da Consultoria</h3>
                         <p className="text-purple-800 whitespace-pre-wrap">{data.relatoConsultoria}</p>
                     </div>
                 )}
 
                 {data.observacoesMaster && (
-                    <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
+                    <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 print:break-inside-avoid">
                         <h3 className="text-lg font-bold text-gray-900 mb-2">Observações da Consultoria</h3>
                         <p className="text-gray-800 whitespace-pre-wrap">{data.observacoesMaster}</p>
                     </div>
@@ -101,7 +101,7 @@ export const VisitDetailView = ({ data, index }: VisitDetailViewProps) => {
                     <h3 className="text-xl font-bold mb-4 border-b pb-2 mt-8">Notas Individuais</h3>
                     <div className="space-y-4">
                         {data.notes.map((note: any) => (
-                            <div key={note.id} className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                            <div key={note.id} className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg print:break-inside-avoid">
                                 <div className="flex justify-between items-start mb-2">
                                     <p className="font-bold text-yellow-900">{note.collaborator?.user?.name || 'Colaborador'}</p>
                                     <span className="text-xs text-yellow-600">{note.createdAt ? new Date(note.createdAt).toLocaleDateString() : '-'}</span>
@@ -144,7 +144,7 @@ export const VisitDetailView = ({ data, index }: VisitDetailViewProps) => {
 
             {/* Anexos */}
             {data.attachments && data.attachments.length > 0 && (
-                <div className="mt-8 break-inside-avoid">
+                <div className="mt-8 break-inside-avoid print:break-inside-avoid">
                     <h3 className="text-xl font-bold mb-4 border-b pb-2 flex items-center gap-2">
                         <FileText className="h-5 w-5 text-gray-500" />
                         Anexos
