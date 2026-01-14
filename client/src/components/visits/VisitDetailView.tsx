@@ -112,8 +112,7 @@ export const VisitDetailView = ({ data, index }: VisitDetailViewProps) => {
                                 <p className="text-yellow-800">{note.content}</p>
                             </div>
                         ))}
-                        ))
-                            }
+
                     </div>
                 </div>
             )}
