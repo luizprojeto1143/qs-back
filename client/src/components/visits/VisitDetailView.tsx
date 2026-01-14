@@ -104,16 +104,15 @@ export const VisitDetailView = ({ data, index }: VisitDetailViewProps) => {
                     <h3 className="text-xl font-bold mb-4 border-b pb-2 mt-8">Notas Individuais</h3>
                     <div className="space-y-4">
                         {data.notes.map((note: any) => (
-                            {
-                                data.notes.map((note: any) => (
-                                    <div key={note.id} className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg print:break-inside-avoid" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
-                                        <div className="flex justify-between items-start mb-2">
-                                            <p className="font-bold text-yellow-900">{note.collaborator?.user?.name || 'Colaborador'}</p>
-                                            <span className="text-xs text-yellow-600">{note.createdAt ? new Date(note.createdAt).toLocaleDateString() : '-'}</span>
-                                        </div>
-                                        <p className="text-yellow-800">{note.content}</p>
-                                    </div>
-                                ))
+                            <div key={note.id} className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg print:break-inside-avoid" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+                                <div className="flex justify-between items-start mb-2">
+                                    <p className="font-bold text-yellow-900">{note.collaborator?.user?.name || 'Colaborador'}</p>
+                                    <span className="text-xs text-yellow-600">{note.createdAt ? new Date(note.createdAt).toLocaleDateString() : '-'}</span>
+                                </div>
+                                <p className="text-yellow-800">{note.content}</p>
+                            </div>
+                        ))}
+                        ))
                             }
                     </div>
                 </div>
