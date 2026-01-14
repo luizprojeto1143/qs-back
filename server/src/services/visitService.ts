@@ -304,13 +304,25 @@ export class VisitService {
                         name: true
                     }
                 },
-                collaborators: true,
+                collaborators: {
+                    include: {
+                        user: {
+                            select: { name: true }
+                        }
+                    }
+                },
                 attachments: true,
                 evaluations: true, // Fetch evaluations
                 generatedPendencies: true,
                 notes: { // VisitNotes
                     include: {
-                        collaborator: true
+                        collaborator: {
+                            include: {
+                                user: {
+                                    select: { name: true }
+                                }
+                            }
+                        }
                     }
                 }
             }
