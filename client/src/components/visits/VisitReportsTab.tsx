@@ -94,14 +94,19 @@ export const VisitReportsTab = ({
 
     const handleQuickAddSuccess = (newItem: any) => {
         if (quickAddType === 'area') {
-            setValue('areaId', newItem.id);
+            setValue('areaId', newItem.id, { shouldValidate: true, shouldDirty: true });
         } else if (quickAddType === 'collaborator') {
             // A API retorna { user: {...}, profile: {...} } para colaboradores
+            // Precisamos usar o userId que é o identificador correto para o collaboratorIds
             const newId = newItem.user?.id || newItem.id;
+            console.log('New collaborator created:', { newItem, extractedId: newId }); // Debug
             if (newId) {
-                setValue('collaboratorIds', [...watchCollaboratorIds, newId]);
+                const updatedIds = [...watchCollaboratorIds, newId];
+                console.log('Updating collaboratorIds to:', updatedIds); // Debug
+                setValue('collaboratorIds', updatedIds, { shouldValidate: true, shouldDirty: true });
             }
         }
+        // Atualizar a lista de colaboradores para que o nome apareça na UI
         if (onRefreshData) onRefreshData();
         setQuickAddType(null);
     };
