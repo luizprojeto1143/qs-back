@@ -21,11 +21,11 @@ interface CreateVisitData {
         colaborador?: any;
     };
     pendencias?: Array<{
-        responsibleId: string;
+        responsible: string;
         description: string;
-        deadline: string | Date;
+        deadline?: string | Date | null;
         priority: 'BAIXA' | 'MEDIA' | 'ALTA';
-        status: 'PENDENTE' | 'CONCLUIDO';
+        status?: 'PENDENTE' | 'CONCLUIDO';
     }>;
     anexos?: Array<{
         url: string;
@@ -148,13 +148,12 @@ export class VisitService {
                 await tx.pendingItem.createMany({
                     data: safeData.pendencias.map(p => ({
                         visitId: visit.id,
-                        responsibleId: p.responsibleId,
                         description: p.description,
-                        deadline: new Date(p.deadline),
+                        responsible: p.responsible,
+                        deadline: p.deadline ? new Date(p.deadline) : null,
                         priority: p.priority,
-                        status: p.status,
-                        companyId: data.companyId,
-                        responsible: p.responsibleId // Assuming responsibleId IS the responsible string/id column, checking schema it is 'responsible String'
+                        status: p.status || 'PENDENTE',
+                        companyId: data.companyId
                     }))
                 });
             }

@@ -24,11 +24,11 @@ export const visitSchema = z.object({
     }),
 
     pendencias: z.array(z.object({
-        responsibleId: z.string().min(1, 'Responsável obrigatório'),
+        responsible: z.string().min(1, 'Responsável obrigatório'),
         description: z.string().min(1, 'Descrição obrigatória'),
-        deadline: z.string().min(1, 'Prazo obrigatório'), // Date string YYYY-MM-DD
+        deadline: z.string().optional().nullable(), // Date string YYYY-MM-DD (optional to match backend)
         priority: z.enum(['BAIXA', 'MEDIA', 'ALTA']),
-        status: z.enum(['PENDENTE', 'CONCLUIDO'])
+        status: z.enum(['PENDENTE', 'CONCLUIDO']).optional()
     })).optional().default([]),
 
     anexos: z.array(z.object({

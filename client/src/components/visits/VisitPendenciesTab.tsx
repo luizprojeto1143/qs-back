@@ -29,12 +29,9 @@ export const VisitPendenciesTab = () => {
 
         append({
             description: newPendency.description,
-            responsibleId: newPendency.responsibleName, // Using name as ID for now to match legacy behavior/schema flexibility if needed, or better: 
-            // The schema says responsibleId is string.
-            // Old code used "responsible" string.
-            // Let's assume user types a name for now.
+            responsible: newPendency.responsibleName,
             priority: newPendency.priority as any,
-            deadline: newPendency.deadline,
+            deadline: newPendency.deadline || null,
             status: 'PENDENTE'
         });
 
@@ -73,7 +70,7 @@ export const VisitPendenciesTab = () => {
                                         }`}>
                                         {p.priority === 'MEDIA' ? 'Média' : p.priority === 'ALTA' ? 'Alta' : 'Baixa'}
                                     </span>
-                                    <span>{p.responsibleId}</span>
+                                    <span>{(p as any).responsible || (p as any).responsibleId}</span>
                                     <span>{p.deadline ? new Date(p.deadline).toLocaleDateString('pt-BR') : 'Sem prazo'}</span>
                                 </div>
                             </div>
