@@ -56,9 +56,9 @@ export const createPendency = async (req: Request, res: Response) => {
                 deadline: deadline ? new Date(deadline) : null,
                 status: 'PENDENTE',
                 companyId,
-                areaId,
-                collaboratorId,
-                visitId
+                areaId: areaId || null,  // Convert empty string to null
+                collaboratorId: collaboratorId || null,  // Convert empty string to null
+                visitId: visitId || null  // Convert empty string to null
             }
         });
 
