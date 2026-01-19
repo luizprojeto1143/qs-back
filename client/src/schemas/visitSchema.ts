@@ -28,7 +28,7 @@ export const visitSchema = z.object({
         description: z.string().min(1, 'Descrição obrigatória'),
         deadline: z.string().optional().nullable(), // Date string YYYY-MM-DD (optional to match backend)
         priority: z.enum(['BAIXA', 'MEDIA', 'ALTA']),
-        status: z.enum(['PENDENTE', 'CONCLUIDO']).optional()
+        status: z.enum(['PENDENTE', 'CONCLUIDA', 'RESOLVIDA']).optional()
     })).optional().default([]),
 
     anexos: z.array(z.object({

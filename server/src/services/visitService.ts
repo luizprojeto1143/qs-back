@@ -25,7 +25,7 @@ interface CreateVisitData {
         description: string;
         deadline?: string | Date | null;
         priority: 'BAIXA' | 'MEDIA' | 'ALTA';
-        status?: 'PENDENTE' | 'CONCLUIDO';
+        status?: 'PENDENTE' | 'CONCLUIDA' | 'RESOLVIDA';
     }>;
     anexos?: Array<{
         url: string;
