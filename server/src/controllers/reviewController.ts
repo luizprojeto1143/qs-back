@@ -103,13 +103,32 @@ export const getMyResults = async (req: Request, res: Response) => {
         const user = (req as AuthRequest).user;
         if (!user) return res.status(401).json({ error: 'Unauthorized' });
 
+
         // Get Active Cycle first
-        const activeCycle = await prisma.performanceCycle.findFirst({
+        let activeCycle = await prisma.performanceCycle.findFirst({
             where: {
-                companyId: user.companyId || undefined, // Fix strict null check
+                companyId: user.companyId || undefined,
                 status: 'ACTIVE'
             }
         });
+
+        // Fallback for MASTER users: if no cycle found in current context (e.g. viewing another company),
+        // try to find one in their home company.
+        if (!activeCycle && user.role === 'MASTER') {
+            const dbUser = await prisma.user.findUnique({
+                where: { id: user.userId },
+                select: { companyId: true }
+            });
+
+            if (dbUser && dbUser.companyId && dbUser.companyId !== user.companyId) {
+                activeCycle = await prisma.performanceCycle.findFirst({
+                    where: {
+                        companyId: dbUser.companyId,
+                        status: 'ACTIVE'
+                    }
+                });
+            }
+        }
 
         if (!activeCycle) return res.json({ available: false, message: 'No active cycle' });
 
