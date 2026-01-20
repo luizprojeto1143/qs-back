@@ -97,3 +97,93 @@ export const submitReview = async (req: Request, res: Response) => {
         sendError500(res, 'REVIEW_SUBMIT_ERROR', error);
     }
 };
+
+export const getMyResults = async (req: Request, res: Response) => {
+    try {
+        const user = (req as AuthRequest).user;
+        if (!user) return res.status(401).json({ error: 'Unauthorized' });
+
+        // Get Active Cycle first
+        const activeCycle = await prisma.performanceCycle.findFirst({
+            where: {
+                companyId: user.companyId || undefined, // Fix strict null check
+                status: 'ACTIVE'
+            }
+        });
+
+        if (!activeCycle) return res.json({ available: false, message: 'No active cycle' });
+
+        // Get ALL reviews where I am the REVIEWEE in this cycle
+        const reviewsReceived = await prisma.performanceReview.findMany({
+            where: {
+                cycleId: activeCycle.id,
+                revieweeId: user.userId,
+                status: 'SUBMITTED' // Only count submitted reviews
+            },
+            include: {
+                answers: true
+            }
+        });
+
+        if (reviewsReceived.length === 0) return res.json({ available: false, message: 'No reviews received yet' });
+
+        // Aggregate Data
+        // Map: Competency -> { self: number, manager: number, peers: number[], peersAvg: number }
+        const aggregation: Record<string, { self?: number, manager?: number, peers: number[] }> = {};
+
+        // Helper to init competency key
+        const initComp = (comp: string) => {
+            if (!aggregation[comp]) aggregation[comp] = { peers: [] };
+        };
+
+        reviewsReceived.forEach(review => {
+            review.answers.forEach(answer => {
+                initComp(answer.competency);
+
+                if (review.type === 'SELF') {
+                    aggregation[answer.competency].self = answer.rating || 0;
+                } else if (review.type === 'MANAGER') {
+                    aggregation[answer.competency].manager = answer.rating || 0;
+                } else if (review.type === 'PEER') {
+                    if (answer.rating) aggregation[answer.competency].peers.push(answer.rating);
+                }
+            });
+        });
+
+        // Format for Recharts: [{ subject: 'Comp A', A: 120, B: 110, fullMark: 150 }]
+        // Our case: [{ subject: 'Competency', self: 4, manager: 5, peer: 3.5 }]
+        const chartData = Object.entries(aggregation).map(([competency, scores]) => {
+            const peerAvg = scores.peers.length > 0
+                ? scores.peers.reduce((a, b) => a + b, 0) / scores.peers.length
+                : undefined;
+
+            return {
+                subject: competency,
+                self: scores.self || 0,
+                manager: scores.manager || 0,
+                peer: peerAvg || 0,
+                fullMark: 5
+            };
+        });
+
+        // Also collect comments
+        const comments = reviewsReceived.flatMap(r => r.answers
+            .filter(a => a.comment && a.comment.trim() !== '')
+            .map(a => ({
+                type: r.type,
+                competency: a.competency,
+                text: a.comment
+            }))
+        );
+
+        res.json({
+            available: true,
+            cycle: activeCycle.name,
+            chartData,
+            comments
+        });
+
+    } catch (error) {
+        sendError500(res, 'REVIEW_RESULTS_ERROR', error);
+    }
+};

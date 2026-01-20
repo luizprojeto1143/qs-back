@@ -5,13 +5,14 @@ import { useCompany } from '../../contexts/CompanyContext';
 import { Target, Trophy, Users } from 'lucide-react';
 import PDITab from './PDITab';
 import PerformanceTab from './PerformanceTab';
+import ResultsTab from './ResultsTab';
 
 import { useAuth } from '../../contexts/AuthContext';
 
 const TalentManagement = () => {
     const { company } = useCompany();
     const { user } = useAuth();
-    const [activeTab, setActiveTab] = useState<'pdi' | 'performance' | 'feedback'>('pdi');
+    const [activeTab, setActiveTab] = useState<'pdi' | 'performance' | 'results'>('pdi');
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -54,14 +55,17 @@ const TalentManagement = () => {
                         }`}
                 >
                     <Trophy className="h-4 w-4" />
-                    Avaliações
+                    Avaliação de Desempenho
                 </button>
                 <button
-                    disabled
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-300 cursor-not-allowed"
+                    onClick={() => setActiveTab('results')}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === 'results'
+                        ? 'bg-white text-green-600 shadow-sm'
+                        : 'text-gray-500 hover:text-gray-700'
+                        }`}
                 >
                     <Users className="h-4 w-4" />
-                    Feedback 360 (Breve)
+                    Meus Resultados
                 </button>
             </div>
 
@@ -69,6 +73,7 @@ const TalentManagement = () => {
             <div className="animate-fade-in">
                 {activeTab === 'pdi' && <PDITab />}
                 {activeTab === 'performance' && <PerformanceTab />}
+                {activeTab === 'results' && <ResultsTab />}
             </div>
         </div>
     );

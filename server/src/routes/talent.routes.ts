@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { listCycles, createCycle, getCycleDetails, assignReviews } from '../controllers/performanceController';
-import { getMyReviews, getReviewDetails, submitReview } from '../controllers/reviewController';
+import { getMyReviews, getReviewDetails, submitReview, getMyResults } from '../controllers/reviewController';
 
 const router = Router();
 
@@ -14,6 +14,7 @@ router.post('/cycles/:cycleId/assign', assignReviews);
 
 // Reviews (User)
 router.get('/reviews/my', getMyReviews);
+router.get('/reviews/results', getMyResults); // New results endpoint
 router.get('/reviews/:id', getReviewDetails);
 router.post('/reviews/:id/submit', submitReview);
 
