@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
-import { prisma } from '../lib/prisma';
+import prisma from '../prisma';
+import { AuthRequest } from '../middleware/authMiddleware';
 
 // List comments for a lesson
 export const listComments = async (req: Request, res: Response) => {
@@ -50,7 +51,8 @@ export const createComment = async (req: Request, res: Response) => {
     try {
         const { lessonId } = req.params;
         const { content, parentId } = req.body;
-        const userId = req.user?.userId;
+        const user = (req as AuthRequest).user;
+        const userId = user?.userId;
 
         if (!userId) {
             return res.status(401).json({ error: 'Unauthorized' });
@@ -94,8 +96,9 @@ export const createComment = async (req: Request, res: Response) => {
 export const deleteComment = async (req: Request, res: Response) => {
     try {
         const { commentId } = req.params;
-        const userId = req.user?.userId;
-        const userRole = req.user?.role;
+        const user = (req as AuthRequest).user;
+        const userId = user?.userId;
+        const userRole = user?.role;
 
         const comment = await prisma.lessonComment.findUnique({
             where: { id: commentId }

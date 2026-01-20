@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { prisma } from '../lib/prisma';
+import prisma from '../prisma';
 import { AuthRequest } from '../middleware/authMiddleware';
 
 // List all trails (with progress for the current user)
@@ -90,7 +90,7 @@ export const getTrailDetails = async (req: Request, res: Response) => {
         // Transform for Map Visualization
         // Assuming courses are linear for now based on some logic, or just list them
         // In a real V2, we might add a `TrailNode` model for positions
-        const nodes = trail.courses.map((course, index) => ({
+        const nodes = trail.courses.map((course: any, index: number) => ({
             id: course.id,
             title: course.title,
             type: 'COURSE',
@@ -98,7 +98,7 @@ export const getTrailDetails = async (req: Request, res: Response) => {
                 ? 'COMPLETED'
                 : course.enrollments[0]?.progress > 0
                     ? 'IN_PROGRESS'
-                    : (index === 0 || trail.courses[index - 1].enrollments[0]?.completed) ? 'UNLOCKED' : 'LOCKED', // Simple linear lock logic
+                    : (index === 0 || (trail.courses as any)[index - 1].enrollments[0]?.completed) ? 'UNLOCKED' : 'LOCKED',
             data: {
                 description: course.description,
                 coverUrl: course.coverUrl,
