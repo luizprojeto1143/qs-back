@@ -11,10 +11,13 @@ import {
     Calendar,
     Video,
     GraduationCap,
+
+    GraduationCap,
     AlertTriangle,
     Activity,
     Megaphone,
-    Rss
+    Rss,
+    Target
 } from 'lucide-react';
 import { useLibrasAvailability } from '../hooks/useLibrasAvailability';
 
@@ -67,7 +70,9 @@ const RHLayout = () => {
         ...(currentCompany?.systemSettings?.complaintsEnabled ? [{ icon: Megaphone, label: 'Ouvidoria', path: '/rh/complaints' }] : []),
         { icon: FileText, label: 'Relatórios', path: '/rh/reports' },
         ...(isUniversityEnabled ? [{ icon: GraduationCap, label: 'Universidade', path: '/rh/university-reports' }] : []),
+
         { icon: Calendar, label: 'Agendamentos', path: '/rh/schedules' },
+        ...(currentCompany?.talentManagementEnabled ? [{ icon: Target, label: 'Gestão de Talentos', path: '/rh/talent' }] : []),
     ];
 
     return (

@@ -150,8 +150,10 @@ function App() {
                       <Route path="university-reports" element={<UniversityReports />} />
                       <Route path="pendencies" element={<Pendencies />} />
                       <Route path="inclusion" element={<RHInclusion />} />
+
                       <Route path="complaints" element={<RHComplaints />} />
                       <Route path="feed" element={<Feed />} />
+                      <Route path="talent" element={<TalentManagement />} />
                     </Route>
                   </Route>
 
