@@ -46,10 +46,16 @@ const PDITab = () => {
     const printRef = useRef<HTMLDivElement>(null);
     const [selectedPDI, setSelectedPDI] = useState<PDI | null>(null);
 
+
+
     const handlePrint = useReactToPrint({
         content: () => printRef.current,
         documentTitle: 'PDI - Plano de Desenvolvimento Individual',
-    } as any);
+        onBeforeGetContent: async () => {
+            // Wait for state update just in case
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+    } as any); // Casting to any to avoid version mismatch type errors temporarily
 
     useEffect(() => {
         fetchPDIs();
