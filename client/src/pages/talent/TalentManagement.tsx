@@ -6,18 +6,22 @@ import { Target, Trophy, Users } from 'lucide-react';
 import PDITab from './PDITab';
 import PerformanceTab from './PerformanceTab';
 
+import { useAuth } from '../../contexts/AuthContext';
+
 const TalentManagement = () => {
     const { company } = useCompany();
+    const { user } = useAuth();
     const [activeTab, setActiveTab] = useState<'pdi' | 'performance' | 'feedback'>('pdi');
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (company && !company.talentManagementEnabled) {
+        // If not enabled AND not master, redirect
+        if (company && !company.talentManagementEnabled && user?.role !== 'MASTER') {
             navigate('/dashboard');
         }
-    }, [company, navigate]);
+    }, [company, user, navigate]);
 
-    if (!company?.talentManagementEnabled) return null;
+    if (!company?.talentManagementEnabled && user?.role !== 'MASTER') return null;
 
     return (
         <div className="space-y-6">
