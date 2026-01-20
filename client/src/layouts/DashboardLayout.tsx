@@ -133,6 +133,7 @@ const DashboardLayout = () => {
         { icon: Video, label: 'Feed Acessível', path: '/dashboard/feed' },
         { icon: GraduationCap, label: 'Universidade', path: '/dashboard/university' },
         // Conditional Talent Management (Always visible for Master, or if enabled for Company)
+        // Debug: console.log('User Role:', user?.role, 'Talent Enabled:', company?.talentManagementEnabled);
         ...((company?.talentManagementEnabled || user?.role === 'MASTER') ? [{ icon: Target, label: 'Gestão de Talentos', path: '/dashboard/talent' }] : []),
         { icon: FileText, label: 'Relatórios', path: '/dashboard/reports' },
     ];
