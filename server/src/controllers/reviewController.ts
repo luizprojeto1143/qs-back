@@ -161,9 +161,10 @@ export const getMyResults = async (req: Request, res: Response) => {
 
                 if (review.type === 'SELF') {
                     aggregation[answer.competency].self = answer.rating || 0;
+
                 } else if (review.type === 'MANAGER') {
                     aggregation[answer.competency].manager = answer.rating || 0;
-                } else if (review.type === 'PEER') {
+                } else if (review.type === 'RH') {
                     if (answer.rating) aggregation[answer.competency].peers.push(answer.rating);
                 }
             });

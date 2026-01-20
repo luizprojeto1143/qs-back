@@ -64,9 +64,10 @@ const ResultsTab = () => {
                                 <PolarAngleAxis dataKey="subject" tick={{ fill: '#6b7280', fontSize: 12 }} />
                                 <PolarRadiusAxis angle={30} domain={[0, 5]} />
 
+
                                 <Radar name="Autoavaliação" dataKey="self" stroke="#8884d8" fill="#8884d8" fillOpacity={0.3} />
                                 <Radar name="Gestor" dataKey="manager" stroke="#82ca9d" fill="#82ca9d" fillOpacity={0.3} />
-                                <Radar name="Pares (Média)" dataKey="peer" stroke="#ffc658" fill="#ffc658" fillOpacity={0.3} />
+                                <Radar name="RH" dataKey="peer" stroke="#ffc658" fill="#ffc658" fillOpacity={0.3} />
 
                                 <Legend />
                             </RadarChart>
@@ -90,7 +91,7 @@ const ResultsTab = () => {
                                     <div className="flex justify-between items-center mb-2">
                                         <span className="text-xs font-bold uppercase text-gray-500">{comment.competency}</span>
                                         <span className="text-xs px-2 py-1 bg-white rounded border border-gray-200 text-gray-600">
-                                            {comment.type === 'SELF' ? 'Você' : comment.type === 'MANAGER' ? 'Gestor' : 'Colega'}
+                                            {comment.type === 'SELF' ? 'Você' : comment.type === 'MANAGER' ? 'Gestor' : 'RH'}
                                         </span>
                                     </div>
                                     <p className="text-gray-700 italic">"{comment.text}"</p>
@@ -111,7 +112,7 @@ const ResultsTab = () => {
                                 <th className="pb-3 text-sm font-bold text-gray-500 uppercase">Competência</th>
                                 <th className="pb-3 text-sm font-bold text-gray-500 uppercase text-center">Auto</th>
                                 <th className="pb-3 text-sm font-bold text-gray-500 uppercase text-center">Gestor</th>
-                                <th className="pb-3 text-sm font-bold text-gray-500 uppercase text-center">Pares</th>
+                                <th className="pb-3 text-sm font-bold text-gray-500 uppercase text-center">RH</th>
                                 <th className="pb-3 text-sm font-bold text-blue-600 uppercase text-center">Média Final</th>
                             </tr>
                         </thead>
