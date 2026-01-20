@@ -16,12 +16,14 @@ const TalentManagement = () => {
 
     useEffect(() => {
         // If not enabled AND not master, redirect
+        /*
         if (company && !company.talentManagementEnabled && user?.role !== 'MASTER') {
             navigate('/dashboard');
         }
+        */
     }, [company, user, navigate]);
 
-    if (!company?.talentManagementEnabled && user?.role !== 'MASTER') return null;
+    // if (!company?.talentManagementEnabled && user?.role !== 'MASTER') return null;
 
     return (
         <div className="space-y-6">
