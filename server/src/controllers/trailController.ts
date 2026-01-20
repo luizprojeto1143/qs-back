@@ -16,7 +16,7 @@ export const listTrails = async (req: Request, res: Response) => {
         const trails = await prisma.learningTrail.findMany({
             where: {
                 active: true,
-                companyId: companyId
+                companyId: companyId || undefined
             },
             include: {
                 courses: {
