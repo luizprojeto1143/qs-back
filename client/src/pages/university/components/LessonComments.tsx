@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { api } from '../../lib/api';
+import { api } from '../../../lib/api';
 import { MessageSquare, Send, Trash2, User } from 'lucide-react';
 import { toast } from 'sonner';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../../contexts/AuthContext';
 
 interface Comment {
     id: string;
