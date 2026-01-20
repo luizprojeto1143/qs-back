@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Building, Plus, X, GraduationCap } from 'lucide-react';
+import { Building, Plus, X, GraduationCap, Trophy } from 'lucide-react';
 import { api } from '../../lib/api';
 import { EmptyState } from '../../components/EmptyState';
 
@@ -13,7 +13,8 @@ const CompaniesList = () => {
         cnpj: '',
         email: '',
         password: '',
-        universityEnabled: false
+        universityEnabled: false,
+        talentManagementEnabled: false,
     });
 
     const fetchCompanies = async () => {
@@ -40,7 +41,7 @@ const CompaniesList = () => {
             await api[method](url, newCompany);
 
             setIsModalOpen(false);
-            setNewCompany({ name: '', cnpj: '', email: '', password: '', universityEnabled: false });
+            setNewCompany({ name: '', cnpj: '', email: '', password: '', universityEnabled: false, talentManagementEnabled: false });
             setEditingId(null);
             fetchCompanies();
             alert(editingId ? 'Empresa atualizada com sucesso!' : 'Empresa cadastrada com sucesso!');
@@ -56,7 +57,8 @@ const CompaniesList = () => {
             cnpj: company.cnpj,
             email: '', // Don't populate sensitive/unknown data if not needed, or fetch if available
             password: '',
-            universityEnabled: company.universityEnabled || false
+            universityEnabled: company.universityEnabled || false,
+            talentManagementEnabled: company.talentManagementEnabled || false
         });
         setEditingId(company.id);
         setIsModalOpen(true);
@@ -69,7 +71,7 @@ const CompaniesList = () => {
                 <button
                     type="button"
                     onClick={() => {
-                        setNewCompany({ name: '', cnpj: '', email: '', password: '', universityEnabled: false });
+                        setNewCompany({ name: '', cnpj: '', email: '', password: '', universityEnabled: false, talentManagementEnabled: false });
                         setEditingId(null);
                         setIsModalOpen(true);
                     }}
@@ -90,7 +92,7 @@ const CompaniesList = () => {
                     action={{
                         label: 'Nova Empresa',
                         onClick: () => {
-                            setNewCompany({ name: '', cnpj: '', email: '', password: '', universityEnabled: false });
+                            setNewCompany({ name: '', cnpj: '', email: '', password: '', universityEnabled: false, talentManagementEnabled: false });
                             setEditingId(null);
                             setIsModalOpen(true);
                         }
@@ -208,8 +210,21 @@ const CompaniesList = () => {
                                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                                 />
                                 <label htmlFor="universityEnabled" className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                                    <GraduationCap className="h-4 w-4" />
                                     Habilitar Universidade Corporativa
+                                </label>
+                            </div>
+
+                            <div className="flex items-center space-x-2 pt-2">
+                                <input
+                                    type="checkbox"
+                                    id="talentManagementEnabled"
+                                    checked={newCompany.talentManagementEnabled}
+                                    onChange={e => setNewCompany({ ...newCompany, talentManagementEnabled: e.target.checked })}
+                                    className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                                />
+                                <label htmlFor="talentManagementEnabled" className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                                    <Trophy className="h-4 w-4" />
+                                    Habilitar Gestão de Talentos
                                 </label>
                             </div>
 
