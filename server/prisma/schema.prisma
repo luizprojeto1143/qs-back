@@ -5,7 +5,7 @@ generator client {
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL") // Required for migrations with Supabase pooler
+  // directUrl = env("DIRECT_URL") // Required for migrations with Supabase pooler
 }
 
 // Enums are not supported in SQLite, so we use String with validation in code
@@ -46,6 +46,7 @@ model Company {
   
   
   universityEnabled Boolean @default(false)
+  talentManagementEnabled Boolean @default(false)
   auditLogs     AuditLog[]
   learningTrails LearningTrail[]
   termsAcceptances UserTermsAcceptance[]
@@ -57,6 +58,7 @@ model Company {
   smartAlerts      SmartAlert[]
   systemSettings   SystemSettings?
   decisionHistory  DecisionHistory[]
+  performanceCycles PerformanceCycle[]
 }
 
 model Sector {
@@ -131,6 +133,15 @@ model User {
   alertsValidated       SmartAlert[]    @relation("AlertValidator")
   dayOffsApproved       DayOff[]        @relation("DayOffApprover")
   decisionsHistory      DecisionHistory[] @relation("DecisionMaker")
+
+  // University 2.0 - Gamification & Social
+  xp            Int      @default(0)
+  level         Int      @default(1)
+  comments      LessonComment[]
+
+  // Talent Management
+  reviewsGiven    PerformanceReview[] @relation("Reviewer")
+  reviewsReceived PerformanceReview[] @relation("Reviewee")
 
   @@index([companyId])
 }
@@ -297,7 +308,7 @@ model PendingItem {
 model Schedule {
   id        String   @id @default(uuid())
   date      DateTime
-  status    String   // PENDENTE, APROVADO, RECUSADO, REMARCADO
+  status    String   // PENDENTE, APROVADO, RECUSADO, REMARCADO, REALIZADO, CANCELADO
   
   companyId String
   company   Company  @relation(fields: [companyId], references: [id])
@@ -515,6 +526,7 @@ model Lesson {
   description String?
   videoUrl    String
   transcription String? // Text content for accessibility
+  videoLibrasUrl String? // URL for the sign language interpreter video
   duration    Int      // in minutes
   order       Int
   
@@ -523,6 +535,7 @@ model Lesson {
   
   progress    LessonProgress[]
   attachments LessonAttachment[]
+  comments    LessonComment[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -790,6 +803,7 @@ model WorkSchedule {
   collaborator    CollaboratorProfile @relation(fields: [collaboratorId], references: [id])
   type            String   // 5X2, 6X1, 12X36, 4X3, PERSONALIZADO
   workDays        String   // JSON array [0,1,2,3,4] (dom=0, seg=1...)
+
   startTime       String?  // "08:00"
   endTime         String?  // "17:00"
   breakStart      String?  // "12:00"
@@ -861,5 +875,83 @@ model DecisionHistory {
   
   @@index([companyId])
   @@index([entityType])
+}
+
+
+model LessonComment {
+  id        String   @id @default(uuid())
+  content   String
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  
+  lessonId  String
+  lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  
+  parentId  String?  // For replies
+  parent    LessonComment? @relation("CommentReplies", fields: [parentId], references: [id])
+  replies   LessonComment[] @relation("CommentReplies")
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([lessonId])
+  @@index([userId])
+}
+
+// ============================================
+// TALENT MANAGEMENT (PERFORMANCE & FEEDBACK)
+// ============================================
+
+model PerformanceCycle {
+  id        String   @id @default(uuid())
+  name      String
+  startDate DateTime
+  endDate   DateTime
+  status    String   @default("DRAFT") // DRAFT, ACTIVE, CLOSED
+  
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id])
+  
+  reviews   PerformanceReview[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PerformanceReview {
+  id        String   @id @default(uuid())
+  
+  cycleId   String
+  cycle     PerformanceCycle @relation(fields: [cycleId], references: [id])
+  
+  reviewerId String
+  reviewer   User     @relation("Reviewer", fields: [reviewerId], references: [id])
+  
+  revieweeId String
+  reviewee   User     @relation("Reviewee", fields: [revieweeId], references: [id])
+  
+  type      String   // SELF, MANAGER, PEER
+  status    String   @default("PENDING") // PENDING, SUBMITTED
+  
+  answers   ReviewAnswer[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([cycleId, reviewerId, revieweeId])
+}
+
+model ReviewAnswer {
+  id        String   @id @default(uuid())
+  
+  reviewId  String
+  review    PerformanceReview @relation(fields: [reviewId], references: [id])
+  
+  competency String
+  rating     Int?   // 1-5
+  comment    String?
+  
+  createdAt DateTime @default(now())
 }
 

@@ -3,6 +3,7 @@ import prisma from '../prisma';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { sendError500, ERROR_CODES } from '../utils/errorUtils';
 import { createFeedPostSchema } from '../schemas/dataSchemas';
+import { sanitizeHTML } from '../utils/validators';
 import cloudinary from '../config/cloudinary';
 
 export const createPost = async (req: Request, res: Response) => {
@@ -27,13 +28,13 @@ export const createPost = async (req: Request, res: Response) => {
             return res.status(400).json({ error: 'Invalid category. Please select an existing category.' });
         }
 
-        // XSS Mitigation: Basic sanitization (strip script tags)
-        // In a real app, use 'sanitize-html' library
-        const sanitizedDescription = description ? description.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gm, "") : "";
+        // Helper function moved to utils
+        const sanitizedTitle = sanitizeHTML(title);
+        const sanitizedDescription = description ? sanitizeHTML(description) : '';
 
         const post = await prisma.feedPost.create({
             data: {
-                title,
+                title: sanitizedTitle,
                 description: sanitizedDescription,
                 category,
                 imageUrl,
@@ -110,11 +111,14 @@ export const updatePost = async (req: Request, res: Response) => {
             return res.status(404).json({ error: 'Post not found or access denied' });
         }
 
+        // XSS Mitigation: Enhanced sanitization (same as createPost)
+        // Helper function moved to utils
+
         const post = await prisma.feedPost.update({
             where: { id },
             data: {
-                title,
-                description,
+                title: title ? sanitizeHTML(title) : undefined,
+                description: description ? sanitizeHTML(description) : undefined,
                 category,
                 imageUrl,
                 videoLibrasUrl
@@ -148,12 +152,17 @@ export const deletePost = async (req: Request, res: Response) => {
         // Delete Image from Cloudinary if exists
         if (existingPost.imageUrl && existingPost.imageUrl.includes('cloudinary.com')) {
             try {
-                // Extract public_id: upload/(v123/)?(folder/filename).ext
-                const regex = /upload\/(?:v\d+\/)?(.+)\.\w+$/;
+                // Extract public_id: supports various Cloudinary URL formats
+                // Matches: /upload/(v123...)/(folder/filename).ext
+                // Group 1: Optional version
+                // Group 2: Public ID (including folders)
+                const regex = /\/upload\/(?:v\d+\/)?([^\.]+)\.\w+$/;
                 const match = existingPost.imageUrl.match(regex);
                 if (match && match[1]) {
                     const publicId = match[1];
                     await cloudinary.uploader.destroy(publicId);
+                } else {
+                    console.warn('Could not extract public_id from Cloudinary URL:', existingPost.imageUrl);
                 }
             } catch (err) {
                 console.error('Error deleting image from Cloudinary', err);

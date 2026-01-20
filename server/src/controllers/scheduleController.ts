@@ -31,7 +31,7 @@ export const createSchedule = async (req: Request, res: Response) => {
         if (company?.availability) {
             try {
                 const availability = JSON.parse(company.availability);
-                const dayOfWeek = scheduleDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
+                const dayOfWeek = scheduleDate.getUTCDay(); // 0 = Sunday (UTC), matching the UTC date constructed above
 
                 // Map day number to key names in availability object
                 const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
@@ -66,7 +66,10 @@ export const createSchedule = async (req: Request, res: Response) => {
                 }
             } catch (parseError) {
                 console.error('Error parsing availability:', parseError);
-                // Continue without validation if there's a parsing error
+                return res.status(500).json({
+                    error: 'Configuration Error',
+                    message: 'Erro ao validar disponibilidade da empresa. Entre em contato com o suporte.'
+                });
             }
         }
         // ============================================
@@ -229,7 +232,7 @@ export const updateScheduleStatus = async (req: Request, res: Response) => {
         if (!user) return res.status(401).json({ error: 'Unauthorized' });
 
         // Validate Status Enum
-        const VALID_STATUSES = ['PENDENTE', 'APROVADO', 'RECUSADO', 'REMARCADO'];
+        const VALID_STATUSES = ['PENDENTE', 'APROVADO', 'RECUSADO', 'REMARCADO', 'REALIZADO', 'CANCELADO'];
         if (!VALID_STATUSES.includes(status)) {
             return res.status(400).json({ error: 'Invalid status' });
         }

@@ -36,7 +36,21 @@ export const createCompany = async (req: Request, res: Response) => {
             return res.status(403).json({ error: 'Unauthorized. Only MASTER can create companies.' });
         }
 
-        const { name, cnpj, email, password, universityEnabled } = req.body;
+        // Import and validate with schema
+        const { createCompanySchema } = await import('../schemas/dataSchemas');
+        const validation = createCompanySchema.safeParse(req.body);
+        if (!validation.success) {
+            return res.status(400).json({ error: 'Validation error', details: validation.error.format() });
+        }
+
+        const { name, cnpj, email } = validation.data;
+        const { password, universityEnabled } = req.body;
+
+        // Check for existing CNPJ
+        const existingCompany = await prisma.company.findFirst({ where: { cnpj } });
+        if (existingCompany) {
+            return res.status(400).json({ error: 'Já existe uma empresa com este CNPJ.' });
+        }
 
         const result = await prisma.$transaction(async (prisma) => {
             const company = await prisma.company.create({

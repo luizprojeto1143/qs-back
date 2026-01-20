@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import prisma from '../prisma';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { sendError500, ERROR_CODES } from '../utils/errorUtils';
+import { createPendencySchema, updatePendencySchema } from '../schemas/dataSchemas';
 
 export const listPendencies = async (req: Request, res: Response) => {
     try {
@@ -35,10 +36,16 @@ export const listPendencies = async (req: Request, res: Response) => {
 
 export const createPendency = async (req: Request, res: Response) => {
     try {
+        // Validate input with Zod
+        const validation = createPendencySchema.safeParse(req.body);
+        if (!validation.success) {
+            return res.status(400).json({ error: 'Validation failed', details: validation.error.format() });
+        }
+
         const {
             description, responsible, priority, deadline,
             companyId, areaId, collaboratorId, visitId
-        } = req.body;
+        } = validation.data;
 
         const user = (req as AuthRequest).user;
         if (!user) return res.status(401).json({ error: 'Unauthorized' });
@@ -71,7 +78,14 @@ export const createPendency = async (req: Request, res: Response) => {
 export const updatePendency = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const { description, responsible, priority, deadline, areaId, collaboratorId, status, resolvedAt } = req.body;
+
+        // Validate input with Zod
+        const validation = updatePendencySchema.safeParse(req.body);
+        if (!validation.success) {
+            return res.status(400).json({ error: 'Validation failed', details: validation.error.format() });
+        }
+
+        const { description, responsible, priority, deadline, areaId, collaboratorId, status, resolvedAt } = validation.data;
         const user = (req as AuthRequest).user;
 
         if (!user || !user.companyId) {

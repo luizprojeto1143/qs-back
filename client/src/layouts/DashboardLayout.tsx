@@ -28,62 +28,18 @@ import {
 import { useTheme } from '../contexts/ThemeContext';
 import { Bell } from 'lucide-react';
 import { api } from '../lib/api';
+import { useCompany } from '../contexts/CompanyContext';
 import { toast } from 'sonner';
 
 // ... (imports)
 
-interface SidebarItemProps {
-    icon: any;
-    label: string;
-    path: string;
-    active: boolean;
-    onClick?: () => void;
-    className?: string;
-}
-
-const SidebarItem = ({ icon: Icon, label, path, active, onClick, className }: SidebarItemProps) => {
-    const navigate = useNavigate();
-    return (
-        <button
-            type="button"
-            onClick={() => {
-                navigate(path);
-                if (onClick) onClick();
-            }}
-            className={`
-        w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors ${active
-                    ? 'bg-blue-600 text-white font-medium shadow-lg shadow-blue-900/50'
-                    : 'text-gray-400 hover:bg-white/5 hover:text-white'
-                } ${className || ''}`}
-        >
-            <Icon className={`h-5 w-5 ${active ? 'text-white' : 'text-gray-400 group-hover:text-white'}`} />
-            <span>{label}</span>
-        </button>
-    );
-};
+import { SidebarItem } from '../components/SidebarItem';
 
 const DashboardLayout = () => {
     const location = useLocation();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
     const { theme, toggleTheme } = useTheme();
     const navigate = useNavigate();
-
-    // Protect Route based on Role
-    React.useEffect(() => {
-        const userStr = localStorage.getItem('user');
-        if (userStr) {
-            try {
-                const user = JSON.parse(userStr);
-                if (user.role === 'RH') {
-                    navigate('/rh', { replace: true });
-                } else if (user.role === 'COLABORADOR' || user.role === 'LIDER') {
-                    navigate('/app', { replace: true });
-                }
-            } catch (e) {
-                console.error('Invalid user data', e);
-            }
-        }
-    }, [navigate]);
 
     // Notification State
     const [notifications, setNotifications] = React.useState<any[]>([]);
@@ -164,6 +120,8 @@ const DashboardLayout = () => {
         navigate('/');
     };
 
+    const { company } = useCompany();
+
     const menuItems = [
         { icon: LayoutDashboard, label: 'Início', path: '/dashboard' },
         { icon: Users, label: 'Colaboradores', path: '/dashboard/collaborators' },
@@ -172,7 +130,8 @@ const DashboardLayout = () => {
         { icon: Calendar, label: 'Agendamentos', path: '/dashboard/schedules' },
         { icon: Video, label: 'Feed Acessível', path: '/dashboard/feed' },
         { icon: GraduationCap, label: 'Universidade', path: '/dashboard/university' },
-        { icon: Target, label: 'PDI', path: '/dashboard/pdi' },
+        // Conditional Talent Management
+        ...(company?.talentManagementEnabled ? [{ icon: Target, label: 'Gestão de Talentos', path: '/dashboard/talent' }] : []),
         { icon: FileText, label: 'Relatórios', path: '/dashboard/reports' },
     ];
 

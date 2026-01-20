@@ -81,6 +81,12 @@ export const createUser = async (req: Request, res: Response) => {
         }
         const { email, password, name, role, companyId, areaId } = validation.data;
 
+        // Check for existing email
+        const existingUser = await prisma.user.findFirst({ where: { email } });
+        if (existingUser) {
+            return res.status(400).json({ error: 'Email já está em uso' });
+        }
+
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const newUser = await prisma.user.create({

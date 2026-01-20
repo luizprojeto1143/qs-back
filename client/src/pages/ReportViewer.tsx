@@ -59,9 +59,6 @@ const ReportViewer = () => {
 
     if (!reportData) return null;
 
-    console.log('DEBUG REPORT DATA:', reportData);
-    console.log('AVATAR URL:', reportData.collaborator?.user?.avatar);
-
     const handlePrint = () => {
         window.print();
     };

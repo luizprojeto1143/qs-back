@@ -272,7 +272,6 @@ const VisitRecording = () => {
     };
 
     const onSubmit = async (data: VisitFormData) => {
-        console.log('Form submitted with data:', data); // DEBUG
         setLoading(true);
         try {
             // Inject system fields
@@ -284,16 +283,12 @@ const VisitRecording = () => {
                 // Zod handles other transformations
             };
 
-            console.log('Sending payload to API:', payload); // DEBUG
-
             let response;
             if (location.state?.visitId) {
                 response = await api.put(`/visits/${location.state.visitId}`, payload);
             } else {
                 response = await api.post('/visits', payload);
             }
-
-            console.log('API Response:', response); // DEBUG
 
             if (response.status === 200 || response.status === 201) {
                 if (linkedScheduleIds.length > 0) {

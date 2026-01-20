@@ -87,32 +87,32 @@ export const createCollaborator = async (req: Request, res: Response) => {
             return res.status(403).json({ error: 'Unauthorized to create collaborator for this company' });
         }
 
-        // Check email existence BEFORE transaction
-        const existingUser = await prisma.user.findFirst({ where: { email } });
-        if (existingUser) {
-            return res.status(400).json({ error: 'Email already registered' });
-        }
-
-        // Check matricula uniqueness in the same company
-        const existingMatricula = await prisma.collaboratorProfile.findFirst({
-            where: {
-                matricula,
-                user: { companyId }
-            }
-        });
-
-        if (existingMatricula) {
-            return res.status(400).json({ error: 'Matrícula already exists in this company' });
-        }
-
-        // Hash password OUTSIDE transaction
+        // Hash password OUTSIDE transaction (CPU-intensive)
         // FIXED: Stronger default password
         const defaultPassword = 'Mudar@' + Math.random().toString(36).slice(-8) + '!';
         const hashedPassword = await bcrypt.hash(password || defaultPassword, 10);
 
-        // Transaction to create User and Profile together
-        const result = await prisma.$transaction(async (prisma) => {
-            const newUser = await prisma.user.create({
+        // Transaction to create User and Profile together with uniqueness checks
+        const result = await prisma.$transaction(async (tx) => {
+            // Check email existence INSIDE transaction to prevent race conditions
+            const existingUser = await tx.user.findFirst({ where: { email } });
+            if (existingUser) {
+                throw new Error('EMAIL_EXISTS');
+            }
+
+            // Check matricula uniqueness in the same company
+            const existingMatricula = await tx.collaboratorProfile.findFirst({
+                where: {
+                    matricula,
+                    user: { companyId }
+                }
+            });
+
+            if (existingMatricula) {
+                throw new Error('MATRICULA_EXISTS');
+            }
+
+            const newUser = await tx.user.create({
                 data: {
                     name,
                     email,
@@ -122,7 +122,7 @@ export const createCollaborator = async (req: Request, res: Response) => {
                 }
             });
 
-            const profile = await prisma.collaboratorProfile.create({
+            const profile = await tx.collaboratorProfile.create({
                 data: {
                     userId: newUser.id,
                     matricula,
@@ -138,7 +138,13 @@ export const createCollaborator = async (req: Request, res: Response) => {
         });
 
         res.status(201).json(result);
-    } catch (error) {
+    } catch (error: any) {
+        if (error.message === 'EMAIL_EXISTS') {
+            return res.status(400).json({ error: 'Email already registered' });
+        }
+        if (error.message === 'MATRICULA_EXISTS') {
+            return res.status(400).json({ error: 'Matrícula already exists in this company' });
+        }
         sendError500(res, ERROR_CODES.COLAB_CREATE, error);
     }
 };
@@ -159,7 +165,8 @@ export const getCollaborator = async (req: Request, res: Response) => {
                             include: {
                                 master: { select: { name: true } }
                             },
-                            orderBy: { date: 'desc' }
+                            orderBy: { date: 'desc' },
+                            take: 20 // Performance Limit
                         },
                         pendingItems: true,
                         visitNotes: {
@@ -170,7 +177,8 @@ export const getCollaborator = async (req: Request, res: Response) => {
                                     }
                                 }
                             },
-                            orderBy: { createdAt: 'desc' }
+                            orderBy: { createdAt: 'desc' },
+                            take: 20 // Performance Limit
                         }
                     }
                 }

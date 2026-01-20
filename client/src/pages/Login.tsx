@@ -4,7 +4,7 @@ import { User, Lock, ArrowRight, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../lib/api';
 
-const SAVED_CREDENTIALS_KEY = 'qs_saved_credentials';
+const SAVED_EMAIL_KEY = 'qs_saved_email';
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -16,17 +16,13 @@ const Login = () => {
     const [require2FA, setRequire2FA] = useState(false);
     const [rememberMe, setRememberMe] = useState(true);
 
-    // Load saved credentials on mount
+    // Load saved email on mount (password is NEVER stored for security)
     useEffect(() => {
         try {
-            const saved = localStorage.getItem(SAVED_CREDENTIALS_KEY);
-            if (saved) {
-                const { email: savedEmail, password: savedPassword } = JSON.parse(saved);
-                if (savedEmail) setEmail(savedEmail);
-                if (savedPassword) setPassword(savedPassword);
-            }
+            const savedEmail = localStorage.getItem(SAVED_EMAIL_KEY);
+            if (savedEmail) setEmail(savedEmail);
         } catch (e) {
-            console.error('Error loading saved credentials', e);
+            console.error('Error loading saved email', e);
         }
     }, []);
 
@@ -51,11 +47,11 @@ const Login = () => {
             localStorage.setItem('token', data.token);
             localStorage.setItem('user', JSON.stringify(data.user));
 
-            // Save or clear credentials based on rememberMe
+            // Save or clear email based on rememberMe (NEVER save password)
             if (rememberMe) {
-                localStorage.setItem(SAVED_CREDENTIALS_KEY, JSON.stringify({ email, password }));
+                localStorage.setItem(SAVED_EMAIL_KEY, email);
             } else {
-                localStorage.removeItem(SAVED_CREDENTIALS_KEY);
+                localStorage.removeItem(SAVED_EMAIL_KEY);
             }
 
             toast.success(`Bem-vindo(a), ${data.user.name}!`);
@@ -76,13 +72,9 @@ const Login = () => {
                     navigate('/dashboard');
             }
         } catch (error: any) {
-            console.error('Login error', error);
-
-            // EMERGENCY DEBUG ALERT
-            if (error.response?.data) {
-                const serverError = error.response.data;
-                alert(`ERRO CRÍTICO NO LOGIN:\n\nMessage: ${serverError.message}\nType: ${serverError.type}\nStack: ${serverError.stack ? 'See console' : 'N/A'}`);
-                console.error('CRITICAL SERVER ERROR:', serverError);
+            // Log error only in development
+            if (import.meta.env.DEV) {
+                console.error('Login error:', error);
             }
 
             const msg = error.response?.data?.error || error.message || 'Erro ao fazer login';

@@ -25,8 +25,8 @@ const handleResponse = async (response: Response) => {
         // Dispatch event instead of hard reload to allow React to handle it
         window.dispatchEvent(new Event('auth:logout'));
         window.location.href = '/login'; // Fallback
-        // Return a promise that never resolves to pause execution and prevent error boundaries from catching a throw
-        return new Promise(() => { });
+        // Throw error to stop further processing
+        throw new Error('Session expired. Please login again.');
     }
 
     const text = await response.text();

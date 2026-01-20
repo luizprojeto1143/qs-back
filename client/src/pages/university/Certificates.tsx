@@ -160,8 +160,9 @@ const Certificates = () => {
                 // The response has certificates array
                 const certs = detailsRes.data.certificates.map((c: any) => ({
                     ...c,
+                    ...c,
                     user: { name: detailsRes.data.user.name },
-                    course: { duration: 60 } // Mock duration if not in response, but it should be
+                    course: { duration: c.courseDuration || 60 } // Use real duration
                 }));
 
                 setCertificates(certs);

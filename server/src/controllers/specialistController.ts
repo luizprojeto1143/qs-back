@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import prisma from '../prisma';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { sendError500, ERROR_CODES } from '../utils/errorUtils';
+import { createSpecialistSchema, updateSpecialistSchema } from '../schemas/dataSchemas';
 
 export const listSpecialists = async (req: Request, res: Response) => {
     try {
@@ -28,11 +29,12 @@ export const createSpecialist = async (req: Request, res: Response) => {
             return res.status(400).json({ error: 'User or Company not found' });
         }
 
-        const { name, email, type } = req.body;
-
-        if (!name || !email || !type) {
-            return res.status(400).json({ error: 'Missing required fields' });
+        const validation = createSpecialistSchema.safeParse(req.body);
+        if (!validation.success) {
+            return res.status(400).json({ error: 'Validation error', details: validation.error.format() });
         }
+
+        const { name, email, type } = validation.data;
 
         const specialist = await prisma.specialist.create({
             data: {
@@ -52,11 +54,29 @@ export const createSpecialist = async (req: Request, res: Response) => {
 export const updateSpecialist = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const { name, email, type } = req.body;
+        const user = (req as AuthRequest).user;
+
+        if (!user || !user.companyId) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        const validation = updateSpecialistSchema.safeParse(req.body);
+        if (!validation.success) {
+            return res.status(400).json({ error: 'Validation error', details: validation.error.format() });
+        }
+
+        // IDOR CHECK
+        const existing = await prisma.specialist.findFirst({
+            where: { id, companyId: user.companyId }
+        });
+
+        if (!existing) {
+            return res.status(404).json({ error: 'Specialist not found or access denied' });
+        }
 
         const specialist = await prisma.specialist.update({
             where: { id },
-            data: { name, email, type }
+            data: validation.data
         });
 
         res.json(specialist);
@@ -68,6 +88,20 @@ export const updateSpecialist = async (req: Request, res: Response) => {
 export const deleteSpecialist = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
+        const user = (req as AuthRequest).user;
+
+        if (!user || !user.companyId) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        // IDOR CHECK
+        const existing = await prisma.specialist.findFirst({
+            where: { id, companyId: user.companyId }
+        });
+
+        if (!existing) {
+            return res.status(404).json({ error: 'Specialist not found or access denied' });
+        }
 
         await prisma.specialist.delete({
             where: { id }

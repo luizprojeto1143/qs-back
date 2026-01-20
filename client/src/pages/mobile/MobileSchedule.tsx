@@ -50,12 +50,10 @@ const MobileSchedule = () => {
                     };
                 });
 
-                console.log('[MobileSchedule] Raw Availability:', data);
-                console.log('[MobileSchedule] Normalized Availability:', normalized);
 
                 setAvailability(normalized);
             } catch (error) {
-                console.error('Error fetching availability:', error);
+                // Failed to load availability - continue with empty
             } finally {
                 setLoadingAvailability(false);
             }
@@ -139,7 +137,6 @@ const MobileSchedule = () => {
             });
             setSubmitted(true);
         } catch (error: any) {
-            console.error('Error scheduling:', error);
             const msg = error.response?.data?.message || error.response?.data?.error || 'Erro ao agendar.';
             alert(msg);
         } finally {

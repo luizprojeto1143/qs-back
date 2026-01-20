@@ -78,7 +78,6 @@ export const VisitReportsTab = ({
             timerRef.current = setInterval(() => setRecordingTime(prev => prev + 1), 1000);
 
         } catch (err) {
-            console.error('Error accessing microphone', err);
             toast.error('Erro ao acessar microfone');
         }
     };
@@ -99,10 +98,8 @@ export const VisitReportsTab = ({
             // A API retorna { user: {...}, profile: {...} } para colaboradores
             // Precisamos usar o userId que é o identificador correto para o collaboratorIds
             const newId = newItem.user?.id || newItem.id;
-            console.log('New collaborator created:', { newItem, extractedId: newId }); // Debug
             if (newId) {
                 const updatedIds = [...watchCollaboratorIds, newId];
-                console.log('Updating collaboratorIds to:', updatedIds); // Debug
                 setValue('collaboratorIds', updatedIds, { shouldValidate: true, shouldDirty: true });
             }
         }

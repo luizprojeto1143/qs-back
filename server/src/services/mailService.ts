@@ -19,7 +19,7 @@ interface CollaboratorInfo {
 
 export const sendInviteEmail = async (to: string, roomUrl: string, collaboratorInfo: CollaboratorInfo) => {
     if (!process.env.SMTP_USER) {
-        console.log(`[MailService] SMTP not configured. Email to ${to} suppressed.`);
+        // console.log(`[MailService] SMTP not configured. Email to ${to} suppressed.`);
         return;
     }
 
@@ -49,7 +49,7 @@ export const sendInviteEmail = async (to: string, roomUrl: string, collaboratorI
             subject: `Convite para Atendimento - ${collaboratorInfo.name}`,
             html: infoHtml,
         });
-        console.log('Invite email sent to:', to);
+        // console.log('Invite email sent to:', to);
     } catch (error) {
         console.error('Error sending invite email:', error);
         throw error;

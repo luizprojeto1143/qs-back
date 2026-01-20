@@ -1,8 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../../lib/api';
-import { ChevronLeft, Play, CheckCircle, Menu, FileText, Download, MessageSquare, Award } from 'lucide-react';
+import { ChevronLeft, CheckCircle, Menu, FileText, Download, Award, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
+import { VideoPlayer } from './components/VideoPlayer';
+import { TranscriptViewer } from './components/TranscriptViewer';
+import { AccessibilityControls } from './components/AccessibilityControls';
+import { LessonComments } from './components/LessonComments';
 
 interface Attachment {
     id: string;
@@ -25,6 +29,7 @@ interface Lesson {
 interface Quiz {
     id: string;
     title: string;
+    description: string;
 }
 
 interface Module {
@@ -50,6 +55,9 @@ const CoursePlayer = () => {
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [activeTab, setActiveTab] = useState<'video' | 'materials' | 'transcript'>('video');
 
+    // New Feature: Focus Mode
+    const [focusMode, setFocusMode] = useState(false);
+
     useEffect(() => {
         const fetchCourse = async () => {
             try {
@@ -58,9 +66,11 @@ const CoursePlayer = () => {
 
                 // Find first uncompleted lesson or just the first one
                 const modules = response.data.modules;
-                if (modules.length > 0 && modules[0].lessons.length > 0) {
-                    // Logic to find first uncompleted could go here
-                    setCurrentLesson(modules[0].lessons[0]);
+                if (modules.length > 0) {
+                    // Simple logic to find first lesson for now
+                    if (modules[0].lessons.length > 0) {
+                        setCurrentLesson(modules[0].lessons[0]);
+                    }
                 }
             } catch (error) {
                 console.error('Error fetching course', error);
@@ -71,6 +81,15 @@ const CoursePlayer = () => {
         };
         if (id) fetchCourse();
     }, [id]);
+
+    // Handle Focus Mode side effects
+    useEffect(() => {
+        if (focusMode) {
+            setSidebarOpen(false);
+        } else {
+            setSidebarOpen(true);
+        }
+    }, [focusMode]);
 
     const handleLessonComplete = async (lessonId: string) => {
         try {
@@ -92,14 +111,11 @@ const CoursePlayer = () => {
                 }));
                 setCourse({ ...course, modules: updatedModules });
 
-                // Also update currentLesson if it's the one we just completed
                 if (currentLesson && currentLesson.id === lessonId) {
                     setCurrentLesson({ ...currentLesson, progress: [{ completed: true }] });
                 }
             }
             toast.success('Aula concluída!');
-
-            // Auto-advance logic could go here
         } catch (error) {
             console.error('Error updating progress', error);
         }
@@ -117,84 +133,79 @@ const CoursePlayer = () => {
     return (
         <div className="flex flex-col h-[calc(100vh-64px)] md:flex-row bg-gray-100 dark:bg-gray-900">
             {/* Main Content */}
-            <div className="flex-1 flex flex-col overflow-hidden">
-                <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 flex items-center gap-4">
+            <div className="flex-1 flex flex-col overflow-hidden transition-all duration-300">
+
+                {/* Header within Player */}
+                <div className={`bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 flex items-center gap-4 ${focusMode ? 'hidden' : ''}`}>
                     <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full">
                         <ChevronLeft className="h-5 w-5 text-gray-600 dark:text-gray-300" />
                     </button>
                     <h1 className="font-bold text-gray-900 dark:text-white truncate">{course.title}</h1>
-                    <button
-                        className="md:hidden ml-auto p-2"
-                        onClick={() => setSidebarOpen(!sidebarOpen)}
-                    >
-                        <Menu className="h-5 w-5" />
-                    </button>
+
+                    <div className="ml-auto flex items-center gap-2">
+                        <AccessibilityControls focusMode={focusMode} setFocusMode={setFocusMode} />
+
+                        <button
+                            className="md:hidden p-2"
+                            onClick={() => setSidebarOpen(!sidebarOpen)}
+                        >
+                            <Menu className="h-5 w-5" />
+                        </button>
+                    </div>
                 </div>
+
+                {/* Focus Mode Exit Bar */}
+                {focusMode && (
+                    <div className="bg-black/90 text-white px-4 py-2 flex justify-between items-center text-sm">
+                        <span>Modo Foco Ativo</span>
+                        <AccessibilityControls focusMode={focusMode} setFocusMode={setFocusMode} />
+                    </div>
+                )}
 
                 <div className="flex-1 overflow-y-auto p-4 md:p-6">
                     {currentLesson ? (
-                        <div className="max-w-4xl mx-auto space-y-6">
-                            {/* Tabs */}
-                            <div className="flex gap-4 border-b border-gray-200 dark:border-gray-700 pb-2">
-                                <button
-                                    onClick={() => setActiveTab('video')}
-                                    className={`pb-2 px-1 text-sm font-medium transition-colors ${activeTab === 'video' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-                                >
-                                    Vídeo Aula
-                                </button>
-                                <button
-                                    onClick={() => setActiveTab('materials')}
-                                    className={`pb-2 px-1 text-sm font-medium transition-colors ${activeTab === 'materials' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-                                >
-                                    Materiais Extras
-                                </button>
-                                <button
-                                    onClick={() => setActiveTab('transcript')}
-                                    className={`pb-2 px-1 text-sm font-medium transition-colors ${activeTab === 'transcript' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-                                >
-                                    Transcrição / Legendas
-                                </button>
-                            </div>
+                        <div className={`mx-auto space-y-6 transition-all duration-500 ${focusMode ? 'max-w-6xl' : 'max-w-4xl'}`}>
+
+                            {/* Tabs (Hidden in Focus Mode for cleaner UI, or kept? Let's keep for now but simplify) */}
+                            {!focusMode && (
+                                <div className="flex gap-4 border-b border-gray-200 dark:border-gray-700 pb-2">
+                                    <button
+                                        onClick={() => setActiveTab('video')}
+                                        className={`pb-2 px-1 text-sm font-medium transition-colors ${activeTab === 'video' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                                    >
+                                        Vídeo Aula
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveTab('materials')}
+                                        className={`pb-2 px-1 text-sm font-medium transition-colors ${activeTab === 'materials' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                                    >
+                                        Materiais Extras
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveTab('transcript')}
+                                        className={`pb-2 px-1 text-sm font-medium transition-colors ${activeTab === 'transcript' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                                    >
+                                        Transcrição / Legendas
+                                    </button>
+                                </div>
+                            )}
 
                             {activeTab === 'video' && (
                                 <>
-                                    <div className="aspect-video bg-black rounded-xl overflow-hidden shadow-lg relative group">
-                                        <iframe
-                                            src={(() => {
-                                                try {
-                                                    let videoId = '';
-                                                    const url = currentLesson.videoUrl;
+                                    <VideoPlayer
+                                        url={currentLesson.videoUrl}
+                                        title={currentLesson.title}
+                                        onEnded={() => handleLessonComplete(currentLesson.id)}
+                                    />
 
-                                                    if (url.includes('youtu.be/')) {
-                                                        videoId = url.split('youtu.be/')[1]?.split('?')[0];
-                                                    } else if (url.includes('watch?v=')) {
-                                                        videoId = url.split('watch?v=')[1]?.split('&')[0];
-                                                    } else if (url.includes('embed/')) {
-                                                        videoId = url.split('embed/')[1]?.split('?')[0];
-                                                    }
-
-                                                    if (!videoId) return url; // Fallback
-
-                                                    return `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`;
-                                                } catch (e) {
-                                                    return currentLesson.videoUrl;
-                                                }
-                                            })()}
-                                            className="w-full h-full"
-                                            frameBorder="0"
-                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                            allowFullScreen
-                                        />
-                                    </div>
-
-                                    <div className="flex justify-between items-start">
+                                    <div className="flex flex-col md:flex-row justify-between items-start gap-4">
                                         <div>
                                             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{currentLesson.title}</h2>
                                             <p className="text-gray-600 dark:text-gray-300">{currentLesson.description}</p>
                                         </div>
                                         <button
                                             onClick={() => handleLessonComplete(currentLesson.id)}
-                                            className={`btn-primary flex items-center gap-2 ${currentLesson.progress?.[0]?.completed ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                                            className={`btn-primary flex items-center gap-2 whitespace-nowrap ${currentLesson.progress?.[0]?.completed ? 'bg-green-600 hover:bg-green-700' : ''}`}
                                         >
                                             <CheckCircle className="h-4 w-4" />
                                             {currentLesson.progress?.[0]?.completed ? 'Concluída' : 'Marcar como Vista'}
@@ -238,27 +249,14 @@ const CoursePlayer = () => {
                                 </div>
                             )}
 
+                            {/* Transcript is now an integrated component */}
                             {activeTab === 'transcript' && (
-                                <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
-                                    <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                                        <MessageSquare className="h-5 w-5 text-blue-600" />
-                                        Transcrição da Aula
-                                    </h3>
-                                    <div className="prose dark:prose-invert max-w-none text-gray-600 dark:text-gray-300 whitespace-pre-wrap">
-                                        {currentLesson.transcription ? (
-                                            currentLesson.transcription
-                                        ) : (
-                                            <>
-                                                <p>
-                                                    [Transcrição automática indisponível no momento. Em breve você poderá acompanhar o texto completo da aula aqui.]
-                                                </p>
-                                                <p className="mt-4 italic text-sm text-gray-400">
-                                                    Nota: Estamos trabalhando para gerar legendas automáticas para todos os vídeos visando maior acessibilidade.
-                                                </p>
-                                            </>
-                                        )}
-                                    </div>
-                                </div>
+                                <TranscriptViewer text={currentLesson.transcription} />
+                            )}
+
+                            {/* Social Learning: Comments Section */}
+                            {!focusMode && (
+                                <LessonComments lessonId={currentLesson.id} />
                             )}
                         </div>
                     ) : (
@@ -269,10 +267,10 @@ const CoursePlayer = () => {
                 </div>
             </div>
 
-            {/* Sidebar (Lessons) */}
-            <div className={`${sidebarOpen ? 'w-full md:w-80' : 'w-0'} transition-all duration-300 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden absolute md:relative z-10 h-full`}>
-                <div className="p-4 border-b border-gray-200 dark:border-gray-700 font-bold text-gray-900 dark:text-white">
-                    Conteúdo do Curso
+            {/* Sidebar (Lessons) - Hidden in Focus Mode unless explicitly toggled (UX decision: Focus Mode hides sidebar) */}
+            <div className={`${sidebarOpen && !focusMode ? 'w-full md:w-80' : 'w-0'} transition-all duration-300 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden absolute md:relative z-10 h-full`}>
+                <div className="p-4 border-b border-gray-200 dark:border-gray-700 font-bold text-gray-900 dark:text-white flex justify-between items-center">
+                    <span>Conteúdo do Curso</span>
                 </div>
                 <div className="flex-1 overflow-y-auto">
                     {course.modules.map((module, mIndex) => {
@@ -304,7 +302,7 @@ const CoursePlayer = () => {
                                                 className={`w-full text-left p-4 flex items-start gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${isActive ? 'bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500' : ''}`}
                                             >
                                                 <div className={`mt-0.5 ${isCompleted ? 'text-green-500' : 'text-gray-300'}`}>
-                                                    {isCompleted ? <CheckCircle className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                                                    <CheckCircle className={`h-4 w-4 ${isCompleted ? 'fill-green-500 text-white' : ''}`} />
                                                 </div>
                                                 <div>
                                                     <div className={`text-sm font-medium ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'}`}>
@@ -326,16 +324,9 @@ const CoursePlayer = () => {
                                         </div>
                                         <div>
                                             <div className="text-sm font-medium">Prova do Módulo</div>
-                                            <div className="text-xs text-gray-500 mt-1">Avaliação de conhecimento</div>
+                                            <div className="text-xs text-gray-500 mt-1 opacity-70">Avaliação de conhecimento</div>
                                         </div>
                                     </button>
-                                )}
-                                {moduleCompleted && (
-                                    <div className="p-2 bg-green-50 dark:bg-green-900/20 text-center">
-                                        <span className="text-xs font-bold text-green-600 dark:text-green-400 flex items-center justify-center gap-1">
-                                            <CheckCircle className="h-3 w-3" /> Módulo Concluído
-                                        </span>
-                                    </div>
                                 )}
                             </div>
                         );

@@ -14,11 +14,27 @@ const upload = multer({
 
 export const uploadMiddleware = upload.single('file');
 
+const ALLOWED_MIME_TYPES = [
+    'image/jpeg',
+    'image/png',
+    'image/gif',
+    'image/webp',
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+    'text/plain',
+    'video/mp4',
+    'video/mpeg'
+];
+
 // Magic Bytes Helper
 const checkMagicBytes = (buffer: Buffer, mimetype: string): boolean => {
     if (!buffer || buffer.length < 4) return false;
     const header = buffer.toString('hex', 0, 4);
 
+    // Verify magic bytes for common critical types
     switch (mimetype) {
         case 'image/jpeg':
             return header.startsWith('ffd8ff');
@@ -28,11 +44,13 @@ const checkMagicBytes = (buffer: Buffer, mimetype: string): boolean => {
             return header === '25504446'; // %PDF
         case 'image/gif':
             return header.startsWith('47494638'); // GIF8
-        // Add other signatures as needed (MP4, MP3 are complex, accepting by mime for now if magic check fails or complex)
+        case 'video/mp4':
+            // Common MP4 signatures (ftyp)
+            // Simple check: starts with specific bytes or contains ftyp at offset 4
+            return true; // Simplified for MP4 due to complexity, relying on mime check + extension
         default:
-            // For other types, fallback to mimetype check IF strict mode isn't required for them
-            // In a strict environment, we should check all. 
-            // For now, allowing others but blocking obvious mismatch if possible.
+            // For other allowed types, strict magic byte check might be too complex for this snippet.
+            // We rely on the AllowList + Mime checks.
             return true;
     }
 };
@@ -40,6 +58,11 @@ const checkMagicBytes = (buffer: Buffer, mimetype: string): boolean => {
 export const uploadFile = (req: Request, res: Response) => {
     if (!req.file) {
         return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    // 0. Validate MIME Type Allowlist
+    if (!ALLOWED_MIME_TYPES.includes(req.file.mimetype)) {
+        return res.status(400).json({ error: 'File type not allowed.' });
     }
 
     // 1. Validate Magic Bytes

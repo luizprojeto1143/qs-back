@@ -63,6 +63,16 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
                 return res.status(400).json({ error: 'Invalid Company ID format' });
             }
 
+            // Verify the company exists and is active
+            const targetCompany = await prisma.company.findFirst({
+                where: { id: contextCompanyId, active: true },
+                select: { id: true }
+            });
+
+            if (!targetCompany) {
+                return res.status(404).json({ error: 'Company not found or inactive' });
+            }
+
             verified.companyId = contextCompanyId;
         } else {
             // Ensure token companyId matches current DB state (in case user was moved)

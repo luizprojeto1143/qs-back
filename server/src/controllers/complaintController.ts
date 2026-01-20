@@ -1,12 +1,13 @@
 import { Request, Response } from 'express';
 import prisma from '../prisma';
 import { sendError500, ERROR_CODES } from '../utils/errorUtils';
+import { AuthRequest } from '../middleware/authMiddleware';
 
 export const complaintController = {
     // Criar nova denúncia
     async create(req: Request, res: Response) {
         try {
-            const user = (req as any).user;
+            const user = (req as AuthRequest).user;
             const {
                 companyId,
                 areaId,
@@ -24,6 +25,10 @@ export const complaintController = {
 
             if (!settings?.complaintsEnabled) {
                 return res.status(403).json({ error: 'Módulo de denúncias não está habilitado' });
+            }
+
+            if (!user) {
+                return res.status(401).json({ error: 'Unauthorized' });
             }
 
             const complaint = await prisma.complaint.create({
@@ -52,7 +57,11 @@ export const complaintController = {
         try {
             const { companyId } = req.params;
             const { status, severity } = req.query;
-            const user = (req as any).user;
+            const user = (req as AuthRequest).user;
+
+            if (!user) {
+                return res.status(401).json({ error: 'Unauthorized' });
+            }
 
             if (user.role !== 'MASTER' && user.role !== 'RH') {
                 return res.status(403).json({ error: 'Apenas MASTER e RH podem ver denúncias' });
@@ -90,7 +99,7 @@ export const complaintController = {
     async get(req: Request, res: Response) {
         try {
             const { id } = req.params;
-            const user = (req as any).user;
+            const user = (req as AuthRequest).user;
 
             const complaint = await prisma.complaint.findUnique({
                 where: { id },
@@ -106,6 +115,10 @@ export const complaintController = {
             }
 
             // Permissão de Visualização
+            if (!user) {
+                return res.status(401).json({ error: 'Unauthorized' });
+            }
+
             if (user.role === 'RH') {
                 // RH só vê se estiver encaminhado ou resolvido
                 if (!['ENCAMINHADO_RH', 'RESOLVIDO'].includes(complaint.status)) {
@@ -126,9 +139,9 @@ export const complaintController = {
         try {
             const { id } = req.params;
             const { translation } = req.body;
-            const user = (req as any).user;
+            const user = (req as AuthRequest).user;
 
-            if (user.role !== 'MASTER') {
+            if (!user || user.role !== 'MASTER') {
                 return res.status(403).json({ error: 'Sem permissão' });
             }
 
@@ -151,9 +164,9 @@ export const complaintController = {
         try {
             const { id } = req.params;
             const { severity, category } = req.body;
-            const user = (req as any).user;
+            const user = (req as AuthRequest).user;
 
-            if (user.role !== 'MASTER') {
+            if (!user || user.role !== 'MASTER') {
                 return res.status(403).json({ error: 'Sem permissão' });
             }
 
@@ -191,9 +204,9 @@ export const complaintController = {
         try {
             const { id } = req.params;
             const { rhNotes } = req.body;
-            const user = (req as any).user;
+            const user = (req as AuthRequest).user;
 
-            if (user.role !== 'MASTER') {
+            if (!user || user.role !== 'MASTER') {
                 return res.status(403).json({ error: 'Sem permissão' });
             }
 
@@ -218,7 +231,8 @@ export const complaintController = {
                 }
             });
 
-            // TODO: Enviar notificação ao RH
+            // FUTURE: Implement email notification to RH via MailService
+            // For now, RH checks the dashboard manually.
 
             res.json(complaint);
         } catch (error) {
@@ -231,9 +245,9 @@ export const complaintController = {
         try {
             const { id } = req.params;
             const { reason } = req.body;
-            const user = (req as any).user;
+            const user = (req as AuthRequest).user;
 
-            if (user.role !== 'MASTER') {
+            if (!user || user.role !== 'MASTER') {
                 return res.status(403).json({ error: 'Sem permissão' });
             }
 
@@ -267,9 +281,9 @@ export const complaintController = {
         try {
             const { id } = req.params;
             const { resolution } = req.body;
-            const user = (req as any).user;
+            const user = (req as AuthRequest).user;
 
-            if (user.role !== 'MASTER' && user.role !== 'RH') {
+            if (!user || (user.role !== 'MASTER' && user.role !== 'RH')) {
                 return res.status(403).json({ error: 'Sem permissão' });
             }
 

@@ -162,7 +162,7 @@ export const login = async (req: Request, res: Response) => {
         try {
             await logAction(user.id, ACTIONS.LOGIN, 'AUTH', { role: user.role }, user.companyId, getIp(req), getUserAgent(req));
         } catch (logError) {
-            console.error('[Login] Warning: Audit log failed but login succeeded', logError);
+            console.warn('[Login] Audit log failed but login succeeded', logError);
         }
     } catch (error) {
         sendError500(res, ERROR_CODES.AUTH_LOGIN, error);
@@ -248,7 +248,6 @@ export const getProfile = async (req: Request, res: Response) => {
         // Remove password from response
         const { password, ...userWithoutPassword } = user;
         res.json({ user: userWithoutPassword });
-        // ... existing codes
     } catch (error) {
         sendError500(res, ERROR_CODES.AUTH_GET_PROFILE, error);
     }
@@ -259,7 +258,7 @@ export const setup2FA = async (req: Request, res: Response) => {
         const userId = (req as AuthRequest).user?.userId;
         if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
-        const secret = speakeasy.generateSecret({ length: 20, name: `QS Inclusao (${(req as AuthRequest).user?.email})` });
+        const secret = speakeasy.generateSecret({ length: 20, name: 'QS Inclusao' });
 
         // Save secret to DB (but keep 2fa disabled until verified)
         await prisma.user.update({

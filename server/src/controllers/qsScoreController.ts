@@ -35,10 +35,40 @@ const getClassification = (score: number): string => {
     return 'CRITICO';
 };
 
+// Score calculation constants
+const SCORE_WEIGHTS = {
+    RESOLUTION_RATE: 350,
+    VISIT_FREQUENCY: 250,
+    EVALUATION_QUALITY: 200,
+    CLEAN_AREA_BONUS: 50,
+    LOW_RESOLUTION_PENALTY: 100,
+    NO_VISITS_PENALTY: 200,
+    PENDING_ITEM_PENALTY: 50,
+    PENDING_ITEM_MAX_PENALTY: 500,
+    LEADERSHIP_PENDING_PENALTY: 30,
+    LEADERSHIP_PENDING_MAX_PENALTY: 300,
+    VISIT_SCORE_PER_VISIT: 25,
+    WEEKS_SILENCE_PENALTY: 100,
+    HIGH_COMPLAINTS_PENALTY: 100,
+    SOME_COMPLAINTS_BONUS: 100,
+    FAST_RESOLUTION_BONUS: 100, // <= 7 days
+    MEDIUM_RESOLUTION_BONUS: 50, // <= 15 days
+    SLOW_RESOLUTION_PENALTY: 100, // > 15 days
+    VERY_SLOW_RESOLUTION_PENALTY: 300, // > 30 days
+    LOW_EVAL_PENALTY: 100
+};
+
+const SCORE_THRESHOLDS = {
+    EXCELLENT: 800,
+    GOOD: 600,
+    ATTENTION: 400,
+    RISK: 200
+};
+
 // Cor para o mapa de risco
 const getRiskColor = (score: number): string => {
-    if (score >= 600) return 'green';
-    if (score >= 400) return 'yellow';
+    if (score >= SCORE_THRESHOLDS.GOOD) return 'green';
+    if (score >= SCORE_THRESHOLDS.ATTENTION) return 'yellow';
     return 'red';
 };
 
@@ -205,8 +235,8 @@ const fetchAreaData = async (areaId: string): Promise<AreaScoreInput> => {
         leadershipPendingItemsCount,
         latestComplaint
     ] = await Promise.all([
-        prisma.pendingItem.count({ where: { areaId, status: { in: ['PENDING', 'IN_PROGRESS'] } } }),
-        prisma.pendingItem.count({ where: { areaId, status: 'RESOLVED' } }),
+        prisma.pendingItem.count({ where: { areaId, status: 'PENDENTE' } }),
+        prisma.pendingItem.count({ where: { areaId, status: { in: ['RESOLVIDA', 'CONCLUIDA'] } } }),
         prisma.visit.findMany({
             where: { areaId, createdAt: { gte: ninetyDaysAgo } },
             select: { evaluations: true }
@@ -225,7 +255,7 @@ const fetchAreaData = async (areaId: string): Promise<AreaScoreInput> => {
         prisma.pendingItem.count({
             where: {
                 areaId,
-                status: { in: ['PENDING', 'IN_PROGRESS'] },
+                status: 'PENDENTE',
                 responsible: { contains: 'Lider', mode: 'insensitive' }
             }
         }),
@@ -305,18 +335,35 @@ export const qsScoreController = {
             // Hard to filter "latest" in pure Prisma efficiently without raw query.
             // Fallback: Promise.all simples (ainda N queries mas leve pois é select simples na tabela de score indexada)
 
-            const areasRisk = await Promise.all(areas.map(async (area) => {
-                const score = await prisma.qSScore.findFirst({
-                    where: { companyId, areaId: area.id },
-                    orderBy: { calculatedAt: 'desc' }
-                });
+            // OTIMIZAÇÃO: Buscar todos os scores recentes da empresa de uma vez
+            const allScores = await prisma.qSScore.findMany({
+                where: { companyId, areaId: { not: null } },
+                orderBy: { calculatedAt: 'desc' },
+                // Precisamos de histórico para pegar o mais recente? 
+                // Se pegarmos todos, podemos filtrar em memória. 
+                // Infelizmente não dá pra fazer "distinct on" nativo facilmente aqui.
+                // Limitando a busca para não pegar histórico infinito?
+                // Vamos pegar os últimos 30 dias de calculo ou limitar 1000 records.
+                take: 1000
+            });
+
+            // Criar Map: AreaId -> Score mais recente
+            const latestScoreMap = new Map();
+            for (const s of allScores) {
+                if (s.areaId && !latestScoreMap.has(s.areaId)) {
+                    latestScoreMap.set(s.areaId, s);
+                }
+            }
+
+            const areasRisk = areas.map(area => {
+                const score = latestScoreMap.get(area.id);
                 return {
                     id: area.id,
                     name: area.name,
                     score: score?.score || 0,
                     classification: score?.classification || 'CRITICO'
                 };
-            }));
+            });
 
             const criticalAreasCount = areasRisk.filter(a => a.classification === 'CRITICO' || a.classification === 'RISCO').length;
 
@@ -379,13 +426,23 @@ export const qsScoreController = {
             // Para o mapa de risco detalhado, se quisermos realtime, teríamos que recalcular.
             // Mas vamos assumir que o "Recalculate" é a ação para atualizar.
             // Aqui buscamos o cache do banco.
-            const riskMap = await Promise.all(areas.map(async (area) => {
-                const score = await prisma.qSScore.findFirst({
-                    where: { companyId, areaId: area.id },
-                    orderBy: { calculatedAt: 'desc' }
-                });
+            // OTIMIZAÇÃO: Buscar todos os scores em lote
+            const allScores = await prisma.qSScore.findMany({
+                where: { companyId, areaId: { not: null } },
+                orderBy: { calculatedAt: 'desc' },
+                take: 1000
+            });
 
-                // Se não tem score, talvez calcular on-the-fly? Não, melhor retornar 0/Critico
+            const latestScoreMap = new Map();
+            for (const s of allScores) {
+                if (s.areaId && !latestScoreMap.has(s.areaId)) {
+                    latestScoreMap.set(s.areaId, s);
+                }
+            }
+
+            const riskMap = areas.map(area => {
+                const score = latestScoreMap.get(area.id);
+
                 return {
                     areaId: area.id,
                     areaName: area.name,
@@ -396,7 +453,7 @@ export const qsScoreController = {
                     color: getRiskColor(score?.score || 0),
                     factors: score?.factors ? JSON.parse(score.factors) : {},
                 };
-            }));
+            });
 
             res.json({
                 companyId,
@@ -450,13 +507,13 @@ export const qsScoreController = {
             // Pending Items Open
             prisma.pendingItem.groupBy({
                 by: ['areaId'],
-                where: { areaId: { in: areaIds }, status: { in: ['PENDING', 'IN_PROGRESS'] } },
+                where: { areaId: { in: areaIds }, status: 'PENDENTE' },
                 _count: true
             }),
             // Pending Items Resolved
             prisma.pendingItem.groupBy({
                 by: ['areaId'],
-                where: { areaId: { in: areaIds }, status: 'RESOLVED' },
+                where: { areaId: { in: areaIds }, status: { in: ['RESOLVIDA', 'CONCLUIDA'] } },
                 _count: true
             }),
             // Visits (Need raw for evaluations)
@@ -477,16 +534,11 @@ export const qsScoreController = {
             }),
             // Leadership Pending Items
             prisma.pendingItem.count({
-                // Count not supported with complex filter in groupBy easily, let's do findMany id
-                // actually count with groupBy DOES support where.
-                // But current prisma version check?
                 where: {
                     areaId: { in: areaIds },
-                    status: { in: ['PENDING', 'IN_PROGRESS'] },
+                    status: 'PENDENTE',
                     responsible: { contains: 'Lider', mode: 'insensitive' }
                 }
-                // Wait, count({ where: ... }) returns total.
-                // We need groupBy.
             }) as any // Fallback to fetching raw if groupBy is limited on contains
         ]);
 
@@ -494,7 +546,7 @@ export const qsScoreController = {
         const leadershipItems = await prisma.pendingItem.findMany({
             where: {
                 areaId: { in: areaIds },
-                status: { in: ['PENDING', 'IN_PROGRESS'] },
+                status: 'PENDENTE',
                 responsible: { contains: 'Lider', mode: 'insensitive' }
             },
             select: { areaId: true }

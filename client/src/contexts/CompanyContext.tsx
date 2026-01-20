@@ -7,6 +7,7 @@ interface Company {
     cnpj: string;
     logo?: string;
     universityEnabled?: boolean;
+    talentManagementEnabled?: boolean;
     systemSettings?: {
         rhCanSeeQSScore?: boolean;
         rhCanSeeRiskMap?: boolean;
@@ -22,6 +23,7 @@ interface CompanyContextType {
     error: string | null;
     apiUrl: string;
     refreshCompanies: () => void;
+    company?: Company;
 }
 
 const CompanyContext = createContext<CompanyContextType>({
@@ -100,8 +102,10 @@ export const CompanyProvider: React.FC<{ children: React.ReactNode }> = ({ child
         // window.location.reload(); // Removed reload to allow reactive updates
     };
 
+    const company = companies.find(c => c.id === selectedCompanyId);
+
     return (
-        <CompanyContext.Provider value={{ companies, selectedCompanyId, selectCompany, loading, error, apiUrl, refreshCompanies }}>
+        <CompanyContext.Provider value={{ companies, selectedCompanyId, selectCompany, loading, error, apiUrl, refreshCompanies, company }}>
             {children}
         </CompanyContext.Provider>
     );

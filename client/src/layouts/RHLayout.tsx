@@ -18,25 +18,7 @@ import {
 } from 'lucide-react';
 import { useLibrasAvailability } from '../hooks/useLibrasAvailability';
 
-const SidebarItem = ({ icon: Icon, label, path, active, onClick }: any) => {
-    const navigate = useNavigate();
-    return (
-        <button
-            onClick={() => {
-                navigate(path);
-                if (onClick) onClick();
-            }}
-            className={`
-        w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors ${active
-                    ? 'bg-blue-600 text-white font-medium shadow-lg shadow-blue-900/50'
-                    : 'text-gray-400 hover:bg-white/5 hover:text-white'
-                }`}
-        >
-            <Icon className={`h-5 w-5 ${active ? 'text-white' : 'text-gray-400 group-hover:text-white'}`} />
-            <span>{label}</span>
-        </button>
-    );
-};
+import { SidebarItem } from '../components/SidebarItem';
 
 import { useCompany } from '../contexts/CompanyContext';
 import { InstallButton } from '../components/InstallButton';

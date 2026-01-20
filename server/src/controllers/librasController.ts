@@ -81,7 +81,6 @@ export const checkAvailability = async (req: Request, res: Response) => {
         res.json({ available: isAvailable });
 
     } catch (error) {
-        console.error('Error checking libras availability:', error);
         // Fail safe: unavailable
         res.json({ available: false, reason: 'System error' });
     }
@@ -101,7 +100,6 @@ export const getSettings = async (req: Request, res: Response) => {
 
         res.json(company?.librasAvailability ? JSON.parse(company.librasAvailability) : {});
     } catch (error) {
-        console.error('Error fetching libras settings:', error);
         // Fail safe: empty settings (default UI)
         res.json({});
     }
@@ -115,7 +113,6 @@ export const updateSettings = async (req: Request, res: Response) => {
         }
 
         const settings = req.body;
-        console.log('Updating Libras settings for company:', user.companyId, JSON.stringify(settings));
 
         await prisma.company.update({
             where: { id: user.companyId },

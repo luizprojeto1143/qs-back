@@ -42,18 +42,41 @@ export const createPDI = async (req: Request, res: Response) => {
 export const listPDIs = async (req: Request, res: Response) => {
     try {
         const user = (req as AuthRequest).user;
-        const companyId = req.headers['x-company-id'] as string || user?.companyId;
-        const page = parseInt(req.query.page as string) || 1;
-        const limit = parseInt(req.query.limit as string) || 20;
-        const skip = (page - 1) * limit;
+
+        if (!user) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        const companyId = req.headers['x-company-id'] as string || user.companyId;
 
         if (!companyId) {
             return res.status(400).json({ error: 'Company context required' });
         }
 
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 20;
+        const skip = (page - 1) * limit;
+
+        // Role-based filtering
+        const where: any = { companyId };
+
+        if (user.role === 'COLABORADOR') {
+            where.userId = user.userId;
+        } else if (user.role === 'LIDER' && user.areaId) {
+            // Leaders see their own PDIs and PDIs of collaborators in their area
+            // Logic: PDI owner has same areaId? PDI model doesn't store areaId directly, only user link.
+            // We need to filter by users in the area.
+            // Prisma 'some' filter on relation
+            where.user = {
+                collaboratorProfile: {
+                    areaId: user.areaId
+                }
+            };
+        }
+
         const [pdis, total] = await Promise.all([
             prisma.pDI.findMany({
-                where: { companyId },
+                where,
                 include: {
                     user: {
                         select: {
@@ -99,10 +122,17 @@ export const updatePDI = async (req: Request, res: Response) => {
 
         if (!user || !user.companyId) return res.status(401).json({ error: 'Unauthorized' });
 
-        // IDOR CHECK: Ensure PDI belongs to user's company
-        const existingPDI = await prisma.pDI.findFirst({
-            where: { id, companyId: user.companyId }
-        });
+        // IDOR CHECK: Ensure PDI belongs to user's company and permissions
+        const where: any = { id, companyId: user.companyId };
+
+        if (!['MASTER', 'RH'].includes(user.role)) {
+            // LIDER and COLABORADOR can only update their own PDIs (or Leader can update their team?? Assuming only own for now like create)
+            // If the rule is "Leader manages PDI of team", we need to check area.
+            // For safety, let's allow users to edit only their OWN PDI for now unless specified otherwise.
+            where.userId = user.userId;
+        }
+
+        const existingPDI = await prisma.pDI.findFirst({ where });
 
         if (!existingPDI) {
             return res.status(404).json({ error: 'PDI not found or access denied' });
@@ -132,9 +162,13 @@ export const deletePDI = async (req: Request, res: Response) => {
         if (!user || !user.companyId) return res.status(401).json({ error: 'Unauthorized' });
 
         // IDOR CHECK
-        const existingPDI = await prisma.pDI.findFirst({
-            where: { id, companyId: user.companyId }
-        });
+        const where: any = { id, companyId: user.companyId };
+
+        if (!['MASTER', 'RH'].includes(user.role)) {
+            where.userId = user.userId;
+        }
+
+        const existingPDI = await prisma.pDI.findFirst({ where });
 
         if (!existingPDI) {
             return res.status(404).json({ error: 'PDI not found or access denied' });

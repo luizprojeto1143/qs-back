@@ -7,6 +7,8 @@ import authRoutes from './routes/auth.routes';
 import companyRoutes from './routes/company.routes';
 import universityRoutes from './routes/university.routes';
 import qsInclusionRoutes from './routes/qsInclusion.routes';
+import talentRoutes from './routes/talent.routes';
+
 
 // Import Controllers for remaining inline routes
 import * as collaboratorController from './controllers/collaboratorController';
@@ -37,13 +39,16 @@ const router = Router();
 // Mount Modular Routes
 router.use('/auth', authRoutes);
 router.use('/', companyRoutes); // Mounts /companies, /sectors, /areas, /structure, /public/areas
-router.use('/', universityRoutes); // Mounts /courses, etc.
 
 
 router.get('/status', healthController.checkStatus);
 
 // Protected Routes Middleware (for inline routes)
 router.use(authenticateToken);
+
+router.use('/', universityRoutes); // Mounts /courses, etc.
+router.use('/', talentRoutes); // Mounts /cycles, /reviews
+
 
 // User Profile Route
 router.get('/me', authController.getProfile);
@@ -75,7 +80,7 @@ router.put('/pendencies/:id', requireRole(['MASTER', 'RH', 'LIDER']), pendencyCo
 router.delete('/pendencies/:id', requireRole(['MASTER', 'RH']), pendencyController.deletePendency);
 
 // Schedule Routes
-router.post('/schedules', scheduleController.createSchedule);
+router.post('/schedules', requireRole(['MASTER', 'RH', 'LIDER', 'COLABORADOR']), scheduleController.createSchedule);
 router.get('/schedules', scheduleController.listSchedules);
 router.put('/schedules/:id', requireRole(['MASTER', 'RH']), scheduleController.updateScheduleStatus);
 
@@ -133,13 +138,12 @@ router.post('/specialties', requireRole(['MASTER', 'RH']), specialtyController.c
 router.delete('/specialties/:id', requireRole(['MASTER', 'RH']), specialtyController.deleteSpecialty);
 
 // PDI Routes
-router.post('/pdis', pdiController.createPDI);
-router.get('/pdis', pdiController.listPDIs);
-router.put('/pdis/:id', pdiController.updatePDI);
-router.delete('/pdis/:id', pdiController.deletePDI);
+router.post('/pdis', requireRole(['MASTER', 'RH', 'LIDER', 'COLABORADOR']), pdiController.createPDI);
+router.get('/pdis', requireRole(['MASTER', 'RH', 'LIDER', 'COLABORADOR']), pdiController.listPDIs);
+router.put('/pdis/:id', requireRole(['MASTER', 'RH', 'LIDER', 'COLABORADOR']), pdiController.updatePDI);
+router.delete('/pdis/:id', requireRole(['MASTER', 'RH']), pdiController.deletePDI);
 
 // User Management (MASTER only)
-// User Management
 router.get('/users', requireRole(['MASTER', 'RH', 'LIDER']), userController.listUsers);
 
 // Days Off Routes

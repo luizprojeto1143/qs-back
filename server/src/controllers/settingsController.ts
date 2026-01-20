@@ -141,7 +141,7 @@ export const getFeedCategories = async (req: Request, res: Response) => {
         });
         res.json(categories || []);
     } catch (error) {
-        console.error('Error fetching feed categories:', error);
+        // Log error but return empty array to prevent UI crash
         res.json([]);
     }
 };
@@ -204,12 +204,8 @@ export const getShifts = async (req: Request, res: Response) => {
             where: { companyId: user.companyId, active: true },
             orderBy: { name: 'asc' }
         });
-        // Return empty array if no shifts found instead of error, or just empty list
         res.json(shifts || []);
     } catch (error) {
-        console.error('Error fetching shifts:', error);
-        // @ts-ignore
-        console.error('Shifts Error Details:', error.message);
         // Return empty array instead of crashing UI
         res.json([]);
     }
@@ -307,15 +303,11 @@ export const deleteShift = async (req: Request, res: Response) => {
 // Availability
 export const getAvailability = async (req: Request, res: Response) => {
     try {
-        console.log('[Settings] Entering getAvailability...');
         const user = (req as AuthRequest).user;
-        console.log('[Settings] User context:', user);
 
         if (!user || !user.companyId) {
-            console.log('[Settings] Missing user or companyId');
             return res.status(400).json({ error: 'User or Company not found' });
         }
-
 
         const company = await prisma.company.findFirst({
             where: { id: user.companyId },
@@ -333,7 +325,6 @@ export const getAvailability = async (req: Request, res: Response) => {
 
         res.json(parsedAvailability);
     } catch (error) {
-        console.error('Error fetching availability:', error);
         // Return empty object instead of 500 to allow UI to render default form
         res.json({});
     }

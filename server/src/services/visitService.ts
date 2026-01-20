@@ -1,5 +1,9 @@
 import prisma from '../prisma'; // Use global configured instance
 
+interface EvaluationCriteria {
+    [key: string]: number;
+}
+
 interface CreateVisitData {
     date?: string | Date; // Now optional - will default to current date
     time?: string;
@@ -16,9 +20,9 @@ interface CreateVisitData {
         audioColaborador?: string | null;
     };
     avaliacoes?: {
-        area?: any;
-        lideranca?: any;
-        colaborador?: any;
+        area?: EvaluationCriteria;
+        lideranca?: EvaluationCriteria;
+        colaborador?: EvaluationCriteria;
     };
     pendencias?: Array<{
         responsible: string;
@@ -101,13 +105,14 @@ export class VisitService {
             // Helper to format evaluations for DB
             const evaluationsToCreate: any[] = [];
 
-            const processEvaluations = (type: string, data: any) => {
+            const processEvaluations = (type: string, data: unknown) => {
                 if (data && typeof data === 'object') {
-                    Object.entries(data).forEach(([criteria, value]) => {
+                    Object.entries(data as Record<string, unknown>).forEach(([criteria, value]) => {
+                        const rating = typeof value === 'number' ? value : (value ? 1 : 0);
                         evaluationsToCreate.push({
                             type,
                             criteria,
-                            rating: typeof value === 'number' ? value : (value ? 1 : 0), // Handle numeric or boolean/string ratings
+                            rating,
                             comment: null // Future: allow comments per criteria
                         });
                     });
@@ -116,7 +121,6 @@ export class VisitService {
 
             processEvaluations('AREA', safeData.avaliacoes?.area);
             processEvaluations('LIDERANCA', safeData.avaliacoes?.lideranca);
-            processEvaluations('LIDERANCA', safeData.avaliacoes?.colaborador); // Typos in original? Assuming COLABORADOR
             processEvaluations('COLABORADOR', safeData.avaliacoes?.colaborador);
 
 
@@ -127,7 +131,7 @@ export class VisitService {
                     time: data.time,
                     companyId: data.companyId,
                     areaId: data.areaId,
-                    masterId: masterUser?.id || safeData.masterId || '', // Direct User ID associated with "MasterVisits"
+                    masterId: masterUser?.id || safeData.masterId || (() => { throw new Error("Master ID obrigatorio") })(),
                     relatoLideranca: safeData.relatos?.lideranca,
                     relatoColaborador: safeData.relatos?.colaborador,
                     relatoConsultoria: safeData.relatos?.consultoria,

@@ -1,7 +1,12 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../lib/api';
 import { useNavigate } from 'react-router-dom';
-import { Play, Clock, BookOpen, Search, CheckCircle, TrendingUp, Zap } from 'lucide-react';
+import {
+    Play, Clock, Search, CheckCircle, TrendingUp, Zap,
+    Target, Brain, Award, ChevronRight, MoreHorizontal,
+    BarChart3, Shield, Users
+} from 'lucide-react';
+import { LearningTrailMap } from './components/LearningTrailMap';
 
 interface Course {
     id: string;
@@ -18,9 +23,22 @@ const CourseCatalog = () => {
     const [courses, setCourses] = useState<Course[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedCategory, setSelectedCategory] = useState('Todos');
-
+    const [showTrailMap, setShowTrailMap] = useState(false);
     const navigate = useNavigate();
+
+    // Mock Data for Trail Map (until connected to real backend fully)
+    const mockTrailNodes = courses.slice(0, 4).map((c, i) => ({
+        id: c.id,
+        title: c.title,
+        type: 'COURSE' as const,
+        status: i === 0 ? 'IN_PROGRESS' : i === 1 ? 'UNLOCKED' : 'LOCKED' as any,
+        data: {
+            description: c.description,
+            coverUrl: c.coverUrl,
+            duration: c.duration,
+            progress: c.enrollments?.[0]?.progress || 0
+        }
+    }));
 
     useEffect(() => {
         const fetchCourses = async () => {
@@ -36,18 +54,16 @@ const CourseCatalog = () => {
         fetchCourses();
     }, []);
 
-    const uniqueCategories = ['Todos', ...Array.from(new Set(courses.map(c => c.category)))];
-
-    const filteredCourses = courses.filter(course => {
-        const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            course.description.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesCategory = selectedCategory === 'Todos' ? true : course.category === selectedCategory;
-
-        return matchesSearch && matchesCategory;
-    });
-
+    // Derived State for Dashboard
     const inProgressCourses = courses.filter(c => c.enrollments && c.enrollments.length > 0 && !c.enrollments[0].completed);
-    const featuredCourse = courses.find(c => c.coverUrl) || courses[0];
+    const completedCourses = courses.filter(c => c.enrollments && c.enrollments[0]?.completed);
+
+    // Simulating "My Current Trail" - taking the first in-progress or first available
+    const currentMainCourse = inProgressCourses[0] || courses[0];
+
+    // Simulating "AI Suggestion" - taking a random course not started
+    const notStartedCourses = courses.filter(c => !c.enrollments || c.enrollments.length === 0);
+    const suggestionCourse = notStartedCourses.length > 0 ? notStartedCourses[0] : courses[1];
 
     if (loading) return (
         <div className="flex items-center justify-center min-h-[60vh]">
@@ -57,218 +73,297 @@ const CourseCatalog = () => {
 
     return (
         <div className="space-y-8 pb-24 animate-in fade-in duration-500">
-            {/* Header Moderno */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h1 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">
-                        Universidade Corporativa
-                    </h1>
-                    <p className="text-gray-500 dark:text-gray-400 font-medium mt-1">
-                        Evolua sua carreira, um play de cada vez. 🚀
-                    </p>
+
+            {/* 1. HERO SECTION */}
+            <div className="relative rounded-3xl overflow-hidden min-h-[400px] flex items-center shadow-2xl group">
+                {/* Background Image with Overlay */}
+                <div className="absolute inset-0 z-0">
+                    <img
+                        src="https://images.unsplash.com/photo-1614728853913-1e22ba863010?q=80&w=1600&auto=format&fit=crop"
+                        className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+                        alt="Hero Data"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-900/80 to-transparent"></div>
                 </div>
 
-                {/* Search Bar Flutuante */}
-                <div className="relative w-full md:w-72 group">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Search className="h-5 w-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
+                <div className="relative z-10 p-8 md:p-16 max-w-3xl">
+                    <div className="flex items-center gap-2 mb-4">
+                        <div className="h-1 w-12 bg-blue-500 rounded-full"></div>
+                        <span className="text-blue-400 font-bold tracking-wider text-sm uppercase">Universidade Corporativa ELITE</span>
                     </div>
-                    <input
-                        type="text"
-                        placeholder="O que vamos aprender hoje?"
-                        className="block w-full pl-10 pr-3 py-3 border-none rounded-2xl bg-white dark:bg-gray-800 shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 focus:ring-2 focus:ring-blue-500 transition-all"
-                        value={searchTerm}
-                        onChange={e => setSearchTerm(e.target.value)}
-                    />
+                    <h1 className="text-4xl md:text-6xl font-black text-white mb-6 leading-tight">
+                        Prepare-se para o <br />
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">Futuro da Empresa</span>
+                    </h1>
+                    <p className="text-gray-300 text-lg mb-8 max-w-xl leading-relaxed">
+                        Trilhas de aprendizagem personalizadas, inovação e crescimento profissional acelerado com inteligência artificial.
+                    </p>
+                    <button
+                        onClick={() => currentMainCourse && navigate(`/app/university/course/${currentMainCourse.id}`)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl font-bold shadow-lg shadow-blue-500/30 transition-all transform hover:-translate-y-1 flex items-center gap-3"
+                    >
+                        <Play className="fill-current h-5 w-5" />
+                        Iniciar Minha Trilha
+                    </button>
                 </div>
             </div>
 
-            {/* Continue Learning Section (Horizontal Scroll) */}
-            {inProgressCourses.length > 0 && (
-                <div className="space-y-4">
-                    <div className="flex items-center gap-2 text-gray-900 dark:text-white font-bold text-lg">
-                        <Zap className="h-5 w-5 text-yellow-500 fill-current" />
-                        Continue de onde parou
+            {/* 2. DASHBOARD WIDGETS ROW */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                {/* Widget 1: Minha Trilha Atual */}
+                {currentMainCourse ? (
+                    <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-0 overflow-hidden relative shadow-lg border border-gray-700/50 group cursor-pointer"
+                        onClick={() => navigate(`/app/university/course/${currentMainCourse.id}`)}>
+                        <div className="absolute inset-0">
+                            <img src={currentMainCourse.coverUrl || 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=400'} className="w-full h-full object-cover opacity-40 mix-blend-overlay transition-transform duration-700 group-hover:scale-110" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent"></div>
+                        </div>
+                        <div className="relative p-6 h-full flex flex-col justify-end min-h-[200px]">
+                            <div className="inline-flex items-center gap-2 bg-yellow-500/20 text-yellow-400 px-3 py-1 rounded-full text-xs font-bold w-fit mb-2 backdrop-blur-sm">
+                                <Zap className="h-3 w-3 fill-current" />
+                                Em Andamento
+                            </div>
+                            <h3 className="text-xl font-bold text-white mb-1 line-clamp-2">{currentMainCourse.title}</h3>
+                            <div className="w-full bg-gray-700/50 h-1.5 rounded-full mt-3 overflow-hidden">
+                                <div className="bg-yellow-500 h-full rounded-full" style={{ width: `${currentMainCourse.enrollments?.[0]?.progress || 0}%` }}></div>
+                            </div>
+                            <div className="flex justify-between items-center mt-4">
+                                <button className="text-white text-sm font-bold flex items-center gap-1 group-hover:gap-2 transition-all">
+                                    Continuar <ChevronRight className="h-4 w-4" />
+                                </button>
+                                <span className="text-xs text-gray-400">{currentMainCourse.enrollments?.[0]?.progress || 0}%</span>
+                            </div>
+                        </div>
                     </div>
-                    <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x">
-                        {inProgressCourses.map(course => (
-                            <div
-                                key={course.id}
-                                onClick={() => navigate(`/app/university/course/${course.id}`)}
-                                className="min-w-[280px] md:min-w-[320px] bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700 cursor-pointer hover:shadow-md transition-all snap-start"
-                            >
-                                <div className="flex gap-4">
-                                    <div className="h-20 w-20 rounded-xl bg-gray-200 dark:bg-gray-700 flex-shrink-0 overflow-hidden">
-                                        {course.coverUrl ? (
-                                            <img src={course.coverUrl} className="w-full h-full object-cover" />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600">
-                                                <Play className="h-8 w-8 text-white/50" />
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <h3 className="font-bold text-gray-900 dark:text-white truncate">{course.title}</h3>
-                                        <p className="text-xs text-gray-500 mt-1">{course.category}</p>
-                                        <div className="mt-3">
-                                            <div className="flex justify-between text-xs font-medium mb-1">
-                                                <span className="text-blue-600">{course.enrollments[0].progress}%</span>
-                                            </div>
-                                            <div className="w-full h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                                                <div
-                                                    className="h-full bg-blue-600 rounded-full transition-all duration-500"
-                                                    style={{ width: `${course.enrollments[0].progress}%` }}
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
+                ) : (
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 flex flex-col items-center justify-center text-center border border-gray-100 dark:border-gray-700">
+                        <Play className="h-10 w-10 text-gray-300 mb-2" />
+                        <p className="text-gray-500">Nenhum curso em andamento</p>
+                    </div>
+                )}
+
+                {/* Widget 2: Metas da Semana */}
+                <div className="bg-gradient-to-br from-blue-900 to-slate-900 rounded-2xl p-6 relative overflow-hidden shadow-lg border border-blue-800/30">
+                    <div className="absolute top-0 right-0 p-4 opacity-10">
+                        <Target className="h-24 w-24 text-blue-400" />
+                    </div>
+                    <h3 className="text-gray-400 font-medium text-sm mb-1">Metas da Semana</h3>
+                    <div className="text-2xl font-bold text-white mb-4">Alcançar 3 KPIs</div>
+
+                    <div className="flex items-center gap-4">
+                        <div className="flex-1">
+                            <div className="flex justify-between text-xs text-blue-200 mb-1">
+                                <span>Progresso</span>
+                                <span>2/3</span>
+                            </div>
+                            <div className="w-full bg-blue-950 h-2 rounded-full overflow-hidden">
+                                <div className="bg-blue-400 h-full rounded-full w-2/3 shadow-[0_0_10px_rgba(96,165,250,0.5)]"></div>
+                            </div>
+                        </div>
+                        <div className="flex items-center justify-center h-12 w-12 rounded-full border-4 border-blue-500/30 border-t-blue-400">
+                            <span className="text-xs font-bold text-blue-100">66%</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Widget 3: Sugestão da IA */}
+                {suggestionCourse && (
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-20 h-20 bg-purple-500/10 rounded-bl-full -mr-4 -mt-4 transition-all group-hover:scale-150"></div>
+                        <div className="flex items-start justify-between mb-4">
+                            <div>
+                                <div className="flex items-center gap-1 text-purple-600 dark:text-purple-400 text-xs font-bold uppercase tracking-wider mb-1">
+                                    <Brain className="h-3 w-3" />
+                                    Sugestão da IA
+                                </div>
+                                <h3 className="font-bold text-gray-900 dark:text-white line-clamp-1">{suggestionCourse.title}</h3>
+                            </div>
+                        </div>
+                        <div className="flex gap-4 items-center">
+                            <img src={suggestionCourse.coverUrl || 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=200'} className="w-16 h-16 rounded-lg object-cover bg-gray-100" />
+                            <div>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mb-2">{suggestionCourse.description}</p>
+                                <button
+                                    onClick={() => navigate(`/app/university/course/${suggestionCourse.id}`)}
+                                    className="text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-3 py-1.5 rounded-md font-bold hover:bg-purple-200 transition-colors"
+                                >
+                                    Saiba Mais
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* 3. LEARNING TRAILS (Horizontal Scroll) */}
+            <div>
+                <div className="flex items-center justify-between mb-4 px-1">
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                        <TrendingUp className="h-5 w-5 text-gray-400" />
+                        Trilhas de Aprendizagem
+                    </h3>
+                    <button className="text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1">
+                        Ver Todos <ChevronRight className="h-4 w-4" />
+                    </button>
+                </div>
+
+                <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x">
+                    {/* Mock Trails based on Course Categories */}
+                    {['Liderança Estratégica', 'Excelência Operacional', 'Cultura Inclusiva', 'Inovação Digital'].map((trail, index) => (
+                        <div key={index} className="min-w-[280px] h-40 rounded-2xl relative overflow-hidden cursor-pointer group snap-start shadow-md hover:shadow-xl transition-all">
+                            <img
+                                src={`https://images.unsplash.com/photo-${index === 0 ? '1552664730-d307ca884978' : index === 1 ? '1556761175-5973ac0f96fc' : '1531482615713-2afd69097998'}?w=400&fit=crop`}
+                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-gray-900/90 to-transparent flex flex-col justify-end p-5">
+                                <h4 className="text-white font-bold text-lg leading-tight group-hover:text-blue-300 transition-colors">{trail}</h4>
+                                <div className="h-0 group-hover:h-auto overflow-hidden transition-all duration-300">
+                                    <p className="text-gray-300 text-xs mt-2 opacity-0 group-hover:opacity-100 transition-opacity delay-100">4 Cursos • 12 Horas</p>
                                 </div>
                             </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {/* Featured Banner */}
-            {!searchTerm && featuredCourse && (
-                <div
-                    onClick={() => navigate(`/app/university/course/${featuredCourse.id}`)}
-                    className="relative rounded-3xl overflow-hidden cursor-pointer group"
-                >
-                    <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent z-10" />
-                    <img
-                        src={featuredCourse.coverUrl || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=60'}
-                        className="w-full h-64 md:h-80 object-cover group-hover:scale-105 transition-transform duration-700"
-                        onError={(e) => {
-                            e.currentTarget.src = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=60';
-                        }}
-                    />
-                    <div className="absolute bottom-0 left-0 p-6 md:p-10 z-20 max-w-2xl">
-                        <span className="inline-block px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-full mb-3">
-                            Destaque da Semana
-                        </span>
-                        <h2 className="text-2xl md:text-4xl font-black text-white mb-2 leading-tight">
-                            {featuredCourse.title}
-                        </h2>
-                        <p className="text-gray-200 line-clamp-2 md:text-lg mb-6">
-                            {featuredCourse.description}
-                        </p>
-                        <button className="bg-white text-gray-900 px-6 py-3 rounded-xl font-bold hover:bg-gray-100 transition-colors flex items-center gap-2">
-                            <Play className="h-5 w-5 fill-current" />
-                            Assistir Agora
-                        </button>
-                    </div>
-                </div>
-            )}
-
-            {/* Categories (Pills) */}
-            <div className="space-y-4">
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5 text-purple-500" />
-                    Explorar
-                </h3>
-                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-                    {uniqueCategories.map(category => (
-                        <button
-                            key={category}
-                            onClick={() => setSelectedCategory(category)}
-                            className={`whitespace-nowrap px-5 py-2.5 rounded-full text-sm font-bold transition-all ${selectedCategory === category
-                                ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900 shadow-lg scale-105'
-                                : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
-                                }`}
-                        >
-                            {category}
-                        </button>
+                        </div>
                     ))}
                 </div>
             </div>
 
-            {/* Course Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredCourses.map(course => {
-                    const enrollment = course.enrollments?.[0];
-                    const isCompleted = enrollment?.completed;
+            {/* 4. STATISTICS & CERTIFICATIONS GRID */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-                    return (
-                        <div
-                            key={course.id}
-                            onClick={() => navigate(`/app/university/course/${course.id}`)}
-                            className="group bg-white dark:bg-gray-800 rounded-3xl p-3 shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-gray-700 cursor-pointer flex flex-col"
-                        >
-                            {/* Card Image */}
-                            <div className="relative h-48 rounded-2xl overflow-hidden mb-4">
-                                {course.coverUrl ? (
-                                    <img
-                                        src={course.coverUrl}
-                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                                        onError={(e) => {
-                                            e.currentTarget.src = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=60';
-                                        }}
-                                    />
-                                ) : (
-                                    <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 flex items-center justify-center">
-                                        <BookOpen className="h-10 w-10 text-gray-400" />
-                                    </div>
-                                )}
-                                <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg text-xs font-bold text-gray-900 flex items-center gap-1 shadow-sm">
-                                    <Clock className="h-3 w-3" />
-                                    {course.duration}m
-                                </div>
-                                {isCompleted && (
-                                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[1px]">
-                                        <div className="bg-green-500 text-white px-4 py-2 rounded-full font-bold flex items-center gap-2 shadow-lg transform scale-110">
-                                            <CheckCircle className="h-5 w-5" />
-                                            Concluído
-                                        </div>
-                                    </div>
-                                )}
+                {/* Performance Panel */}
+                <div className="bg-gradient-to-b from-slate-800 to-slate-900 rounded-2xl p-6 text-white shadow-lg border border-slate-700">
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="font-bold">Painel de Desempenho</h3>
+                        <BarChart3 className="h-5 w-5 text-slate-400" />
+                    </div>
+                    <div className="flex items-center gap-6">
+                        <div className="relative h-24 w-24 flex items-center justify-center">
+                            <svg className="h-full w-full rotate-[-90deg]" viewBox="0 0 36 36">
+                                <path className="text-slate-700" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="3" />
+                                <path className="text-blue-500 drop-shadow-[0_0_5px_rgba(59,130,246,0.8)]" strokeDasharray="78, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                            </svg>
+                            <Clock className="absolute h-8 w-8 text-blue-400" />
+                        </div>
+                        <div>
+                            <div className="text-3xl font-bold">78%</div>
+                            <div className="text-sm text-yellow-400 font-medium">Progresso Geral</div>
+                            <p className="text-xs text-slate-400 mt-1">Melhore seus resultados finais</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Certifications */}
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col">
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="font-bold text-gray-900 dark:text-white">Certificações</h3>
+                        <span className="text-xs font-bold text-gray-500 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">2 Ativos</span>
+                    </div>
+
+                    <div className="flex-1 flex items-center justify-around gap-4 my-2">
+                        {/* Mock Badges */}
+                        <div className="flex flex-col items-center gap-2 group cursor-pointer">
+                            <div className="w-16 h-20 bg-gradient-to-br from-yellow-300 to-yellow-600 clip-path-badge shadow-lg flex items-center justify-center transform group-hover:scale-110 transition-transform">
+                                <Award className="text-white h-8 w-8 drop-shadow-md" />
                             </div>
+                            <span className="text-[10px] font-bold text-center text-gray-600 dark:text-gray-300 leading-tight">Gestão <br /> Avançada</span>
+                        </div>
+                        <div className="flex flex-col items-center gap-2 group cursor-pointer">
+                            <div className="w-16 h-20 bg-gradient-to-br from-blue-400 to-blue-700 clip-path-badge shadow-lg flex items-center justify-center transform group-hover:scale-110 transition-transform">
+                                <Shield className="text-white h-8 w-8 drop-shadow-md" />
+                            </div>
+                            <span className="text-[10px] font-bold text-center text-gray-600 dark:text-gray-300 leading-tight">Segurança <br /> no Trabalho</span>
+                        </div>
+                    </div>
 
-                            {/* Card Content */}
-                            <div className="px-2 pb-2 flex-1 flex flex-col">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded-md">
-                                        {course.category}
-                                    </span>
-                                    <span className="text-[10px] font-medium text-gray-400">
-                                        {course.difficulty}
-                                    </span>
+                    <button
+                        onClick={() => navigate('/app/university/certificates')}
+                        className="w-full mt-auto bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-bold py-2 rounded-xl transition-colors flex items-center justify-center gap-2"
+                    >
+                        Ver Certificados <ChevronRight className="h-4 w-4" />
+                    </button>
+                </div>
+
+                {/* Practical Challenges (Simulations) */}
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+                    <h3 className="font-bold text-gray-900 dark:text-white mb-4">Simulações e Prática</h3>
+                    <div className="space-y-3">
+                        <div className="flex gap-3 group cursor-pointer">
+                            <div className="w-20 h-14 rounded-lg overflow-hidden relative">
+                                <img src="https://images.unsplash.com/photo-1573164713988-8665fc963095?w=200" className="w-full h-full object-cover" />
+                                <div className="absolute inset-0 bg-black/30 flex items-center justify-center group-hover:bg-black/10 transition-all">
+                                    <Play className="h-4 w-4 text-white fill-current" />
                                 </div>
-
-                                <h3 className="text-lg font-bold text-gray-900 dark:text-white leading-tight mb-2 group-hover:text-blue-600 transition-colors">
-                                    {course.title}
-                                </h3>
-                                <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-4 flex-1">
-                                    {course.description}
-                                </p>
-
-                                <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700">
-                                    <div className="flex -space-x-2">
-                                        {[1, 2, 3].map(i => (
-                                            <div key={i} className="w-6 h-6 rounded-full bg-gray-200 border-2 border-white dark:border-gray-800" />
-                                        ))}
-                                        <div className="w-6 h-6 rounded-full bg-gray-100 border-2 border-white dark:border-gray-800 flex items-center justify-center text-[8px] font-bold text-gray-500">
-                                            +12
-                                        </div>
-                                    </div>
-                                    <button className="text-sm font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1">
-                                        Ver Detalhes <Play className="h-3 w-3 fill-current" />
-                                    </button>
-                                </div>
+                            </div>
+                            <div>
+                                <h4 className="text-sm font-bold text-gray-800 dark:text-gray-200 line-clamp-1 group-hover:text-blue-600">Webinar: Inovações 2024</h4>
+                                <p className="text-xs text-blue-600 font-medium mt-1">Ao Vivo Hoje 14h</p>
                             </div>
                         </div>
-                    );
-                })}
+                        <div className="flex gap-3 group cursor-pointer">
+                            <div className="w-20 h-14 rounded-lg overflow-hidden relative">
+                                <img src="https://images.unsplash.com/photo-1557804506-669a67965ba0?w=200" className="w-full h-full object-cover" />
+                                <div className="absolute inset-0 bg-black/30 flex items-center justify-center group-hover:bg-black/10 transition-all">
+                                    <Play className="h-4 w-4 text-white fill-current" />
+                                </div>
+                            </div>
+                            <div>
+                                <h4 className="text-sm font-bold text-gray-800 dark:text-gray-200 line-clamp-1 group-hover:text-blue-600">Novo Artigo: ESG</h4>
+                                <p className="text-xs text-gray-400 mt-1">Sustentabilidade Empresarial</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
-            {filteredCourses.length === 0 && (
-                <div className="text-center py-20">
-                    <div className="bg-gray-50 dark:bg-gray-800 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Search className="h-8 w-8 text-gray-400" />
+            {/* Standard Course Grid (For remaining courses) */}
+            <div className="pt-8 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">Todos os Cursos</h3>
+                    <div className="relative w-64">
+                        <input
+                            type="text"
+                            placeholder="Buscar cursos..."
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                            className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 outline-none"
+                        />
+                        <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
                     </div>
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">Nenhum curso encontrado</h3>
-                    <p className="text-gray-500">Tente buscar por outro termo ou categoria.</p>
                 </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {courses.filter(c => c.title.toLowerCase().includes(searchTerm.toLowerCase())).map(course => (
+                        <div key={course.id} onClick={() => navigate(`/app/university/course/${course.id}`)} className="bg-white dark:bg-gray-800 rounded-xl p-3 border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-lg transition-all cursor-pointer group">
+                            <div className="relative h-32 rounded-lg overflow-hidden mb-3">
+                                <img src={course.coverUrl || 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=400'} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                {course.enrollments[0]?.completed && (
+                                    <div className="absolute top-2 right-2 bg-green-500/90 text-white text-[10px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+                                        <CheckCircle className="h-3 w-3" /> Concluído
+                                    </div>
+                                )}
+                            </div>
+                            <h4 className="font-bold text-gray-900 dark:text-white text-sm line-clamp-1 group-hover:text-blue-600">{course.title}</h4>
+                            <p className="text-xs text-gray-500 mt-1">{course.category}</p>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            <style>{`
+                .clip-path-badge {
+                    clip-path: polygon(50% 0%, 100% 20%, 100% 80%, 50% 100%, 0% 80%, 0% 20%);
+                }
+            `}</style>
+
+            {showTrailMap && (
+                <LearningTrailMap
+                    trailId="demo"
+                    title="Liderança Estratégica"
+                    description="Domine as habilidades essenciais para liderar equipes de alta performance no cenário atual."
+                    nodes={mockTrailNodes}
+                    onClose={() => setShowTrailMap(false)}
+                />
             )}
         </div>
     );

@@ -39,7 +39,7 @@ export const getRHDashboardStats = async (req: Request, res: Response) => {
         const pcdCount = await prisma.collaboratorProfile.count({
             where: {
                 user: { companyId, active: true },
-                disabilityType: { not: 'Nenhuma' }
+                disabilityType: { not: 'NENHUMA' }
             }
         }).catch(() => 0);
 

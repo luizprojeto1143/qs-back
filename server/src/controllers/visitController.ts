@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { VisitService } from '../services/visitService';
+import prisma from '../prisma';
 import { z } from 'zod';
 import { AuthRequest } from '../middleware/authMiddleware';
 
@@ -66,10 +67,7 @@ export const listVisits = async (req: Request, res: Response) => {
     try {
         const { companyId, areaId, status, masterId, collaboratorId, startDate, endDate, page, limit } = req.query;
 
-        if (!companyId) { // Basic check, though usually middleware handles context
-            // Assuming context middleware sets something? Or explicit param?
-            // Using req.query.companyId as per old code structure assumption
-        }
+        // Note: companyId can be optional for MASTER users who can see all companies
 
         const result = await visitService.list(
             companyId as string,
@@ -108,19 +106,6 @@ export const getVisit = async (req: Request, res: Response) => {
     }
 };
 
-// Update not fully implemented in Service yet for full logic?
-// The corrupted file had update logic.
-// I will just stub update for now or implement if critical.
-// Since User asked to "apply everything to test", if update is critical, I might break it.
-// Checking visitService.ts (Step 205), it has `create`, `list`, `getById`.
-// It DOES NOT have `update`.
-// This is a risk.
-// However, the corrupted file showed `update` logic.
-// I should probably move that corrupted logic to `visitService.ts` properly or just restore it here?
-// Given `visitService.ts` is already clean, I don't want to pollute it with the messy update logic right now.
-// I will keep ONLY create/list/get for now, as that covers "Recording" (Create) and "History" (List/Get).
-// Update is usually used for editing a report later.
-// I will comment out update or provide a basic error.
 export const updateVisit = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
@@ -131,9 +116,6 @@ export const updateVisit = async (req: Request, res: Response) => {
         }
 
         const data = validation.data;
-
-        // Import prisma for direct update (service layer doesn't have update yet)
-        const prisma = (await import('../prisma')).default;
 
         // Build update data object - only include defined fields
         const updateData: any = {};

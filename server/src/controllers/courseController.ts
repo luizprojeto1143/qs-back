@@ -231,6 +231,27 @@ export const updateLessonProgress = async (req: Request, res: Response) => {
 
         const { lessonId, completed } = req.body;
 
+        // 1. Verify Lesson and Course Access Access first
+        const lesson = await prisma.lesson.findUnique({
+            where: { id: lessonId },
+            include: { module: { include: { course: { include: { allowedCompanies: true } } } } }
+        });
+
+        if (!lesson) return res.status(404).json({ error: 'Lesson not found' });
+
+        const course = lesson.module.course;
+
+        // Access Check Logic
+        const isOwnerCompany = course.companyId === user.companyId;
+        const isVisibleToAll = course.visibleToAll;
+        const isAllowedCompany = course.allowedCompanies.some(c => c.id === user.companyId);
+        const canAccess = isOwnerCompany || isVisibleToAll || isAllowedCompany;
+
+        if (!canAccess) {
+            return res.status(403).json({ error: 'Access to this course is restricted' });
+        }
+
+        // 2. Update Progress
         const progress = await prisma.lessonProgress.upsert({
             where: {
                 userId_lessonId: {
@@ -246,11 +267,36 @@ export const updateLessonProgress = async (req: Request, res: Response) => {
             }
         });
 
+        // --- GAMIFICATION (University 2.0) ---
+        // Award XP only if completing the lesson
+        if (completed) {
+            const XP_PER_LESSON = 10;
+
+            // Get current user to update
+            const currentUser = await prisma.user.findUnique({
+                where: { id: user.userId },
+                select: { xp: true, level: true }
+            });
+
+            if (currentUser) {
+                const newXp = currentUser.xp + XP_PER_LESSON;
+                // Simple level formula: Level = 1 + floor(XP / 100)
+                const newLevel = 1 + Math.floor(newXp / 100);
+
+                await prisma.user.update({
+                    where: { id: user.userId },
+                    data: {
+                        xp: newXp,
+                        level: newLevel
+                    }
+                });
+            }
+        }
+        // -------------------------------------
+
         // Calculate Course Progress
-        const lesson = await prisma.lesson.findUnique({
-            where: { id: lessonId },
-            include: { module: true }
-        });
+        // lesson already fetched above
+
 
         if (lesson) {
             const courseId = lesson.module.courseId;
@@ -523,6 +569,7 @@ export const getUserUniversityDetails = async (req: Request, res: Response) => {
             certificates: user.certificates.map(c => ({
                 id: c.id,
                 courseTitle: c.course.title,
+                courseDuration: c.course.duration,
                 code: c.code,
                 issuedAt: c.issuedAt
             })),
