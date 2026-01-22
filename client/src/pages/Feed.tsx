@@ -28,6 +28,11 @@ const Feed = () => {
     const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
     const [isUploading, setIsUploading] = useState(false);
 
+    // Get user role to restrict actions
+    const userStr = localStorage.getItem('user');
+    const userRole = userStr ? JSON.parse(userStr)?.role : null;
+    const canManagePosts = userRole === 'MASTER'; // Only MASTER can add/edit/delete
+
     const [categories, setCategories] = useState<Category[]>([]);
 
     // New Post Form State
@@ -150,14 +155,16 @@ const Feed = () => {
         <div className="space-y-6" onClick={() => setActiveMenuId(null)}>
             <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold text-gray-900">Feed Acessível</h1>
-                <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); setIsModalOpen(true); setEditingId(null); setNewPost({ title: '', description: '', category: categories[0]?.name || '', imageUrl: '', videoLibrasUrl: '' }); }}
-                    className="btn-primary flex items-center space-x-2"
-                >
-                    <Plus className="h-4 w-4" />
-                    <span>Novo Post</span>
-                </button>
+                {canManagePosts && (
+                    <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setIsModalOpen(true); setEditingId(null); setNewPost({ title: '', description: '', category: categories[0]?.name || '', imageUrl: '', videoLibrasUrl: '' }); }}
+                        className="btn-primary flex items-center space-x-2"
+                    >
+                        <Plus className="h-4 w-4" />
+                        <span>Novo Post</span>
+                    </button>
+                )}
             </div>
 
             {loading ? (
@@ -191,34 +198,36 @@ const Feed = () => {
                                     <span className="px-3 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-full uppercase tracking-wide">
                                         {post.category}
                                     </span>
-                                    <div className="relative">
-                                        <button
-                                            type="button"
-                                            onClick={(e) => { e.stopPropagation(); setActiveMenuId(activeMenuId === post.id ? null : post.id); }}
-                                            className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100"
-                                        >
-                                            <MoreHorizontal className="h-5 w-5" />
-                                        </button>
+                                    {canManagePosts && (
+                                        <div className="relative">
+                                            <button
+                                                type="button"
+                                                onClick={(e) => { e.stopPropagation(); setActiveMenuId(activeMenuId === post.id ? null : post.id); }}
+                                                className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100"
+                                            >
+                                                <MoreHorizontal className="h-5 w-5" />
+                                            </button>
 
-                                        {activeMenuId === post.id && (
-                                            <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-10">
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); handleEdit(post); }}
-                                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center"
-                                                >
-                                                    <Edit className="h-4 w-4 mr-2" />
-                                                    Editar
-                                                </button>
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); handleDelete(post.id); }}
-                                                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center"
-                                                >
-                                                    <Trash2 className="h-4 w-4 mr-2" />
-                                                    Excluir
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
+                                            {activeMenuId === post.id && (
+                                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-10">
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); handleEdit(post); }}
+                                                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center"
+                                                    >
+                                                        <Edit className="h-4 w-4 mr-2" />
+                                                        Editar
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); handleDelete(post.id); }}
+                                                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center"
+                                                    >
+                                                        <Trash2 className="h-4 w-4 mr-2" />
+                                                        Excluir
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
 
                                 <h3 className="text-lg font-bold text-gray-900 mb-2">{post.title}</h3>
@@ -226,13 +235,15 @@ const Feed = () => {
 
                                 <div className="flex items-center justify-between pt-4 border-t border-gray-50">
                                     <span className="text-xs text-gray-400">{new Date(post.createdAt).toLocaleDateString()}</span>
-                                    <button
-                                        type="button"
-                                        onClick={(e) => { e.stopPropagation(); handleEdit(post); }}
-                                        className="text-primary text-sm font-medium hover:text-blue-700"
-                                    >
-                                        Editar
-                                    </button>
+                                    {canManagePosts && (
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); handleEdit(post); }}
+                                            className="text-primary text-sm font-medium hover:text-blue-700"
+                                        >
+                                            Editar
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         </div>

@@ -149,16 +149,18 @@ const MobileHome = () => {
                     <span className="text-sm font-bold text-gray-700 text-center">Agendar Suporte</span>
                 </button>
 
-                {/* Solicitar Folga (For Everyone) */}
-                <button
-                    onClick={() => navigate('/app/dayoff')}
-                    className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center space-y-2 active:scale-95 transition-transform"
-                >
-                    <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-full flex items-center justify-center">
-                        <Clock className="h-6 w-6" />
-                    </div>
-                    <span className="text-sm font-bold text-gray-700 text-center">Solicitar Folga</span>
-                </button>
+                {/* Solicitar Folga (Only for COLABORADOR) */}
+                {user.role === 'COLABORADOR' && (
+                    <button
+                        onClick={() => navigate('/app/dayoff')}
+                        className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center space-y-2 active:scale-95 transition-transform"
+                    >
+                        <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-full flex items-center justify-center">
+                            <Clock className="h-6 w-6" />
+                        </div>
+                        <span className="text-sm font-bold text-gray-700 text-center">Solicitar Folga</span>
+                    </button>
+                )}
 
                 {/* Canal de Ética - Only show if complaints module is enabled */}
                 {isComplaintsEnabled && (
