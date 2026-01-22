@@ -140,6 +140,34 @@ const UniversityManagement = () => {
         }
     };
 
+    const handleEditCourse = (course: Course) => {
+        // For now, just show the modal in edit mode - can be extended later
+        toast.info(`Editar curso: ${course.title}`);
+        // TODO: Implement edit course modal
+    };
+
+    const handleDeleteModule = async (moduleId: string) => {
+        if (!confirm('Tem certeza? Isso apagará todas as aulas deste módulo.')) return;
+        try {
+            await api.delete(`/modules/${moduleId}`);
+            toast.success('Módulo removido!');
+            fetchCourses();
+        } catch {
+            toast.error('Erro ao remover módulo');
+        }
+    };
+
+    const handleDeleteLesson = async (lessonId: string) => {
+        if (!confirm('Tem certeza que deseja excluir esta aula?')) return;
+        try {
+            await api.delete(`/lessons/${lessonId}`);
+            toast.success('Aula removida!');
+            fetchCourses();
+        } catch {
+            toast.error('Erro ao remover aula');
+        }
+    };
+
     if (loading) return <div>Carregando...</div>;
 
     if (showQuizEditor && selectedQuizId) {
@@ -163,8 +191,11 @@ const UniversityManagement = () => {
                 expandedCourse={expandedCourse}
                 setExpandedCourse={setExpandedCourse}
                 onDeleteCourse={handleDeleteCourse}
+                onEditCourse={handleEditCourse}
                 onAddModule={(id) => { setSelectedCourseId(id); setShowModuleModal(true); }}
+                onDeleteModule={handleDeleteModule}
                 onAddLesson={(id) => { setSelectedModuleId(id); setShowLessonModal(true); }}
+                onDeleteLesson={handleDeleteLesson}
                 onCreateQuiz={handleCreateQuiz}
                 onEditQuiz={(id) => { setSelectedQuizId(id); setShowQuizEditor(true); }}
             />

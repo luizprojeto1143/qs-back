@@ -149,6 +149,47 @@ export const createModule = async (req: Request, res: Response) => {
     }
 };
 
+export const updateModule = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const user = (req as AuthRequest).user;
+        if (!user || user.role !== 'MASTER') {
+            return res.status(403).json({ error: 'Unauthorized' });
+        }
+
+        const { title, order } = req.body;
+
+        const module = await prisma.module.update({
+            where: { id },
+            data: {
+                title,
+                order: order !== undefined ? Number(order) : undefined
+            }
+        });
+
+        res.json(module);
+    } catch (error) {
+        sendError500(res, ERROR_CODES.MODULE_UPDATE || 'MOD_UPD', error);
+    }
+};
+
+export const deleteModule = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const user = (req as AuthRequest).user;
+        if (!user || user.role !== 'MASTER') {
+            return res.status(403).json({ error: 'Unauthorized' });
+        }
+
+        // Delete associated lessons first
+        await prisma.lesson.deleteMany({ where: { moduleId: id } });
+        await prisma.module.delete({ where: { id } });
+        res.status(204).send();
+    } catch (error) {
+        sendError500(res, ERROR_CODES.MODULE_DELETE || 'MOD_DEL', error);
+    }
+};
+
 // --- Lessons ---
 
 export const createLesson = async (req: Request, res: Response) => {
@@ -183,6 +224,52 @@ export const createLesson = async (req: Request, res: Response) => {
         res.status(201).json(lesson);
     } catch (error) {
         sendError500(res, ERROR_CODES.LESSON_CREATE, error);
+    }
+};
+
+export const updateLesson = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const user = (req as AuthRequest).user;
+        if (!user || user.role !== 'MASTER') {
+            return res.status(403).json({ error: 'Unauthorized' });
+        }
+
+        const { title, description, videoUrl, duration, order, transcription } = req.body;
+
+        const lesson = await prisma.lesson.update({
+            where: { id },
+            data: {
+                title,
+                description,
+                videoUrl,
+                transcription,
+                duration: duration !== undefined ? Number(duration) : undefined,
+                order: order !== undefined ? Number(order) : undefined
+            }
+        });
+
+        res.json(lesson);
+    } catch (error) {
+        sendError500(res, ERROR_CODES.LESSON_UPDATE || 'LES_UPD', error);
+    }
+};
+
+export const deleteLesson = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const user = (req as AuthRequest).user;
+        if (!user || user.role !== 'MASTER') {
+            return res.status(403).json({ error: 'Unauthorized' });
+        }
+
+        // Delete attachments and progress first
+        await prisma.lessonAttachment.deleteMany({ where: { lessonId: id } });
+        await prisma.lessonProgress.deleteMany({ where: { lessonId: id } });
+        await prisma.lesson.delete({ where: { id } });
+        res.status(204).send();
+    } catch (error) {
+        sendError500(res, ERROR_CODES.LESSON_DELETE || 'LES_DEL', error);
     }
 };
 

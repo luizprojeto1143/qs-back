@@ -14,7 +14,12 @@ router.put('/courses/:id', requireRole(['MASTER', 'RH']), courseController.updat
 router.delete('/courses/:id', requireRole(['MASTER', 'RH']), courseController.deleteCourse);
 
 router.post('/modules', requireRole(['MASTER', 'RH']), courseController.createModule);
+router.put('/modules/:id', requireRole(['MASTER']), courseController.updateModule);
+router.delete('/modules/:id', requireRole(['MASTER']), courseController.deleteModule);
+
 router.post('/lessons', requireRole(['MASTER', 'RH']), courseController.createLesson);
+router.put('/lessons/:id', requireRole(['MASTER']), courseController.updateLesson);
+router.delete('/lessons/:id', requireRole(['MASTER']), courseController.deleteLesson);
 
 router.get('/courses/:id', courseController.getCourseDetails);
 router.post('/progress', courseController.updateLessonProgress);

@@ -1,4 +1,4 @@
-import { BookOpen, Video, Trash2, ChevronDown, ChevronRight, Layers, FileText } from 'lucide-react';
+import { BookOpen, Video, Trash2, ChevronDown, ChevronRight, Layers, FileText, Edit } from 'lucide-react';
 import type { Course } from '../../../types/university';
 
 interface CourseListProps {
@@ -6,8 +6,11 @@ interface CourseListProps {
     expandedCourse: string | null;
     setExpandedCourse: (id: string | null) => void;
     onDeleteCourse: (id: string) => void;
+    onEditCourse: (course: Course) => void;
     onAddModule: (courseId: string) => void;
+    onDeleteModule: (moduleId: string) => void;
     onAddLesson: (moduleId: string) => void;
+    onDeleteLesson: (lessonId: string) => void;
     onCreateQuiz: (moduleId: string, courseId: string) => void;
     onEditQuiz: (quizId: string) => void;
 }
@@ -17,8 +20,11 @@ export const CourseList = ({
     expandedCourse,
     setExpandedCourse,
     onDeleteCourse,
+    onEditCourse,
     onAddModule,
+    onDeleteModule,
     onAddLesson,
+    onDeleteLesson,
     onCreateQuiz,
     onEditQuiz
 }: CourseListProps) => {
@@ -60,6 +66,9 @@ export const CourseList = ({
                             >
                                 + Módulo
                             </button>
+                            <button onClick={() => onEditCourse(course)} className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg" aria-label="Editar curso">
+                                <Edit className="h-4 w-4" />
+                            </button>
                             <button onClick={() => onDeleteCourse(course.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg" aria-label="Excluir curso">
                                 <Trash2 className="h-4 w-4" />
                             </button>
@@ -82,7 +91,7 @@ export const CourseList = ({
                                             <Layers className="h-4 w-4 text-gray-400" />
                                             {module.title}
                                         </h4>
-                                        <div className="flex gap-3">
+                                        <div className="flex gap-3 items-center">
                                             {module.quizzes && module.quizzes.length > 0 ? (
                                                 <button
                                                     onClick={() => onEditQuiz(module.quizzes[0].id)}
@@ -106,17 +115,31 @@ export const CourseList = ({
                                             >
                                                 + Adicionar Aula
                                             </button>
+                                            <button
+                                                onClick={() => onDeleteModule(module.id)}
+                                                className="text-xs text-red-500 hover:text-red-700"
+                                                title="Excluir módulo"
+                                            >
+                                                <Trash2 className="h-3 w-3" />
+                                            </button>
                                         </div>
                                     </div>
 
                                     <div className="space-y-2 pl-4 border-l-2 border-gray-100 dark:border-gray-700">
                                         {module.lessons?.map(lesson => (
-                                            <div key={lesson.id} className="flex justify-between items-center text-sm group">
+                                            <div key={lesson.id} className="flex justify-between items-center text-sm group py-1">
                                                 <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                                                     <Video className="h-3 w-3" />
                                                     <span>{lesson.title}</span>
                                                     <span className="text-xs text-gray-400">({lesson.duration} min)</span>
                                                 </div>
+                                                <button
+                                                    onClick={() => onDeleteLesson(lesson.id)}
+                                                    className="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    title="Excluir aula"
+                                                >
+                                                    <Trash2 className="h-3 w-3" />
+                                                </button>
                                             </div>
                                         ))}
                                         {(!module.lessons || module.lessons.length === 0) && (
