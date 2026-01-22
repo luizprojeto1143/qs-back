@@ -4,7 +4,46 @@ import { FileText, BarChart2, Users, Building, AlertCircle, PieChart, ClipboardL
 import { api } from '../lib/api';
 import { toast } from 'sonner';
 
-const reportTypes = [
+interface ReportType {
+    id: string;
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+    desc: string;
+    param: string | null;
+}
+
+interface Visit {
+    id: string;
+    date: string;
+    area?: { name: string };
+}
+
+interface Collaborator {
+    id: string;
+    name: string;
+}
+
+interface Area {
+    id: string;
+    name: string;
+}
+
+interface Sector {
+    id: string;
+    name: string;
+}
+
+interface ReportFilters {
+    month?: number;
+    year?: number;
+    visitId?: string;
+    collaboratorId?: string;
+    areaId?: string;
+    sectorId?: string;
+    [key: string]: string | number | undefined;
+}
+
+const reportTypes: ReportType[] = [
     { id: 'VISIT_INDIVIDUAL', label: 'Relatório de Visita Individual', icon: ClipboardList, desc: 'Detalhes completos de uma visita específica.', param: 'visitId' },
     { id: 'COMPANY_MONTHLY', label: 'Relatório Mensal da Empresa', icon: Building, desc: 'Visão geral do mês para RH e diretoria.', param: null },
     { id: 'COLLABORATOR_HISTORY', label: 'Histórico do Colaborador', icon: Users, desc: 'Evolução individual e histórico de visitas.', param: 'collaboratorId' },
@@ -23,14 +62,14 @@ const Reports = () => {
     // const { selectedCompanyId } = useCompany();
     const [generating, setGenerating] = useState<string | null>(null);
     const [modalOpen, setModalOpen] = useState(false);
-    const [selectedReport, setSelectedReport] = useState<any>(null);
+    const [selectedReport, setSelectedReport] = useState<ReportType | null>(null);
     const [selectedValue, setSelectedValue] = useState('');
 
     // Data for dropdowns
-    const [visits, setVisits] = useState<any[]>([]);
-    const [collaborators, setCollaborators] = useState<any[]>([]);
-    const [areas, setAreas] = useState<any[]>([]);
-    const [sectors, setSectors] = useState<any[]>([]);
+    const [visits, setVisits] = useState<Visit[]>([]);
+    const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
+    const [areas, setAreas] = useState<Area[]>([]);
+    const [sectors, setSectors] = useState<Sector[]>([]);
     const [loadingData, setLoadingData] = useState(false);
 
     // Determine base path based on current location
@@ -66,7 +105,7 @@ const Reports = () => {
         }
     };
 
-    const handleReportClick = (report: any) => {
+    const handleReportClick = (report: ReportType) => {
         if (report.param) {
             setSelectedReport(report);
             setSelectedValue('');
@@ -76,10 +115,10 @@ const Reports = () => {
         }
     };
 
-    const generateReport = async (type: string, paramValue?: string, extraFilters?: any) => {
+    const generateReport = async (type: string, paramValue?: string, extraFilters?: ReportFilters) => {
         setGenerating(type);
         try {
-            let filters: any = {
+            const filters: ReportFilters = {
                 month: new Date().getMonth(),
                 year: new Date().getFullYear(),
                 ...extraFilters
@@ -118,11 +157,13 @@ const Reports = () => {
         const month = formData.get('month');
         const year = formData.get('year');
 
-        const extraFilters: any = {};
+        const extraFilters: ReportFilters = {};
         if (month) extraFilters.month = parseInt(month.toString());
         if (year) extraFilters.year = parseInt(year.toString());
 
-        generateReport(selectedReport.id, selectedValue, extraFilters);
+        if (selectedReport) {
+            generateReport(selectedReport.id, selectedValue, extraFilters);
+        }
     };
 
     return (

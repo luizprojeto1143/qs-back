@@ -6,9 +6,23 @@ import { SkeletonRow } from '../components/Skeleton';
 import { api } from '../lib/api';
 import { EmptyState } from '../components/EmptyState';
 
+interface Collaborator {
+    user?: { name: string };
+    name?: string;
+}
+
+interface Visit {
+    id: string;
+    date: string;
+    company?: { name: string };
+    area?: { name: string };
+    master?: { name: string };
+    collaborators?: Collaborator[];
+}
+
 const VisitHistory = () => {
     const navigate = useNavigate();
-    const [visits, setVisits] = useState<any[]>([]);
+    const [visits, setVisits] = useState<Visit[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [dateFilter, setDateFilter] = useState('');
@@ -17,7 +31,7 @@ const VisitHistory = () => {
         const matchesSearch =
             visit.company?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             visit.area?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            visit.collaborators?.some((c: any) => c.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()));
+            visit.collaborators?.some((c) => c.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()));
 
         const matchesDate = dateFilter ? new Date(visit.date).toISOString().split('T')[0] === dateFilter : true;
 
@@ -37,7 +51,7 @@ const VisitHistory = () => {
                 new Date(v.date).toLocaleDateString(),
                 `"${v.company?.name || ''}"`,
                 `"${v.area?.name || ''}"`,
-                `"${v.collaborators?.map((c: any) => c.user?.name).join(', ') || ''}"`,
+                `"${v.collaborators?.map((c) => c.user?.name).join(', ') || ''}"`,
                 `"${v.master?.name || ''}"`
             ].join(','))
         ].join('\n');
@@ -98,9 +112,10 @@ const VisitHistory = () => {
             setVisits(prev => prev.filter(v => v.id !== id));
             toast.success('Acompanhamento excluído com sucesso!');
             setDeleteConfirmId(null);
-        } catch (error: any) {
+        } catch (error) {
             console.error('Error deleting visit', error);
-            toast.error(error.response?.data?.error || 'Erro ao excluir acompanhamento');
+            const err = error as { response?: { data?: { error?: string } } };
+            toast.error(err.response?.data?.error || 'Erro ao excluir acompanhamento');
         }
     };
 
@@ -179,8 +194,8 @@ const VisitHistory = () => {
                                             </span>
                                             <span className="flex items-center">
                                                 <User className="h-4 w-4 mr-1" />
-                                                {visit.collaborators?.length > 0
-                                                    ? visit.collaborators.map((c: any) => c.user?.name || c.name).filter(Boolean).join(', ') || 'Sem nomes'
+                                                {(visit.collaborators?.length ?? 0) > 0
+                                                    ? visit.collaborators?.map((c) => c.user?.name || c.name).filter(Boolean).join(', ') || 'Sem nomes'
                                                     : 'Sem colaboradores'}
                                             </span>
                                         </div>

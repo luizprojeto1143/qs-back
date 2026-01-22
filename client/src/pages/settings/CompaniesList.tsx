@@ -2,9 +2,20 @@ import { useState, useEffect } from 'react';
 import { Building, Plus, X, GraduationCap, Trophy } from 'lucide-react';
 import { api } from '../../lib/api';
 import { EmptyState } from '../../components/EmptyState';
+import { toast } from 'sonner';
+
+interface Company {
+    id: string;
+    name: string;
+    cnpj: string;
+    email?: string;
+    universityEnabled?: boolean;
+    talentManagementEnabled?: boolean;
+    active?: boolean;
+}
 
 const CompaniesList = () => {
-    const [companies, setCompanies] = useState<any[]>([]);
+    const [companies, setCompanies] = useState<Company[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -44,14 +55,15 @@ const CompaniesList = () => {
             setNewCompany({ name: '', cnpj: '', email: '', password: '', universityEnabled: false, talentManagementEnabled: false });
             setEditingId(null);
             fetchCompanies();
-            alert(editingId ? 'Empresa atualizada com sucesso!' : 'Empresa cadastrada com sucesso!');
-        } catch (error: any) {
+            toast.success(editingId ? 'Empresa atualizada com sucesso!' : 'Empresa cadastrada com sucesso!');
+        } catch (error) {
             console.error('Error saving company', error);
-            alert(error.message || 'Erro ao salvar empresa.');
+            const err = error as { message?: string };
+            toast.error(err.message || 'Erro ao salvar empresa.');
         }
     };
 
-    const handleEdit = (company: any) => {
+    const handleEdit = (company: { id: string; name: string; cnpj: string; universityEnabled?: boolean; talentManagementEnabled?: boolean }) => {
         setNewCompany({
             name: company.name,
             cnpj: company.cnpj,

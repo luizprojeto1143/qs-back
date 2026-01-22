@@ -30,12 +30,43 @@ import { toast } from 'sonner';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
 
+interface CensusMetric {
+    name: string;
+    value: number;
+}
+
+interface CensusData {
+    totalCollaborators: number;
+    gender: CensusMetric[];
+    ethnicity: CensusMetric[];
+    age: CensusMetric[];
+}
+
+interface RetentionData {
+    retentionRate: number;
+    activePcds: number;
+    totalPcds: number;
+}
+
+interface SectorMetric {
+    name: string;
+    MASCULINO: number;
+    FEMININO: number;
+    OUTRO: number;
+}
+
+interface RadarMetric {
+    subject: string;
+    A: number;
+    B: number;
+}
+
 const InternalIndicators = () => {
     const { selectedCompanyId } = useCompany();
-    const [data, setData] = useState<any>(null);
-    const [retention, setRetention] = useState<any>(null);
-    const [sectors, setSectors] = useState<any[]>([]);
-    const [radarData, setRadarData] = useState<any[]>([]);
+    const [data, setData] = useState<CensusData | null>(null);
+    const [retention, setRetention] = useState<RetentionData | null>(null);
+    const [sectors, setSectors] = useState<SectorMetric[]>([]);
+    const [radarData, setRadarData] = useState<RadarMetric[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -139,7 +170,7 @@ const InternalIndicators = () => {
                                     dataKey="value"
                                     label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                                 >
-                                    {data.gender.map((entry: any, index: number) => (
+                                    {data.gender.map((_, index: number) => (
                                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                     ))}
                                 </Pie>
@@ -170,7 +201,7 @@ const InternalIndicators = () => {
                                     dataKey="value"
                                     label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                                 >
-                                    {data.ethnicity.map((entry: any, index: number) => (
+                                    {data.ethnicity.map((_, index: number) => (
                                         <Cell key={`cell-${index}`} fill={COLORS[(index + 2) % COLORS.length]} />
                                     ))}
                                 </Pie>

@@ -207,6 +207,11 @@ export const ERROR_CODES = {
     // Daily errors (DAILY_xxx)
     DAILY_ROOM: 'DAILY_001',
 
+    // Gamification errors (GAMIF_xxx)
+    GAMIF_PROFILE: 'GAMIF_001',
+    GAMIF_LEADERBOARD: 'GAMIF_002',
+    GAMIF_ACHIEVEMENTS: 'GAMIF_003',
+
     // Generic
     INTERNAL: 'ERR_500',
     UNKNOWN: 'ERR_999',
@@ -407,6 +412,11 @@ export const ERROR_MESSAGES: Record<string, string> = {
 
     // Daily
     [ERROR_CODES.DAILY_ROOM]: 'Erro ao criar sala de videoconferência',
+
+    // Gamification
+    [ERROR_CODES.GAMIF_PROFILE]: 'Erro ao buscar perfil de gamificação',
+    [ERROR_CODES.GAMIF_LEADERBOARD]: 'Erro ao buscar placar de líderes',
+    [ERROR_CODES.GAMIF_ACHIEVEMENTS]: 'Erro ao buscar conquistas',
 
     // Generic
     [ERROR_CODES.INTERNAL]: 'Erro interno do servidor',

@@ -4,13 +4,28 @@ import { api } from '../../lib/api';
 import { toast } from 'sonner';
 import { User, Mail, Lock, Briefcase, Building2, CheckCircle, Clock, Accessibility, Calendar } from 'lucide-react';
 
+interface Area {
+    id: string;
+    name: string;
+    sector?: {
+        name: string;
+    };
+}
+
+interface Shift {
+    id: string;
+    name: string;
+    startTime: string;
+    endTime: string;
+}
+
 const CollaboratorRegistration = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const companyId = searchParams.get('companyId');
 
-    const [areas, setAreas] = useState<any[]>([]);
-    const [shifts, setShifts] = useState<any[]>([]);
+    const [areas, setAreas] = useState<Area[]>([]);
+    const [shifts, setShifts] = useState<Shift[]>([]);
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
 
@@ -93,9 +108,10 @@ const CollaboratorRegistration = () => {
 
             setSuccess(true);
             toast.success('Cadastro realizado com sucesso!');
-        } catch (error: any) {
+        } catch (error) {
             console.error('Registration error', error);
-            toast.error(error.response?.data?.error || 'Erro ao realizar cadastro.');
+            const err = error as { response?: { data?: { error?: string } } };
+            toast.error(err.response?.data?.error || 'Erro ao realizar cadastro.');
         } finally {
             setLoading(false);
         }

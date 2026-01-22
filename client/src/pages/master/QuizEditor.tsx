@@ -64,10 +64,13 @@ const QuizEditor = ({ quizId, onClose }: QuizEditorProps) => {
         setNewOptions(newOptions.filter((_, i) => i !== index));
     };
 
-    const handleOptionChange = (index: number, field: keyof Option, value: any) => {
+    const handleOptionChange = (index: number, field: keyof Option, value: string | boolean) => {
         const updatedOptions = [...newOptions];
-        // @ts-ignore
-        (updatedOptions[index] as any)[field] = value;
+        if (field === 'text') {
+            updatedOptions[index].text = value as string;
+        } else if (field === 'isCorrect') {
+            updatedOptions[index].isCorrect = value as boolean;
+        }
 
         // Ensure only one correct answer for now (can be expanded later)
         if (field === 'isCorrect' && value === true) {

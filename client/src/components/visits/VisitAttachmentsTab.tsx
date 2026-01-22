@@ -32,7 +32,7 @@ export const VisitAttachmentsTab = () => {
 
                 append({
                     name: file.name,
-                    url: (res.data as any).url,
+                    url: (res.data as { url: string }).url,
                     type: file.type,
                     // size: file.size // Not in schema, skipping
                 });

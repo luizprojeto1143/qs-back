@@ -15,6 +15,36 @@ import { VisitEvaluationsTab } from '../components/visits/VisitEvaluationsTab';
 import { VisitPendenciesTab } from '../components/visits/VisitPendenciesTab';
 import { VisitAttachmentsTab } from '../components/visits/VisitAttachmentsTab';
 
+interface Company {
+    id: string;
+    name: string;
+}
+
+interface Area {
+    id: string;
+    name: string;
+}
+
+interface Collaborator {
+    id: string;
+    name: string;
+}
+
+interface ScheduleItem {
+    id: string;
+    date: string;
+    area?: string;
+    collaborator?: string;
+    reason?: string;
+    status: string;
+    companyId?: string;
+}
+
+interface NoteData {
+    collaboratorId: string;
+    content: string;
+}
+
 const VisitRecording = () => {
     const navigate = useNavigate();
     const location = useLocation();
@@ -23,9 +53,9 @@ const VisitRecording = () => {
     const [activeTab, setActiveTab] = useState(0);
 
     // Data State
-    const [companies, setCompanies] = useState<any[]>(contextCompanies);
-    const [areas, setAreas] = useState<any[]>([]);
-    const [collaborators, setCollaborators] = useState<any[]>([]);
+    const [companies, setCompanies] = useState<Company[]>(contextCompanies as Company[]);
+    const [areas, setAreas] = useState<Area[]>([]);
+    const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
     const [linkedScheduleIds, setLinkedScheduleIds] = useState<string[]>([]);
     const [loading, setLoading] = useState(false);
     const [dataLoaded, setDataLoaded] = useState(false); // Flag to prevent re-fetching
@@ -85,7 +115,7 @@ const VisitRecording = () => {
                 // Determine company to fetch for
                 const targetCompanyId = selectedCompanyId || watchedCompanyId || '';
 
-                const promises: Record<string, Promise<any>> = {
+                const promises: Record<string, Promise<{ data: unknown }>> = {
                     areas: api.get('/areas'),
                     collaborators: api.get('/collaborators'),
                 };
@@ -104,6 +134,7 @@ const VisitRecording = () => {
 
                 const results = await Promise.all(Object.values(promises));
                 const keys = Object.keys(promises);
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const data: Record<string, any> = {};
 
                 keys.forEach((key, index) => {
@@ -122,13 +153,13 @@ const VisitRecording = () => {
                     const { scheduleId, areaName, date } = location.state;
 
                     if (areaName && data.areas) {
-                        const area = data.areas.find((a: any) => a.name === areaName);
+                        const area = (data.areas as Area[]).find((a) => a.name === areaName);
                         if (area) {
                             setValue('areaId', area.id);
 
                             // Find other schedules
                             const targetDate = new Date(date).toISOString().split('T')[0];
-                            const relatedSchedules = data.schedules.filter((s: any) => {
+                            const relatedSchedules = (data.schedules as ScheduleItem[]).filter((s) => {
                                 const sDate = new Date(s.date).toISOString().split('T')[0];
                                 return s.status === 'PENDENTE' &&
                                     sDate === targetDate &&
@@ -136,7 +167,7 @@ const VisitRecording = () => {
                                     s.companyId === targetCompanyId;
                             });
 
-                            const ids = relatedSchedules.map((s: any) => s.id);
+                            const ids = relatedSchedules.map((s) => s.id);
                             if (!ids.includes(scheduleId)) ids.push(scheduleId);
                             setLinkedScheduleIds(ids);
 
@@ -144,13 +175,13 @@ const VisitRecording = () => {
                             const collabsList = data.collaborators.data || data.collaborators;
                             const collaboratorsToAdd: string[] = [];
 
-                            relatedSchedules.forEach((s: any) => {
-                                const collab = collabsList.find((c: any) => c.name === s.collaborator);
+                            relatedSchedules.forEach((s) => {
+                                const collab = collabsList.find((c: Collaborator) => c.name === s.collaborator);
                                 if (collab) collaboratorsToAdd.push(collab.id);
                             });
 
                             if (location.state.collaboratorName) {
-                                const initialCollab = collabsList.find((c: any) => c.name === location.state.collaboratorName);
+                                const initialCollab = collabsList.find((c: Collaborator) => c.name === location.state.collaboratorName);
                                 if (initialCollab) collaboratorsToAdd.push(initialCollab.id);
                             }
 
@@ -169,7 +200,7 @@ const VisitRecording = () => {
                     reset({
                         companyId: visit.companyId,
                         areaId: visit.areaId || '',
-                        collaboratorIds: visit.collaborators.map((c: any) => c.id),
+                        collaboratorIds: (visit as { collaborators: { id: string }[] }).collaborators.map((c) => c.id),
                         date: visit.date, // Preserve original date
                         masterId: visit.masterId,
                         relatos: {
@@ -187,7 +218,7 @@ const VisitRecording = () => {
                         },
                         pendencias: visit.generatedPendencies || [],
                         anexos: visit.attachments || [],
-                        notes: visit.notes?.map((n: any) => ({
+                        notes: (visit as { notes?: NoteData[] }).notes?.map((n) => ({
                             collaboratorId: n.collaboratorId,
                             content: n.content
                         })) || []
@@ -224,14 +255,14 @@ const VisitRecording = () => {
                 if (res.data && res.data.length > 0) {
                     // Logic to merge approved schedules
                     const approvedSchedules = res.data;
-                    const ids = approvedSchedules.map((s: any) => s.id);
+                    const ids = (approvedSchedules as ScheduleItem[]).map((s) => s.id);
                     setLinkedScheduleIds(prev => [...new Set([...prev, ...ids])]);
 
                     // Add collaborators
                     const currentCollabs = methods.getValues('collaboratorIds');
                     const newCollabs: string[] = [];
-                    approvedSchedules.forEach((s: any) => {
-                        const collab = collaborators.find((c: any) => c.name === s.collaborator);
+                    (approvedSchedules as ScheduleItem[]).forEach((s) => {
+                        const collab = collaborators.find((c) => c.name === s.collaborator);
                         if (collab) newCollabs.push(collab.id);
                     });
 
@@ -241,8 +272,8 @@ const VisitRecording = () => {
 
                     // Append to report
                     const currentReport = methods.getValues('relatos.colaborador') || '';
-                    const reasons = approvedSchedules
-                        .map((s: any) => `${s.collaborator}: ${s.reason || 'Sem motivo'}`)
+                    const reasons = (approvedSchedules as ScheduleItem[])
+                        .map((s) => `${s.collaborator}: ${s.reason || 'Sem motivo'}`)
                         .join('\n');
 
                     if (reasons && !currentReport.includes(reasons)) {
@@ -258,10 +289,10 @@ const VisitRecording = () => {
 
 
     // Handle validation errors from react-hook-form
-    const onError = (errors: any) => {
-        console.error('Form Validation Errors:', errors);
+    const onError = (formErrors: Record<string, { message?: string; root?: { message?: string } }>) => {
+        console.error('Form Validation Errors:', formErrors);
         // Show first error as toast
-        const firstError = Object.values(errors)[0] as any;
+        const firstError = Object.values(formErrors)[0];
         if (firstError?.message) {
             toast.error(firstError.message);
         } else if (firstError?.root?.message) {
@@ -300,15 +331,16 @@ const VisitRecording = () => {
                 const basePath = user?.role === 'RH' ? '/rh/visits' : '/dashboard';
                 navigate(basePath);
             }
-        } catch (error: any) {
+        } catch (error) {
             console.error('Save error', error);
-            if (error.response?.data?.error?.issues) {
+            const err = error as { response?: { data?: { error?: { issues?: { path: string[]; message: string }[] } } }; message?: string };
+            if (err.response?.data?.error?.issues) {
                 // Zod server error
-                error.response.data.error.issues.forEach((issue: any) => {
+                err.response.data.error.issues.forEach((issue) => {
                     toast.error(`${issue.path.join('.')}: ${issue.message}`);
                 });
-            } else if (error.message) {
-                toast.error(error.message);
+            } else if (err.message) {
+                toast.error(err.message);
             } else {
                 toast.error('Erro ao salvar. Verifique os campos.');
             }

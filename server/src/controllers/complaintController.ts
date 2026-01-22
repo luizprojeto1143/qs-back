@@ -52,6 +52,21 @@ export const complaintController = {
         }
     },
 
+    // Listar denúncias da empresa do usuário (para RH)
+    async listForCurrentUser(req: Request, res: Response) {
+        try {
+            const user = (req as AuthRequest).user;
+            if (!user || !user.companyId) {
+                return res.status(400).json({ error: 'User or Company not found' });
+            }
+            // Redireciona para list com companyId do usuário
+            req.params.companyId = user.companyId;
+            return complaintController.list(req, res);
+        } catch (error) {
+            sendError500(res, ERROR_CODES.COMPL_LIST, error);
+        }
+    },
+
     // Listar denúncias
     async list(req: Request, res: Response) {
         try {

@@ -7,10 +7,17 @@ import { LoadingState } from '../../components/master/ai-insights/LoadingState';
 import { EmptyState } from '../../components/master/ai-insights/EmptyState';
 import { AnalysisResults } from '../../components/master/ai-insights/AnalysisResults';
 
+interface Analysis {
+    analysis: string;
+    priorityActions: string[];
+    positivePoints: string[];
+    recommendation: string;
+}
+
 const AIInsightsDashboard = () => {
     const { selectedCompanyId } = useCompany();
     const [loading, setLoading] = useState(false);
-    const [analysis, setAnalysis] = useState<any>(null);
+    const [analysis, setAnalysis] = useState<Analysis | null>(null);
 
     const handleGenerateAnalysis = async () => {
         if (!selectedCompanyId) return;
@@ -21,9 +28,10 @@ const AIInsightsDashboard = () => {
                 'x-company-id': selectedCompanyId
             });
             setAnalysis(response.data.ai);
-        } catch (error: any) {
+        } catch (error) {
             console.error('Error analyzing data:', error);
-            const msg = error.response?.data?.error || 'Falha ao conectar com o serviço de IA.';
+            const err = error as { response?: { data?: { error?: string } } };
+            const msg = err.response?.data?.error || 'Falha ao conectar com o serviço de IA.';
             if (msg.includes('API Key')) {
                 toast.error('Chave da OpenAI não configurada ou inválida.');
             } else {

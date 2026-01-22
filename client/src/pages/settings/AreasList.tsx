@@ -3,6 +3,7 @@ import { MapPin, Plus, X } from 'lucide-react';
 import { useCompany } from '../../contexts/CompanyContext';
 import { api } from '../../lib/api';
 import { EmptyState } from '../../components/EmptyState';
+import { toast } from 'sonner';
 import type { Area, Sector } from '../../types/organization';
 
 const AreasList = () => {
@@ -46,10 +47,11 @@ const AreasList = () => {
             setNewArea({ name: '', sectorId: '' });
             setEditingId(null);
             fetchData();
-            alert(editingId ? 'Área atualizada com sucesso!' : 'Área cadastrada com sucesso!');
-        } catch (error: any) {
+            toast.success(editingId ? 'Área atualizada com sucesso!' : 'Área cadastrada com sucesso!');
+        } catch (error) {
             console.error('Error saving area', error);
-            alert(error.message || 'Erro ao salvar área.');
+            const err = error as { message?: string };
+            toast.error(err.message || 'Erro ao salvar área.');
         }
     };
 

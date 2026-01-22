@@ -32,8 +32,9 @@ const SecuritySettings = () => {
             setQrCode(response.data.qrCode);
             setSecret(response.data.secret);
             setStatus('setup');
-        } catch (error: any) {
-            toast.error(error.response?.data?.error || 'Erro ao iniciar configuração');
+        } catch (error) {
+            const err = error as { response?: { data?: { error?: string } } };
+            toast.error(err.response?.data?.error || 'Erro ao iniciar configuração');
         } finally {
             setLoading(false);
         }
@@ -48,8 +49,9 @@ const SecuritySettings = () => {
             setStatus('enabled');
             setToken('');
             setQrCode('');
-        } catch (error: any) {
-            toast.error(error.response?.data?.error || 'Código inválido');
+        } catch (error) {
+            const err = error as { response?: { data?: { error?: string } } };
+            toast.error(err.response?.data?.error || 'Código inválido');
         } finally {
             setLoading(false);
         }
@@ -62,8 +64,9 @@ const SecuritySettings = () => {
             await api.post('/auth/2fa/disable');
             toast.success('Autenticação em 2 fatores desativada.');
             setStatus('disabled');
-        } catch (error: any) {
-            toast.error(error.response?.data?.error || 'Erro ao desativar 2FA');
+        } catch (error) {
+            const err = error as { response?: { data?: { error?: string } } };
+            toast.error(err.response?.data?.error || 'Erro ao desativar 2FA');
         } finally {
             setLoading(false);
         }

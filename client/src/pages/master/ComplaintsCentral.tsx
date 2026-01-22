@@ -29,8 +29,9 @@ const ComplaintsCentral: React.FC = () => {
             const query = filterStatus ? `?status=${filterStatus}` : '';
             const res = await api.get(`/complaints/${selectedCompanyId}${query}`);
             setComplaints(res.data);
-        } catch (error: any) {
-            if (error.response?.status === 403) {
+        } catch (error) {
+            const err = error as { response?: { status?: number } };
+            if (err.response?.status === 403) {
                 toast.error('Módulo de denúncias não está habilitado');
             }
         } finally {

@@ -5,9 +5,14 @@ import { api } from '../../lib/api';
 import { Download, Copy, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 
+interface Company {
+    id: string;
+    name: string;
+}
+
 const QRCodeGenerator = () => {
     const { companies: contextCompanies } = useCompany();
-    const [companies, setCompanies] = useState<any[]>(contextCompanies);
+    const [companies, setCompanies] = useState<Company[]>(contextCompanies);
     const [selectedCompanyId, setSelectedCompanyId] = useState('');
 
     useEffect(() => {

@@ -6,12 +6,46 @@ import CollaboratorHistory from '../components/CollaboratorHistory';
 import { formatShift } from '../utils/formatters';
 import { EmptyState } from '../components/EmptyState';
 
+interface Collaborator {
+    id: string;
+    name: string;
+    email: string;
+    avatar?: string;
+    companyId: string;
+    collaboratorProfile?: {
+        matricula?: string;
+        areaId?: string;
+        area?: { name: string };
+        shift?: string;
+        nextRestDay?: string;
+        disabilityType?: string;
+        needsDescription?: string;
+    };
+}
+
+interface Area {
+    id: string;
+    name: string;
+    sector?: { companyId: string };
+}
+
+interface Shift {
+    id: string;
+    name: string;
+    type: string;
+}
+
+interface Company {
+    id: string;
+    name: string;
+}
+
 const CollaboratorsList = () => {
     const { selectedCompanyId, companies: contextCompanies } = useCompany();
-    const [collaborators, setCollaborators] = useState<any[]>([]);
-    const [areas, setAreas] = useState<any[]>([]);
-    const [shifts, setShifts] = useState<any[]>([]);
-    const [companies, setCompanies] = useState<any[]>(contextCompanies);
+    const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
+    const [areas, setAreas] = useState<Area[]>([]);
+    const [shifts, setShifts] = useState<Shift[]>([]);
+    const [companies, setCompanies] = useState<Company[]>(contextCompanies as Company[]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -87,13 +121,14 @@ const CollaboratorsList = () => {
             setEditingId(null);
             fetchData();
             alert(editingId ? 'Colaborador atualizado com sucesso!' : 'Colaborador cadastrado com sucesso!');
-        } catch (error: any) {
+        } catch (error) {
             console.error('Error saving collaborator', error);
-            alert(error.message || 'Erro ao salvar colaborador.');
+            const message = error instanceof Error ? error.message : 'Erro ao salvar colaborador.';
+            alert(message);
         }
     };
 
-    const handleEdit = (collab: any) => {
+    const handleEdit = (collab: Collaborator) => {
         setNewCollab({
             name: collab.name,
             email: collab.email,
@@ -116,9 +151,10 @@ const CollaboratorsList = () => {
                 await api.delete(`/collaborators/${id}`);
                 fetchData();
                 alert('Colaborador excluído com sucesso!');
-            } catch (error: any) {
+            } catch (error) {
                 console.error('Error deleting collaborator', error);
-                alert(error.response?.data?.error || 'Erro ao excluir colaborador.');
+                const err = error as { response?: { data?: { error?: string } } };
+                alert(err.response?.data?.error || 'Erro ao excluir colaborador.');
             }
         }
     };

@@ -1,7 +1,51 @@
 import { TrendingUp, FileText } from 'lucide-react';
 
+interface Collaborator {
+    id: string;
+    user?: { name?: string; email?: string; avatar?: string };
+    matricula?: string;
+    shift?: string;
+}
+
+interface Note {
+    id: string;
+    content: string;
+    createdAt?: string;
+    collaborator?: { user?: { name?: string } };
+}
+
+interface Pendency {
+    id: string;
+    description: string;
+    responsible?: string;
+    priority?: string;
+    status?: string;
+}
+
+interface Attachment {
+    id: string;
+    name?: string;
+    url: string;
+    type?: string;
+}
+
+interface VisitData {
+    date?: string;
+    area?: { name?: string; sector?: { name?: string } };
+    master?: { name?: string };
+    company?: { name?: string };
+    collaborators?: Collaborator[];
+    relatoLideranca?: string;
+    relatoColaborador?: string;
+    relatoConsultoria?: string;
+    observacoesMaster?: string;
+    notes?: Note[];
+    generatedPendencies?: Pendency[];
+    attachments?: Attachment[];
+}
+
 interface VisitDetailViewProps {
-    data: any;
+    data: VisitData;
     index?: number;
 }
 
@@ -50,10 +94,10 @@ export const VisitDetailView = ({ data, index }: VisitDetailViewProps) => {
                         Colaboradores Acompanhados
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {data.collaborators.map((c: any) => (
+                        {data.collaborators.map((c) => (
                             <div key={c.id} className="p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
                                 <div className="flex items-center gap-3 mb-2">
-                                    {c.user?.avatar && <img src={c.user.avatar} className="w-10 h-10 rounded-full object-cover" alt="" />}
+                                    {c.user?.avatar && <img src={c.user.avatar} className="w-10 h-10 rounded-full object-cover" alt={`Avatar de ${c.user?.name || 'colaborador'}`} />}
                                     <div>
                                         <p className="font-bold text-lg">{c.user?.name || 'Colaborador'}</p>
                                         <p className="text-xs text-gray-400">{c.user?.email}</p>
@@ -103,7 +147,7 @@ export const VisitDetailView = ({ data, index }: VisitDetailViewProps) => {
                 <div style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
                     <h3 className="text-xl font-bold mb-4 border-b pb-2 mt-8">Notas Individuais</h3>
                     <div className="space-y-4">
-                        {data.notes.map((note: any) => (
+                        {data.notes.map((note) => (
                             <div key={note.id} className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg print:break-inside-avoid" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
                                 <div className="flex justify-between items-start mb-2">
                                     <p className="font-bold text-yellow-900">{note.collaborator?.user?.name || 'Colaborador'}</p>
@@ -132,7 +176,7 @@ export const VisitDetailView = ({ data, index }: VisitDetailViewProps) => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {data.generatedPendencies.map((p: any) => (
+                                {data.generatedPendencies.map((p) => (
                                     <tr key={p.id}>
                                         <td className="p-3 border">{p.description}</td>
                                         <td className="p-3 border">{p.responsible}</td>
@@ -154,7 +198,7 @@ export const VisitDetailView = ({ data, index }: VisitDetailViewProps) => {
                         Anexos
                     </h3>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        {data.attachments.map((file: any) => (
+                        {data.attachments.map((file) => (
                             <div key={file.id} className="border rounded-lg p-2">
                                 {file.type?.startsWith('image/') ? (
                                     <img src={file.url} alt={file.name} className="w-full h-48 object-cover rounded" />

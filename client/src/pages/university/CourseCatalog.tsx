@@ -3,8 +3,8 @@ import { api } from '../../lib/api';
 import { useNavigate } from 'react-router-dom';
 import {
     Play, Clock, Search, CheckCircle, TrendingUp, Zap,
-    Target, Brain, Award, ChevronRight, MoreHorizontal,
-    BarChart3, Shield, Users
+    Target, Brain, Award, ChevronRight,
+    BarChart3, Shield
 } from 'lucide-react';
 import { LearningTrailMap } from './components/LearningTrailMap';
 
@@ -31,7 +31,7 @@ const CourseCatalog = () => {
         id: c.id,
         title: c.title,
         type: 'COURSE' as const,
-        status: i === 0 ? 'IN_PROGRESS' : i === 1 ? 'UNLOCKED' : 'LOCKED' as any,
+        status: (i === 0 ? 'IN_PROGRESS' : i === 1 ? 'UNLOCKED' : 'LOCKED') as 'IN_PROGRESS' | 'UNLOCKED' | 'LOCKED' | 'COMPLETED',
         data: {
             description: c.description,
             coverUrl: c.coverUrl,
@@ -45,7 +45,7 @@ const CourseCatalog = () => {
             try {
                 const response = await api.get('/courses');
                 setCourses(response.data);
-            } catch (error: any) {
+            } catch (error) {
                 console.error('Error fetching courses', error);
             } finally {
                 setLoading(false);

@@ -65,12 +65,24 @@ export const createVisit = async (req: Request, res: Response) => {
 
 export const listVisits = async (req: Request, res: Response) => {
     try {
-        const { companyId, areaId, status, masterId, collaboratorId, startDate, endDate, page, limit } = req.query;
+        const user = (req as AuthRequest).user;
+        const { areaId, status, masterId, collaboratorId, startDate, endDate, page, limit } = req.query;
 
-        // Note: companyId can be optional for MASTER users who can see all companies
+        // Para MASTER: pode usar query param ou header para filtrar por empresa
+        // Para outros: SEMPRE usar companyId do token
+        let companyId: string | undefined;
+        if (user?.role === 'MASTER') {
+            companyId = (req.query.companyId as string) || (req.headers['x-company-id'] as string);
+        } else {
+            companyId = user?.companyId || undefined;
+        }
+
+        if (!companyId && user?.role !== 'MASTER') {
+            return res.status(400).json({ error: 'Company context required' });
+        }
 
         const result = await visitService.list(
-            companyId as string,
+            companyId || '',
             {
                 areaId: areaId as string,
                 status: status as string,

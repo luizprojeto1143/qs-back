@@ -69,18 +69,18 @@ const MobileHome = () => {
                     api.get('/schedules')
                 ]);
 
-                const feedData = resFeed.data as any;
-                const scheduleData = resSchedule.data as any;
+                const feedData = resFeed.data as { data?: FeedItem[] } | FeedItem[];
+                const scheduleData = resSchedule.data as Schedule[];
 
-                if (feedData.data && Array.isArray(feedData.data)) {
-                    setFeedItems(feedData.data.map((item: any) => ({
+                if ('data' in feedData && Array.isArray(feedData.data)) {
+                    setFeedItems(feedData.data.map((item) => ({
                         ...item,
                         type: item.videoLibrasUrl ? 'video' : 'article',
                         thumbnail: item.videoLibrasUrl ? 'bg-blue-100' : 'bg-green-100',
                         author: 'RH'
                     })));
                 } else if (Array.isArray(feedData)) {
-                    setFeedItems(feedData.map((item: any) => ({
+                    setFeedItems((feedData as FeedItem[]).map((item) => ({
                         ...item,
                         type: item.videoLibrasUrl ? 'video' : 'article',
                         thumbnail: item.videoLibrasUrl ? 'bg-blue-100' : 'bg-green-100',
@@ -92,8 +92,8 @@ const MobileHome = () => {
                     // Find next schedule
                     const now = new Date();
                     const next = scheduleData
-                        .filter((s: any) => new Date(s.date) > now)
-                        .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
+                        .filter((s) => new Date(s.date) > now)
+                        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
 
                     if (next) setNextSchedule(next);
                 }

@@ -29,6 +29,25 @@ interface Collaborator {
     };
 }
 
+interface Participant {
+    id: string;
+    name: string;
+    role: string;
+    area?: string;
+}
+
+interface Mediation {
+    id: string;
+    theme: string;
+    description: string;
+    date: string;
+    result: string;
+    confidentiality: string;
+    participants: Participant[] | number;
+    leader?: { name: string };
+    area?: { id: string; name: string };
+}
+
 interface Area {
     id: string;
     name: string;
@@ -38,7 +57,7 @@ const MediationCentral = () => {
     const { selectedCompanyId } = useCompany();
     const [searchParams] = useSearchParams();
 
-    const [mediations, setMediations] = useState<any[]>([]);
+    const [mediations, setMediations] = useState<Mediation[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -61,7 +80,7 @@ const MediationCentral = () => {
         date: new Date().toISOString().split('T')[0],
         theme: '',
         description: '',
-        participants: [] as any[], // Now storing objects
+        participants: [] as Participant[], // Now storing objects
         leaderId: '',
         areaId: '',
         confidentiality: 'RESTRITO',
@@ -106,7 +125,7 @@ const MediationCentral = () => {
             // If areas endpoint fails, we extract areas from collaborators
             if (!areaRes || !areaRes.data || areaRes.data.length === 0) {
                 const extractedAreas = new Map();
-                collabRes.data.data.forEach((c: any) => {
+                (collabRes.data.data || collabRes.data).forEach((c: { collaboratorProfile?: { area: Area } }) => {
                     if (c.collaboratorProfile?.area) {
                         extractedAreas.set(c.collaboratorProfile.area.id, c.collaboratorProfile.area);
                     }
@@ -319,8 +338,8 @@ const MediationCentral = () => {
                                         <span className="flex items-center gap-1">
                                             <Users className="w-4 h-4" />
                                             {Array.isArray(item.participants)
-                                                ? item.participants.map((p: any) => p.name || p).join(', ')
-                                                : item.participants?.length || 0}
+                                                ? item.participants.map((p) => (p as Participant).name || p).join(', ')
+                                                : item.participants || 0}
                                         </span>
                                         {item.leader && (
                                             <span className="flex items-center gap-1">

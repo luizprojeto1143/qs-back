@@ -4,8 +4,34 @@ import { api } from '../lib/api';
 import { TrendingUp, Activity, AlertTriangle, Info, Map as MapIcon, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 
+interface Metric {
+    name: string;
+    value: string;
+    status: 'success' | 'warning';
+}
+
+interface QSScoreCardProps {
+    score: number;
+    classification: string;
+    metrics: Metric[];
+}
+
+interface Alert {
+    id: string;
+    title: string;
+    description: string;
+    severity: string;
+    status: string;
+}
+
+interface ScoreData {
+    score: number;
+    classification: string;
+    metrics: Metric[];
+}
+
 // Placeholder components - these would be complex charts/heatmaps
-const QSScoreCard = ({ score, classification, metrics }: any) => {
+const QSScoreCard = ({ score, classification, metrics }: QSScoreCardProps) => {
     const getScoreColor = (s: number) => {
         if (s >= 800) return 'text-green-600';
         if (s >= 500) return 'text-yellow-600';
@@ -21,7 +47,7 @@ const QSScoreCard = ({ score, classification, metrics }: any) => {
                 Índice global de inclusão baseado em conformidade legal e bem-estar (QS Method).
             </p>
             <div className="grid grid-cols-2 gap-2 mt-6">
-                {(metrics || []).map((m: any) => (
+                {(metrics || []).map((m) => (
                     <div key={m.name} className="bg-gray-50 p-2 rounded-lg text-xs">
                         <span className="block text-gray-400 mb-1">{m.name}</span>
                         <span className={`font-bold text-sm ${m.status === 'success' ? 'text-green-600' : 'text-orange-500'}`}>
@@ -44,14 +70,14 @@ const RiskMap = () => (
     </div>
 );
 
-const AlertsList = ({ alerts }: { alerts: any[] }) => (
+const AlertsList = ({ alerts }: { alerts: Alert[] }) => (
     <div className="space-y-4">
         {alerts.length === 0 ? (
             <div className="text-center py-10 bg-white rounded-xl border border-dashed text-gray-500">
                 Nenhum alerta ativo no momento.
             </div>
         ) : (
-            alerts.map((alert: any) => (
+            alerts.map((alert) => (
                 <div key={alert.id} className="bg-white p-4 rounded-xl border-l-4 border-l-red-500 shadow-sm flex items-start gap-4">
                     <div className="p-2 bg-red-50 rounded-lg shrink-0">
                         <AlertTriangle className="h-5 w-5 text-red-600" />
@@ -72,8 +98,8 @@ const AlertsList = ({ alerts }: { alerts: any[] }) => (
 
 const RHInclusion = () => {
     const [activeTab, setActiveTab] = useState('SCORE'); // SCORE, MAP, ALERTS
-    const [scoreData, setScoreData] = useState<any>(null);
-    const [alerts, setAlerts] = useState<any[]>([]);
+    const [scoreData, setScoreData] = useState<ScoreData | null>(null);
+    const [alerts, setAlerts] = useState<Alert[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {

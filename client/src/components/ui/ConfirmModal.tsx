@@ -51,10 +51,10 @@ export const ConfirmModal = ({
             <div className="bg-white rounded-2xl w-full max-w-md p-6 animate-in fade-in zoom-in duration-200">
                 <div className="flex items-start gap-4">
                     <div className={`p-3 rounded-full ${variant === 'danger' ? 'bg-red-100' :
-                            variant === 'warning' ? 'bg-yellow-100' : 'bg-blue-100'
+                        variant === 'warning' ? 'bg-yellow-100' : 'bg-blue-100'
                         }`}>
                         <AlertTriangle className={`h-6 w-6 ${variant === 'danger' ? 'text-red-600' :
-                                variant === 'warning' ? 'text-yellow-600' : 'text-blue-600'
+                            variant === 'warning' ? 'text-yellow-600' : 'text-blue-600'
                             }`} />
                     </div>
                     <div className="flex-1">
@@ -137,15 +137,17 @@ export const useConfirmModal = () => {
         });
     }, []);
 
+    const { resolve } = state;
+
     const handleConfirm = useCallback(() => {
-        state.resolve?.(true);
+        resolve?.(true);
         setState(prev => ({ ...prev, isOpen: false, resolve: null }));
-    }, [state.resolve]);
+    }, [resolve]);
 
     const handleCancel = useCallback(() => {
-        state.resolve?.(false);
+        resolve?.(false);
         setState(prev => ({ ...prev, isOpen: false, resolve: null }));
-    }, [state.resolve]);
+    }, [resolve]);
 
     const ConfirmModalComponent = () => (
         <ConfirmModal

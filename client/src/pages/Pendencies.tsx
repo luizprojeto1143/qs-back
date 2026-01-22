@@ -22,6 +22,16 @@ interface Pendency {
     createdAt: string;
 }
 
+interface Area {
+    id: string;
+    name: string;
+}
+
+interface Company {
+    id: string;
+    name: string;
+}
+
 const Pendencies = () => {
     const { selectedCompanyId, companies: contextCompanies } = useCompany();
     const [searchParams] = useSearchParams();
@@ -34,8 +44,8 @@ const Pendencies = () => {
     const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
 
     // Dropdown Data
-    const [companies, setCompanies] = useState<any[]>(contextCompanies);
-    const [areas, setAreas] = useState<any[]>([]);
+    const [companies, setCompanies] = useState<Company[]>(contextCompanies as Company[]);
+    const [areas, setAreas] = useState<Area[]>([]);
 
     const [filters, setFilters] = useState({
         status: searchParams.get('status') || '',
@@ -108,7 +118,7 @@ const Pendencies = () => {
         }
     };
 
-    const handleEdit = (item: any) => {
+    const handleEdit = (item: Pendency) => {
         setNewPendency({
             description: item.description,
             responsible: item.responsible,

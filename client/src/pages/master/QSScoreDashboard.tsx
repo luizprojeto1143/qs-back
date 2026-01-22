@@ -9,12 +9,26 @@ import {
     Building2, Users, Activity, Brain
 } from 'lucide-react';
 
+interface QSScoreFactors {
+    visitasMensais?: number;
+    pendenciasAbertas?: number;
+    tempoMedioResolucao?: number;
+    colaboradoresPCD?: number;
+    taxaCobertura?: number;
+}
+
 interface QSScoreData {
     score: number;
     classification: string;
-    factors: any;
-    breakdown?: any;
+    factors: QSScoreFactors;
+    breakdown?: Record<string, number>;
     trend?: string;
+}
+
+interface RiskMapFactors {
+    pendenciasAbertas?: number;
+    visitasRecentes?: number;
+    colaboradores?: number;
 }
 
 interface RiskMapArea {
@@ -24,7 +38,7 @@ interface RiskMapArea {
     score: number;
     classification: string;
     color: string;
-    factors: any;
+    factors: RiskMapFactors;
 }
 
 interface RiskMapData {
@@ -81,8 +95,9 @@ const QSScoreDashboard: React.FC = () => {
             ]);
             setScoreData(scoreRes.data);
             setRiskMap(riskRes.data);
-        } catch (error: any) {
-            if (error.response?.status === 403) {
+        } catch (error) {
+            const err = error as { response?: { status?: number } };
+            if (err.response?.status === 403) {
                 toast.error('QS Score não está habilitado para esta empresa');
             } else {
                 toast.error('Erro ao carregar dados do QS Score');

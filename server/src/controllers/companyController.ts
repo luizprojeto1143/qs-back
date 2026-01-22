@@ -6,7 +6,11 @@ import { sendError500, ERROR_CODES } from '../utils/errorUtils';
 export const getStructure = async (req: Request, res: Response) => {
     try {
         const user = (req as AuthRequest).user;
-        const companyId = req.headers['x-company-id'] as string || user?.companyId;
+        // Para MASTER: pode usar x-company-id para navegar entre empresas
+        // Para outros: SEMPRE usar companyId do token
+        const companyId = user?.role === 'MASTER'
+            ? (req.headers['x-company-id'] as string || user?.companyId)
+            : user?.companyId;
 
         if (!companyId) {
             return res.status(400).json({ error: 'Company context required' });
@@ -191,7 +195,11 @@ export const deleteCompany = async (req: Request, res: Response) => {
 export const listSectors = async (req: Request, res: Response) => {
     try {
         const user = (req as AuthRequest).user;
-        const companyId = req.headers['x-company-id'] as string || user?.companyId;
+        // Para MASTER: pode usar x-company-id para navegar entre empresas
+        // Para outros: SEMPRE usar companyId do token
+        const companyId = user?.role === 'MASTER'
+            ? (req.headers['x-company-id'] as string || user?.companyId)
+            : user?.companyId;
 
         const where: Prisma.SectorWhereInput = {};
         if (companyId) {
@@ -214,8 +222,11 @@ export const listSectors = async (req: Request, res: Response) => {
 export const listAreas = async (req: Request, res: Response) => {
     try {
         const user = (req as AuthRequest).user;
-        // Support query param, header, or user's company
-        const companyId = (req.query.companyId as string) || req.headers['x-company-id'] as string || user?.companyId;
+        // Para MASTER: pode usar query param, header ou token
+        // Para outros: SEMPRE usar companyId do token
+        const companyId = user?.role === 'MASTER'
+            ? ((req.query.companyId as string) || (req.headers['x-company-id'] as string) || user?.companyId)
+            : user?.companyId;
 
         const where: Prisma.AreaWhereInput = {};
         if (companyId) {

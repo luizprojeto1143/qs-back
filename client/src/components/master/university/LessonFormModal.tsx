@@ -3,10 +3,25 @@ import { Upload, FileText, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../../lib/api';
 
+interface LessonFormData {
+    title: string;
+    description: string;
+    videoUrl: string;
+    transcription: string;
+    duration: number;
+    order: number;
+}
+
+interface Attachment {
+    name: string;
+    url: string;
+    type: string;
+}
+
 interface LessonFormModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (data: any, attachments: any[]) => Promise<void>;
+    onSubmit: (data: LessonFormData, attachments: Attachment[]) => Promise<void>;
 }
 
 export const LessonFormModal = ({ isOpen, onClose, onSubmit }: LessonFormModalProps) => {

@@ -15,6 +15,8 @@ export interface User {
     email: string;
     role: string;
     companyId?: string;
+    avatar?: string;
+    level?: number;
 }
 
 interface AuthContextData {
@@ -28,19 +30,6 @@ export const AuthContext = createContext<AuthContextData>({} as AuthContextData)
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
-
-    useEffect(() => {
-        const storedUser = storage.get('user');
-        if (storedUser) {
-            setUser(storedUser);
-        }
-
-        // Listen for force logout events from api.ts
-        const handleLogoutEvent = () => logout();
-        window.addEventListener('auth:logout', handleLogoutEvent);
-
-        return () => window.removeEventListener('auth:logout', handleLogoutEvent);
-    }, []);
 
     const login = (userData: User, token: string) => {
         storage.set('token', token);
@@ -57,6 +46,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         storage.remove('selectedCompanyId');
         setUser(null);
     };
+
+    useEffect(() => {
+        const storedUser = storage.get('user');
+        if (storedUser) {
+            setUser(storedUser);
+        }
+
+        // Listen for force logout events from api.ts
+        const handleLogoutEvent = () => logout();
+        window.addEventListener('auth:logout', handleLogoutEvent);
+
+        return () => window.removeEventListener('auth:logout', handleLogoutEvent);
+    }, [logout]);
 
     return (
         <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user }}>

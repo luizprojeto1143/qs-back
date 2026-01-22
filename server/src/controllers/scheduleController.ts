@@ -150,7 +150,11 @@ export const listSchedules = async (req: Request, res: Response) => {
 
         const where: any = {};
 
-        const companyId = req.headers['x-company-id'] as string || user.companyId;
+        // Para MASTER: pode usar x-company-id para navegar entre empresas
+        // Para outros: SEMPRE usar companyId do token
+        const companyId = user.role === 'MASTER'
+            ? (req.headers['x-company-id'] as string || user.companyId)
+            : user.companyId;
 
         if (companyId) {
             where.companyId = companyId;

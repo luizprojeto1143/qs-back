@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { api } from '../../../lib/api';
 import { MessageSquare, Send, Trash2, User } from 'lucide-react';
 import { toast } from 'sonner';
@@ -28,20 +28,20 @@ export const LessonComments = ({ lessonId }: LessonCommentsProps) => {
     const [newComment, setNewComment] = useState('');
     const [loading, setLoading] = useState(true);
 
-    const fetchComments = async () => {
+    const fetchComments = useCallback(async () => {
         try {
             const response = await api.get(`/lessons/${lessonId}/comments`);
             setComments(response.data);
-        } catch (error) {
-            console.error('Error fetching comments', error);
+        } catch {
+            console.error('Error fetching comments');
         } finally {
             setLoading(false);
         }
-    };
+    }, [lessonId]);
 
     useEffect(() => {
         fetchComments();
-    }, [lessonId]);
+    }, [fetchComments]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -54,7 +54,7 @@ export const LessonComments = ({ lessonId }: LessonCommentsProps) => {
             setNewComment('');
             fetchComments(); // Refresh list
             toast.success('Comentário enviado!');
-        } catch (error) {
+        } catch {
             toast.error('Erro ao enviar comentário');
         }
     };

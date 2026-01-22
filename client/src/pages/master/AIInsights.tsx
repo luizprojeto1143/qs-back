@@ -83,9 +83,10 @@ const AIInsights: React.FC = () => {
             setAlerts(alertsRes.data);
             setPriorities(prioritiesRes.data.priorities || []);
             setSummary(summaryRes.data);
-        } catch (error: any) {
+        } catch (error) {
             console.error('Error loading AI data:', error);
-            if (error.response?.status === 403) {
+            const err = error as { response?: { status?: number } };
+            if (err.response?.status === 403) {
                 toast.error('IA não está habilitada para esta empresa');
             }
         } finally {

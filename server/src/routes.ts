@@ -31,6 +31,7 @@ import * as workScheduleController from './controllers/workScheduleController';
 import * as aiController from './controllers/aiController';
 import * as healthController from './controllers/healthController';
 import * as authController from './controllers/authController';
+import * as gamificationController from './controllers/gamificationController';
 import { createRoom } from './controllers/dailyController';
 import { createQuiz, addQuestion, getQuiz, submitQuiz, deleteQuiz, deleteQuestion, getQuizEditor } from './controllers/quizController';
 
@@ -52,6 +53,13 @@ router.use('/', talentRoutes); // Mounts /cycles, /reviews
 
 // User Profile Route
 router.get('/me', authController.getProfile);
+
+// Gamification Routes
+router.get('/gamification/profile', gamificationController.getMyProfile);
+router.get('/gamification/profile/:userId', gamificationController.getUserProfile);
+router.get('/gamification/leaderboard', gamificationController.getLeaderboard);
+router.get('/gamification/achievements', gamificationController.getAchievements);
+router.get('/gamification/xp-values', gamificationController.getXPValues);
 
 // Collaborator Routes
 router.get('/collaborators', collaboratorController.listCollaborators);

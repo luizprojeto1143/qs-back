@@ -34,6 +34,8 @@ router.patch('/settings/:companyId/toggle/:feature', requireRole(['MASTER']), sy
 // DENÚNCIAS
 // ============================================
 router.post('/complaints', complaintController.create);
+// Rota para RH listar denúncias da própria empresa (usa companyId do token)
+router.get('/complaints', requireRole(['RH']), complaintController.listForCurrentUser);
 router.get('/complaints/:companyId', requireRole(['MASTER']), complaintController.list);
 router.get('/complaint/:id', requireRole(['MASTER']), complaintController.get);
 router.patch('/complaint/:id/translate', requireRole(['MASTER']), complaintController.translate);

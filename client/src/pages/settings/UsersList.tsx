@@ -28,6 +28,23 @@ interface Area {
     };
 }
 
+interface UserFormData {
+    name: string;
+    email: string;
+    password: string;
+    role: string;
+    companyId: string;
+    areaId: string;
+}
+
+interface ApiError {
+    response?: {
+        data?: {
+            error?: string;
+        };
+    };
+}
+
 export function UsersList() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -70,7 +87,7 @@ export function UsersList() {
     });
 
     const createMutation = useMutation({
-        mutationFn: async (data: any) => {
+        mutationFn: async (data: UserFormData) => {
             await api.post('/users', data);
         },
         onSuccess: () => {
@@ -79,13 +96,13 @@ export function UsersList() {
             resetForm();
             toast.success('Usuário criado com sucesso!');
         },
-        onError: (error: any) => {
+        onError: (error: ApiError) => {
             toast.error(error.response?.data?.error || 'Erro ao criar usuário');
         }
     });
 
     const updateMutation = useMutation({
-        mutationFn: async (data: any) => {
+        mutationFn: async (data: UserFormData) => {
             await api.put(`/users/${editingUser?.id}`, data);
         },
         onSuccess: () => {
@@ -94,7 +111,7 @@ export function UsersList() {
             resetForm();
             toast.success('Usuário atualizado com sucesso!');
         },
-        onError: (error: any) => {
+        onError: (error: ApiError) => {
             toast.error(error.response?.data?.error || 'Erro ao atualizar usuário');
         }
     });

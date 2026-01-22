@@ -6,10 +6,25 @@ import { Play, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import ReviewForm from './ReviewForm';
 
+interface Review {
+    id: string;
+    reviewee: { name: string; role: string };
+    type: string;
+    cycle: { name: string };
+}
+
+interface Cycle {
+    id: string;
+    name: string;
+    startDate: string;
+    endDate: string;
+    status: string;
+}
+
 const PerformanceTab = () => {
     const { user } = useAuth();
-    const [reviews, setReviews] = useState<any[]>([]);
-    const [activeCycles, setActiveCycles] = useState<any[]>([]);
+    const [reviews, setReviews] = useState<Review[]>([]);
+    const [activeCycles, setActiveCycles] = useState<Cycle[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedReviewId, setSelectedReviewId] = useState<string | null>(null);
 
@@ -65,7 +80,7 @@ const PerformanceTab = () => {
                     </div>
                 ) : (
                     <div className="grid gap-4 md:grid-cols-2">
-                        {reviews.map((review: any) => (
+                        {reviews.map((review) => (
                             <div key={review.id} className="border p-4 rounded-lg flex justify-between items-center hover:bg-gray-50 transition-colors group relative overflow-hidden">
                                 <div>
                                     <p className="font-bold text-gray-800">{review.reviewee.name}</p>
@@ -104,7 +119,7 @@ const PerformanceTab = () => {
                         {activeCycles.length === 0 ? (
                             <p className="text-gray-500">Nenhum ciclo criado.</p>
                         ) : (
-                            activeCycles.map((cycle: any) => (
+                            activeCycles.map((cycle) => (
                                 <div key={cycle.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                                     <div>
                                         <p className="font-bold">{cycle.name}</p>

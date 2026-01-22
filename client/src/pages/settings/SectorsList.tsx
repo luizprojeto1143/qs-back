@@ -3,6 +3,7 @@ import { Layers, Plus, X } from 'lucide-react';
 import { useCompany } from '../../contexts/CompanyContext';
 import { api } from '../../lib/api';
 import { EmptyState } from '../../components/EmptyState';
+import { toast } from 'sonner';
 import type { Sector, Company } from '../../types/organization';
 
 const SectorsList = () => {
@@ -59,10 +60,11 @@ const SectorsList = () => {
             setNewSector({ name: '', companyId: selectedCompanyId || '' });
             setEditingId(null);
             fetchData();
-            alert(editingId ? 'Setor atualizado com sucesso!' : 'Setor cadastrado com sucesso!');
-        } catch (error: any) {
+            toast.success(editingId ? 'Setor atualizado com sucesso!' : 'Setor cadastrado com sucesso!');
+        } catch (error) {
             console.error('Error saving sector', error);
-            alert(error.message || 'Erro ao salvar setor.');
+            const err = error as { message?: string };
+            toast.error(err.message || 'Erro ao salvar setor.');
         }
     };
 

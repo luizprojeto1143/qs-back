@@ -6,8 +6,29 @@ import {
 } from 'recharts';
 import { AlertTriangle, TrendingUp, MessageSquare } from 'lucide-react';
 
+interface ResultComment {
+    competency: string;
+    type: string;
+    text: string;
+}
+
+interface ResultChartItem {
+    subject: string;
+    self: number;
+    manager: number;
+    peer: number;
+}
+
+interface ResultsData {
+    available: boolean;
+    message?: string;
+    cycle: string;
+    chartData: ResultChartItem[];
+    comments: ResultComment[];
+}
+
 const ResultsTab = () => {
-    const [data, setData] = useState<any>(null);
+    const [data, setData] = useState<ResultsData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -86,7 +107,7 @@ const ResultsTab = () => {
                         {data.comments.length === 0 ? (
                             <p className="text-gray-400 text-center py-10">Nenhum comentário registrado.</p>
                         ) : (
-                            data.comments.map((comment: any, index: number) => (
+                            data.comments.map((comment, index: number) => (
                                 <div key={index} className="p-4 bg-gray-50 rounded-lg border-l-4 border-purple-400">
                                     <div className="flex justify-between items-center mb-2">
                                         <span className="text-xs font-bold uppercase text-gray-500">{comment.competency}</span>
@@ -117,7 +138,7 @@ const ResultsTab = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
-                            {data.chartData.map((item: any) => {
+                            {data.chartData.map((item) => {
                                 const validScores = [item.self, item.manager, item.peer].filter(s => s > 0);
                                 const average = validScores.length > 0
                                     ? validScores.reduce((a: number, b: number) => a + b, 0) / validScores.length

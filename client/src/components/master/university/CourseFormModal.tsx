@@ -1,9 +1,21 @@
 import React, { useState } from 'react';
 
+interface CourseFormData {
+    title: string;
+    description: string;
+    coverUrl: string;
+    category: string;
+    duration: number;
+    isMandatory: boolean;
+    publishedAt: string;
+    visibleToAll: boolean;
+    allowedCompanyIds: string[];
+}
+
 interface CourseFormModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (data: any) => Promise<void>;
+    onSubmit: (data: CourseFormData) => Promise<void>;
     companies: { id: string; name: string }[];
 }
 

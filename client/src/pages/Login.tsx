@@ -31,7 +31,11 @@ const Login = () => {
         setLoading(true);
 
         try {
-            const payload: any = { email: email.trim().toLowerCase(), password, rememberMe };
+            const payload: { email: string; password: string; rememberMe: boolean; totpCode?: string } = {
+                email: email.trim().toLowerCase(),
+                password,
+                rememberMe
+            };
             if (require2FA && totpCode) payload.totpCode = totpCode;
 
             const response = await api.post('/auth/login', payload);
@@ -71,13 +75,14 @@ const Login = () => {
                 default:
                     navigate('/dashboard');
             }
-        } catch (error: any) {
+        } catch (error) {
             // Log error only in development
             if (import.meta.env.DEV) {
                 console.error('Login error:', error);
             }
 
-            const msg = error.response?.data?.error || error.message || 'Erro ao fazer login';
+            const err = error as { response?: { data?: { error?: string } }; message?: string };
+            const msg = err.response?.data?.error || err.message || 'Erro ao fazer login';
             toast.error(msg);
             if (msg.includes('Invalid 2FA')) {
                 setTotpCode(''); // Clear invalid code

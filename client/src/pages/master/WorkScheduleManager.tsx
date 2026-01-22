@@ -68,7 +68,7 @@ const WorkScheduleManager: React.FC = () => {
         try {
             const res = await api.get(`/days-off`);
             setDaysOff(res.data);
-        } catch (error: any) {
+        } catch (error) {
             console.error('Error loading days off:', error);
         } finally {
             setLoading(false);
@@ -226,9 +226,9 @@ const WorkScheduleManager: React.FC = () => {
                                         </td>
                                         <td className="py-4 px-4">
                                             <span className={`px-3 py-1 rounded-full text-sm font-medium ${dayOff.type === 'FERIAS' ? 'bg-yellow-100 text-yellow-700' :
-                                                    dayOff.type === 'ATESTADO' ? 'bg-red-100 text-red-700' :
-                                                        dayOff.type === 'FOLGA' ? 'bg-green-100 text-green-700' :
-                                                            'bg-blue-100 text-blue-700'
+                                                dayOff.type === 'ATESTADO' ? 'bg-red-100 text-red-700' :
+                                                    dayOff.type === 'FOLGA' ? 'bg-green-100 text-green-700' :
+                                                        'bg-blue-100 text-blue-700'
                                                 }`}>
                                                 {DAYOFF_TYPES.find(t => t.value === dayOff.type)?.label || dayOff.type}
                                             </span>

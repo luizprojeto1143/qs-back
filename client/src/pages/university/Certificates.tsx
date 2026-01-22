@@ -18,7 +18,7 @@ interface Certificate {
     };
 }
 
-const CertificateTemplate = ({ certificate, logoUrl, companyName, ref }: { certificate: Certificate | null, logoUrl?: string, companyName?: string, ref: any }) => {
+const CertificateTemplate = ({ certificate, logoUrl, companyName, ref }: { certificate: Certificate | null, logoUrl?: string, companyName?: string, ref: React.RefObject<HTMLDivElement> }) => {
     if (!certificate) return null;
 
     return (
@@ -124,7 +124,7 @@ const Certificates = () => {
         content: () => printRef.current,
         documentTitle: `Certificado - ${selectedCertificate?.courseTitle}`,
         onAfterPrint: () => setSelectedCertificate(null)
-    } as any);
+    } as unknown as { content: () => HTMLDivElement | null });
 
     useEffect(() => {
         if (selectedCertificate) {
@@ -158,8 +158,7 @@ const Certificates = () => {
 
                 // Map the response to our interface
                 // The response has certificates array
-                const certs = detailsRes.data.certificates.map((c: any) => ({
-                    ...c,
+                const certs = detailsRes.data.certificates.map((c: { courseDuration?: number }) => ({
                     ...c,
                     user: { name: detailsRes.data.user.name },
                     course: { duration: c.courseDuration || 60 } // Use real duration

@@ -1,4 +1,4 @@
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, type FieldPath } from 'react-hook-form';
 import type { VisitFormData } from '../../schemas/visitSchema';
 
 export const VisitEvaluationsTab = () => {
@@ -14,7 +14,10 @@ export const VisitEvaluationsTab = () => {
     const criteria = ['Comunicação', 'Acolhimento', 'Acessibilidade', 'Relacionamento', 'Postura'];
 
     const handleRating = (sectionId: string, item: string, rating: number) => {
-        setValue(`avaliacoes.${sectionId}.${item}` as any, rating);
+        // Dynamic nested paths for z.record aren't auto-inferred by react-hook-form
+        // Cast to FieldPath to satisfy TypeScript while preserving runtime correctness
+        const path = `avaliacoes.${sectionId}.${item}` as FieldPath<VisitFormData>;
+        setValue(path, rating as never);
     };
 
     return (
@@ -28,7 +31,7 @@ export const VisitEvaluationsTab = () => {
                                 <span className="text-sm font-medium text-gray-700">{item}</span>
                                 <div className="flex space-x-2">
                                     {[1, 2, 3, 4, 5].map((rating) => {
-                                        const currentRating = (evaluations as any)[section.id]?.[item];
+                                        const currentRating = (evaluations as Record<string, Record<string, number>>)[section.id]?.[item];
                                         return (
                                             <button
                                                 type="button"

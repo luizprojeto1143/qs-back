@@ -13,7 +13,11 @@ import { createCollaboratorSchema } from '../schemas/dataSchemas';
 export const listCollaborators = async (req: Request, res: Response) => {
     try {
         const user = (req as AuthRequest).user;
-        const companyId = req.headers['x-company-id'] as string || user?.companyId;
+        // Para MASTER: pode usar x-company-id para navegar entre empresas
+        // Para outros: SEMPRE usar companyId do token
+        const companyId = user?.role === 'MASTER'
+            ? (req.headers['x-company-id'] as string || user?.companyId)
+            : user?.companyId;
         const page = parseInt(req.query.page as string) || 1;
         const limit = parseInt(req.query.limit as string) || 20;
         const skip = (page - 1) * limit;
@@ -153,7 +157,11 @@ export const getCollaborator = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const user = (req as AuthRequest).user;
-        const companyId = req.headers['x-company-id'] as string || user?.companyId;
+        // Para MASTER: pode usar x-company-id para navegar entre empresas
+        // Para outros: SEMPRE usar companyId do token
+        const companyId = user?.role === 'MASTER'
+            ? (req.headers['x-company-id'] as string || user?.companyId)
+            : user?.companyId;
 
         const collaborator = await prisma.user.findFirst({
             where: { id },

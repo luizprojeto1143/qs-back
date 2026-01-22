@@ -33,7 +33,7 @@ const handleResponse = async (response: Response) => {
     let data;
     try {
         data = text ? JSON.parse(text) : {};
-    } catch (e) {
+    } catch {
         console.error('Failed to parse JSON response:', text);
         throw new Error('Invalid JSON response from server');
     }

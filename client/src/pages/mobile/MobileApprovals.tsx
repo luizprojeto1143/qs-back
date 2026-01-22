@@ -12,6 +12,24 @@ interface ApprovalRequest {
     category: 'dayoff' | 'schedule';
 }
 
+interface DayOffRaw {
+    id: string;
+    type: string;
+    date: string;
+    collaborator?: {
+        user?: {
+            name?: string;
+        };
+    };
+}
+
+interface ScheduleRaw {
+    id: string;
+    date: string;
+    time?: string;
+    requester?: string;
+}
+
 const MobileApprovals = () => {
     const [requests, setRequests] = useState<ApprovalRequest[]>([]);
     const [loading, setLoading] = useState(true);
@@ -24,22 +42,22 @@ const MobileApprovals = () => {
                 api.get('/schedules?status=PENDENTE')
             ]);
 
-            const dayOffs = resDayOffs.data.map((d: any) => ({
+            const dayOffs = (resDayOffs.data as DayOffRaw[]).map((d) => ({
                 id: d.id,
                 type: d.type === 'FOLGA' ? 'Folga' : d.type,
                 user: d.collaborator?.user?.name || 'Colaborador',
                 date: new Date(d.date).toLocaleDateString(),
                 rawDate: d.date,
-                category: 'dayoff'
+                category: 'dayoff' as const
             }));
 
-            const schedules = resSchedules.data.map((s: any) => ({
+            const schedules = (resSchedules.data as ScheduleRaw[]).map((s) => ({
                 id: s.id,
                 type: 'Agendamento',
                 user: s.requester || 'Usuário',
                 date: `${new Date(s.date).toLocaleDateString()} às ${s.time}`,
                 rawDate: s.date,
-                category: 'schedule'
+                category: 'schedule' as const
             }));
 
             setRequests([...dayOffs, ...schedules].sort((a, b) => new Date(a.rawDate).getTime() - new Date(b.rawDate).getTime()));

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../../lib/api';
-import { ChevronLeft, CheckCircle, Menu, FileText, Download, Award, MessageSquare } from 'lucide-react';
+import { ChevronLeft, CheckCircle, Menu, FileText, Download, Award } from 'lucide-react';
 import { toast } from 'sonner';
 import { VideoPlayer } from './components/VideoPlayer';
 import { TranscriptViewer } from './components/TranscriptViewer';
@@ -57,6 +57,17 @@ const CoursePlayer = () => {
 
     // New Feature: Focus Mode
     const [focusMode, setFocusMode] = useState(false);
+
+    // Accessibility Features
+    const [fontSize, setFontSize] = useState<'small' | 'medium' | 'large'>('medium');
+    const [highContrast, setHighContrast] = useState(false);
+
+    // Font size classes
+    const fontSizeClasses = {
+        small: 'text-sm',
+        medium: 'text-base',
+        large: 'text-lg'
+    };
 
     useEffect(() => {
         const fetchCourse = async () => {
@@ -143,7 +154,14 @@ const CoursePlayer = () => {
                     <h1 className="font-bold text-gray-900 dark:text-white truncate">{course.title}</h1>
 
                     <div className="ml-auto flex items-center gap-2">
-                        <AccessibilityControls focusMode={focusMode} setFocusMode={setFocusMode} />
+                        <AccessibilityControls
+                            focusMode={focusMode}
+                            setFocusMode={setFocusMode}
+                            fontSize={fontSize}
+                            setFontSize={setFontSize}
+                            highContrast={highContrast}
+                            setHighContrast={setHighContrast}
+                        />
 
                         <button
                             className="md:hidden p-2"
@@ -158,13 +176,20 @@ const CoursePlayer = () => {
                 {focusMode && (
                     <div className="bg-black/90 text-white px-4 py-2 flex justify-between items-center text-sm">
                         <span>Modo Foco Ativo</span>
-                        <AccessibilityControls focusMode={focusMode} setFocusMode={setFocusMode} />
+                        <AccessibilityControls
+                            focusMode={focusMode}
+                            setFocusMode={setFocusMode}
+                            fontSize={fontSize}
+                            setFontSize={setFontSize}
+                            highContrast={highContrast}
+                            setHighContrast={setHighContrast}
+                        />
                     </div>
                 )}
 
-                <div className="flex-1 overflow-y-auto p-4 md:p-6">
+                <div className={`flex-1 overflow-y-auto p-4 md:p-6 ${fontSizeClasses[fontSize]} ${highContrast ? 'bg-black text-white' : ''}`}>
                     {currentLesson ? (
-                        <div className={`mx-auto space-y-6 transition-all duration-500 ${focusMode ? 'max-w-6xl' : 'max-w-4xl'}`}>
+                        <div className={`mx-auto space-y-6 transition-all duration-500 ${focusMode ? 'max-w-6xl' : 'max-w-4xl'} ${highContrast ? 'bg-black' : ''}`}>
 
                             {/* Tabs (Hidden in Focus Mode for cleaner UI, or kept? Let's keep for now but simplify) */}
                             {!focusMode && (

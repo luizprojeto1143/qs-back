@@ -3,20 +3,38 @@ import { X, Plus, Loader2, AlertTriangle } from 'lucide-react';
 import { api } from '../../lib/api';
 import { toast } from 'sonner';
 
+interface Area {
+    id: string;
+    name: string;
+    sectorId: string;
+    sector?: { companyId: string };
+}
+
+interface Sector {
+    id: string;
+    name: string;
+    companyId: string;
+}
+
+interface Shift {
+    id: string;
+    name: string;
+}
+
 interface QuickAddModalProps {
     type: 'area' | 'collaborator';
     companyId: string;
     areaId?: string; // Pre-selected area for collaborator
-    onSuccess: (newItem: any) => void;
+    onSuccess: (newItem: unknown) => void;
     onClose: () => void;
 }
 
 export const QuickAddModal = ({ type, companyId, areaId, onSuccess, onClose }: QuickAddModalProps) => {
     const [loading, setLoading] = useState(false);
     const [dataLoading, setDataLoading] = useState(true);
-    const [areas, setAreas] = useState<any[]>([]);
-    const [sectors, setSectors] = useState<any[]>([]);
-    const [shifts, setShifts] = useState<any[]>([]);
+    const [areas, setAreas] = useState<Area[]>([]);
+    const [sectors, setSectors] = useState<Sector[]>([]);
+    const [shifts, setShifts] = useState<Shift[]>([]);
 
     // Area Form
     const [areaName, setAreaName] = useState('');
@@ -39,16 +57,16 @@ export const QuickAddModal = ({ type, companyId, areaId, onSuccess, onClose }: Q
             try {
                 if (type === 'area') {
                     const res = await api.get('/sectors');
-                    setSectors(res.data.filter((s: any) => s.companyId === companyId));
+                    setSectors(res.data.filter((s: Sector) => s.companyId === companyId));
                 } else {
                     const [resAreas, resShifts, resSectors] = await Promise.all([
                         api.get('/areas'),
                         api.get('/settings/shifts'),
                         api.get('/sectors')
                     ]);
-                    setAreas(resAreas.data.filter((a: any) => a.sector?.companyId === companyId));
+                    setAreas(resAreas.data.filter((a: Area) => a.sector?.companyId === companyId));
                     setShifts(resShifts.data);
-                    setSectors(resSectors.data.filter((s: any) => s.companyId === companyId));
+                    setSectors(resSectors.data.filter((s: Sector) => s.companyId === companyId));
                 }
             } catch (error) {
                 console.error('Error fetching data for quick add', error);
@@ -86,9 +104,11 @@ export const QuickAddModal = ({ type, companyId, areaId, onSuccess, onClose }: Q
                 onSuccess(res.data);
             }
             onClose();
-        } catch (error: any) {
+        } catch (error) {
             console.error('Error creating', error);
-            toast.error(error.response?.data?.error || 'Erro ao criar');
+            const err = error as { response?: { data?: { error?: string } } };
+            const errorMessage = err.response?.data?.error || 'Erro ao criar';
+            toast.error(errorMessage);
         } finally {
             setLoading(false);
         }

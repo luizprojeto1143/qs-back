@@ -30,7 +30,7 @@ export const VisitPendenciesTab = () => {
         append({
             description: newPendency.description,
             responsible: newPendency.responsibleName,
-            priority: newPendency.priority as any,
+            priority: newPendency.priority as 'BAIXA' | 'MEDIA' | 'ALTA',
             deadline: newPendency.deadline || null,
             status: 'PENDENTE'
         });
@@ -70,7 +70,7 @@ export const VisitPendenciesTab = () => {
                                         }`}>
                                         {p.priority === 'MEDIA' ? 'Média' : p.priority === 'ALTA' ? 'Alta' : 'Baixa'}
                                     </span>
-                                    <span>{(p as any).responsible || (p as any).responsibleId}</span>
+                                    <span>{(p as { responsible?: string; responsibleId?: string }).responsible || (p as { responsibleId?: string }).responsibleId}</span>
                                     <span>{p.deadline ? new Date(p.deadline).toLocaleDateString('pt-BR') : 'Sem prazo'}</span>
                                 </div>
                             </div>

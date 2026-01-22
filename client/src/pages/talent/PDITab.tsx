@@ -41,7 +41,7 @@ const PDITab = () => {
     });
 
     // Collaborators for selection
-    const [collaborators, setCollaborators] = useState<any[]>([]);
+    const [collaborators, setCollaborators] = useState<Array<{ id: string; name: string; collaboratorProfile?: { area?: { name: string } } }>>([]);
 
     const printRef = useRef<HTMLDivElement>(null);
     const [selectedPDI, setSelectedPDI] = useState<PDI | null>(null);
@@ -55,7 +55,7 @@ const PDITab = () => {
             // Wait for state update just in case
             await new Promise(resolve => setTimeout(resolve, 100));
         }
-    } as any); // Casting to any to avoid version mismatch type errors temporarily
+    } as unknown as { content: () => HTMLDivElement | null }); // Using better casting
 
     useEffect(() => {
         fetchPDIs();

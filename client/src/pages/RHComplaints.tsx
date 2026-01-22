@@ -19,6 +19,7 @@ interface Complaint {
     videoUrl?: string;
     createdAt: string;
     confidentiality: string;
+    resolution?: string;
 }
 
 const RHComplaints = () => {
@@ -73,9 +74,9 @@ const RHComplaints = () => {
             await api.put(`/complaints/${id}/status`, { status: newStatus });
             toast.success(`Status atualizado para ${newStatus}`);
             // Update local state
-            setComplaints(prev => prev.map(c => c.id === id ? { ...c, status: newStatus as any } : c));
+            setComplaints(prev => prev.map(c => c.id === id ? { ...c, status: newStatus as Complaint['status'] } : c));
             if (selectedComplaint?.id === id) {
-                setSelectedComplaint(prev => prev ? { ...prev, status: newStatus as any } : null);
+                setSelectedComplaint(prev => prev ? { ...prev, status: newStatus as Complaint['status'] } : null);
             }
         } catch (error) {
             console.error("Error updating status", error);
@@ -94,14 +95,14 @@ const RHComplaints = () => {
     };
 
     const getSeverityBadge = (severity: string) => {
-        const colors = {
+        const colors: Record<string, string> = {
             'BAIXO': 'bg-gray-100 text-gray-800',
             'MEDIO': 'bg-yellow-50 text-yellow-700 border-yellow-200',
             'ALTO': 'bg-orange-50 text-orange-700 border-orange-200',
             'CRITICO': 'bg-red-50 text-red-700 border-red-200'
         };
         return (
-            <span className={`px-2 py-0.5 rounded border text-xs font-semibold ${(colors as any)[severity] || colors['BAIXO']}`}>
+            <span className={`px-2 py-0.5 rounded border text-xs font-semibold ${colors[severity] || colors['BAIXO']}`}>
                 {severity}
             </span>
         );
@@ -128,9 +129,9 @@ const RHComplaints = () => {
             toast.success("Denúncia resolvida com sucesso.");
 
             // Update local state
-            setComplaints(prev => prev.map(c => c.id === resolvingId ? { ...c, status: 'RESOLVIDO', resolution: resolutionText } : c));
+            setComplaints(prev => prev.map(c => c.id === resolvingId ? { ...c, status: 'RESOLVIDO' as const, resolution: resolutionText } : c));
             if (selectedComplaint?.id === resolvingId) {
-                setSelectedComplaint(prev => prev ? { ...prev, status: 'RESOLVIDO', resolution: resolutionText } : null);
+                setSelectedComplaint(prev => prev ? { ...prev, status: 'RESOLVIDO' as const, resolution: resolutionText } : null);
             }
 
             setShowResolutionModal(false);
@@ -291,13 +292,13 @@ const RHComplaints = () => {
                                 </div>
 
                                 {/* Resolution Details if Solved */}
-                                {(selectedComplaint as any).resolution && (
+                                {selectedComplaint.resolution && (
                                     <div className="bg-green-50 p-4 rounded-xl border border-green-100">
                                         <h3 className="text-sm font-bold text-green-800 mb-2 flex items-center gap-2">
                                             <CheckCircle className="h-4 w-4" />
                                             Resolução Aplicada
                                         </h3>
-                                        <p className="text-green-900 text-sm">{(selectedComplaint as any).resolution}</p>
+                                        <p className="text-green-900 text-sm">{selectedComplaint.resolution}</p>
                                     </div>
                                 )}
 

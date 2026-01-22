@@ -9,7 +9,22 @@ import { ptBR } from 'date-fns/locale';
 import { api } from '../lib/api';
 import { VisitDetailsModal } from '../components/modals/VisitDetailsModal';
 
-const StatCard = ({ icon: Icon, label, value, color, onClick }: any) => (
+interface StatCardProps {
+    icon: React.ComponentType<{ className?: string }>;
+    label: string;
+    value: number | string;
+    color: string;
+    onClick?: () => void;
+}
+
+interface Activity {
+    id: string;
+    description: string;
+    time: string;
+    author: string;
+}
+
+const StatCard = ({ icon: Icon, label, value, color, onClick }: StatCardProps) => (
     <div
         onClick={onClick}
         className={`bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center space-x-4 transition-all hover:shadow-md hover:scale-[1.02] cursor-pointer`}
@@ -148,7 +163,7 @@ const DashboardHome = () => {
                     <h3 className="text-lg font-bold text-gray-900 mb-4">Atividade Recente</h3>
                     <div className="space-y-4">
                         {recentActivity.length > 0 ? (
-                            recentActivity.map((activity: any) => (
+                            recentActivity.map((activity: Activity) => (
                                 <div
                                     key={activity.id}
                                     onClick={() => {

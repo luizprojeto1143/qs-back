@@ -24,7 +24,7 @@ const MobileTeam = () => {
                 const allUsers = response.data.data;
 
                 // Filter only COLLABORATORS (and optionally by Leader's area if logic existed)
-                const teamMembers = allUsers.filter((u: any) => u.role === 'COLABORADOR');
+                const teamMembers = allUsers.filter((u: TeamMember) => u.role === 'COLABORADOR');
                 setTeam(teamMembers);
 
             } catch {

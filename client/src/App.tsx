@@ -63,6 +63,7 @@ const CoursePlayer = lazy(() => import('./pages/university/CoursePlayer'));
 const QuizPlayer = lazy(() => import('./pages/university/QuizPlayer'));
 const UniversityReports = lazy(() => import('./pages/university/UniversityReports'));
 const Certificates = lazy(() => import('./pages/university/Certificates'));
+const GamificationPage = lazy(() => import('./pages/university/GamificationPage'));
 const SecuritySettings = lazy(() => import('./pages/settings/SecuritySettings'));
 
 // Loading Fallback
@@ -172,6 +173,7 @@ function App() {
                       <Route path="university/course/:id" element={<CoursePlayer />} />
                       <Route path="university/quiz/:id" element={<QuizPlayer />} />
                       <Route path="university/certificates" element={<Certificates />} />
+                      <Route path="university/progress" element={<GamificationPage />} />
                       <Route path="complaints" element={<MobileComplaints />} />
                     </Route>
                   </Route>

@@ -41,21 +41,17 @@ const PDIManagement = () => {
     });
 
     // Collaborators for selection
-    const [collaborators, setCollaborators] = useState<any[]>([]);
+    interface Collaborator {
+        id: string;
+        name: string;
+        area?: { name: string };
+    }
+    const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
 
     const printRef = useRef<HTMLDivElement>(null);
     const [selectedPDI, setSelectedPDI] = useState<PDI | null>(null);
 
-    const handlePrint = useReactToPrint({
-        content: () => printRef.current,
-        documentTitle: 'PDI - Plano de Desenvolvimento Individual',
-    } as any);
-
-    useEffect(() => {
-        fetchPDIs();
-        fetchCollaborators();
-    }, [selectedCompanyId]);
-
+    // Define functions before useEffect to avoid TDZ
     const fetchPDIs = async () => {
         try {
             const response = await api.get('/pdis');
@@ -73,6 +69,16 @@ const PDIManagement = () => {
             console.error('Error fetching collaborators', error);
         }
     };
+
+    const handlePrint = useReactToPrint({
+        content: () => printRef.current,
+        documentTitle: 'PDI - Plano de Desenvolvimento Individual',
+    } as Parameters<typeof useReactToPrint>[0]);
+
+    useEffect(() => {
+        fetchPDIs();
+        fetchCollaborators();
+    }, [selectedCompanyId]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

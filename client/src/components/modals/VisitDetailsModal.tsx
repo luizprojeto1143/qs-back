@@ -90,7 +90,7 @@ export const VisitDetailsModal = ({ visitId, isOpen, onClose }: VisitDetailsModa
                                 </div>
                                 <div className="flex items-center space-x-2 text-gray-600">
                                     <User className="h-4 w-4 text-purple-500" />
-                                    <span>Colabs: {visit.collaborators?.map((c: any) => c.user.name).join(', ')}</span>
+                                    <span>Colabs: {visit.collaborators?.map((c: { user: { name: string } }) => c.user.name).join(', ')}</span>
                                 </div>
                             </div>
 
@@ -145,7 +145,7 @@ export const VisitDetailsModal = ({ visitId, isOpen, onClose }: VisitDetailsModa
                                         <span>Pendências Geradas</span>
                                     </h3>
                                     <div className="space-y-2">
-                                        {visit.generatedPendencies.map((p: any) => (
+                                        {visit.generatedPendencies.map((p: { id: string; status: string; description: string }) => (
                                             <div key={p.id} className="bg-white border border-gray-200 p-3 rounded-lg flex justify-between items-center">
                                                 <div className="flex items-center space-x-3">
                                                     <span className={`h-2.5 w-2.5 rounded-full ${p.status === 'RESOLVIDA' ? 'bg-green-500' : 'bg-orange-500'}`}></span>
@@ -166,7 +166,7 @@ export const VisitDetailsModal = ({ visitId, isOpen, onClose }: VisitDetailsModa
                                         <span>Anotações Individuais</span>
                                     </h3>
                                     <div className="space-y-2">
-                                        {visit.notes.map((note: any) => (
+                                        {visit.notes.map((note: { id: string; collaborator?: { user: { name: string } }; content: string }) => (
                                             <div key={note.id} className="bg-purple-50 p-3 rounded-lg border border-purple-100">
                                                 <p className="text-xs font-bold text-purple-800 mb-1">{note.collaborator?.user?.name}</p>
                                                 <p className="text-gray-700">{note.content}</p>
@@ -184,7 +184,7 @@ export const VisitDetailsModal = ({ visitId, isOpen, onClose }: VisitDetailsModa
                                         <span>Anexos</span>
                                     </h3>
                                     <div className="grid grid-cols-2 gap-3">
-                                        {visit.attachments.map((file: any) => (
+                                        {visit.attachments.map((file: { id: string; url: string; name: string }) => (
                                             <a
                                                 key={file.id}
                                                 href={file.url}

@@ -33,7 +33,15 @@ interface CourseWatched {
     title: string;
     views: number;
 }
-const StatCard = ({ icon: Icon, label, value, color }: any) => (
+
+interface StatCardProps {
+    icon: React.ComponentType<{ className?: string }>;
+    label: string;
+    value: string | number;
+    color: string;
+}
+
+const StatCard = ({ icon: Icon, label, value, color }: StatCardProps) => (
     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center space-x-4">
         <div className={`p-3 rounded-xl ${color} bg-opacity-10`}>
             <Icon className={`h-6 w-6 ${color.replace('bg-', 'text-')}`} />
@@ -228,7 +236,7 @@ const RHDashboard = () => {
                             {sectorEngagement.length === 0 ? (
                                 <p className="text-gray-500 text-sm">Nenhum dado disponível.</p>
                             ) : (
-                                sectorEngagement.map((sector: any, index: number) => (
+                                sectorEngagement.map((sector, index) => (
                                     <div key={index} className="flex items-center justify-between pb-2 border-b border-gray-50 last:border-0">
                                         <span className="text-sm font-medium text-gray-700">{sector.name}</span>
                                         <div className="text-right">
@@ -250,7 +258,7 @@ const RHDashboard = () => {
                             {mostWatchedCourses.length === 0 ? (
                                 <p className="text-gray-500 text-sm">Nenhum curso assistido ainda.</p>
                             ) : (
-                                mostWatchedCourses.map((course: any) => (
+                                mostWatchedCourses.map((course) => (
                                     <div key={course.id} className="flex items-center justify-between pb-2 border-b border-gray-50 last:border-0">
                                         <span className="text-sm font-medium text-gray-700 truncate max-w-[180px]" title={course.title}>{course.title}</span>
                                         <div className="text-right">

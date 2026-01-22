@@ -5,13 +5,36 @@ import { useCompany } from '../contexts/CompanyContext';
 import DailyIframe from '@daily-co/daily-js';
 import { toast } from 'sonner';
 
+interface LibrasCall {
+    id: string;
+    status: 'WAITING' | 'IN_PROGRESS' | 'CANCELED' | 'FINISHED';
+    createdAt: string;
+    requester: {
+        name: string;
+        collaboratorProfile?: {
+            area?: { name: string };
+            matricula?: string;
+        };
+    };
+}
+
+interface Specialist {
+    id: string;
+    name: string;
+    email: string;
+    type: string;
+}
+
+// Daily.js types
+type DailyCallObject = ReturnType<typeof DailyIframe.createFrame>;
+
 const LibrasCentral = () => {
     const { selectedCompanyId } = useCompany();
     const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
     const [reason, setReason] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [userName, setUserName] = useState('Colaborador QS');
-    const callFrameRef = useRef<any>(null);
+    const callFrameRef = useRef<DailyCallObject | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [roomUrl, setRoomUrl] = useState<string | null>(null);
 
@@ -20,7 +43,7 @@ const LibrasCentral = () => {
     const [currentCallId, setCurrentCallId] = useState<string | null>(null);
 
     // Master View State
-    const [pendingCalls, setPendingCalls] = useState<any[]>([]);
+    const [pendingCalls, setPendingCalls] = useState<LibrasCall[]>([]);
     const [isMaster, setIsMaster] = useState(false);
 
     // Invite System
@@ -168,7 +191,7 @@ const LibrasCentral = () => {
         }
     };
 
-    const [specialists, setSpecialists] = useState<any[]>([]);
+    const [specialists, setSpecialists] = useState<Specialist[]>([]);
 
     useEffect(() => {
         if (isMaster) {

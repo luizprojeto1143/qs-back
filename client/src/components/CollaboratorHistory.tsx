@@ -9,9 +9,49 @@ interface CollaboratorHistoryProps {
     onClose: () => void;
 }
 
+interface VisitData {
+    id: string;
+    date: string;
+    master?: { name: string };
+    observacoesMaster?: string;
+}
+
+interface NoteData {
+    id: string;
+    createdAt: string;
+    content: string;
+    visit?: { date: string };
+}
+
+interface PendencyData {
+    id: string;
+    description: string;
+    status: string;
+    priority: string;
+    deadline?: string;
+}
+
+interface CollaboratorData {
+    name: string;
+    avatar?: string;
+    collaboratorProfile?: {
+        area?: { name: string };
+        shift?: string;
+        visits?: VisitData[];
+        visitNotes?: NoteData[];
+        pendingItems?: PendencyData[];
+    };
+}
+
+interface TimelineItem {
+    type: 'VISIT' | 'NOTE';
+    date: Date;
+    data: VisitData | NoteData;
+}
+
 const CollaboratorHistory = ({ collaboratorId, onClose }: CollaboratorHistoryProps) => {
     const navigate = useNavigate();
-    const [collaborator, setCollaborator] = useState<any>(null);
+    const [collaborator, setCollaborator] = useState<CollaboratorData | null>(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'timeline' | 'pendencies'>('timeline');
 
@@ -54,14 +94,14 @@ const CollaboratorHistory = ({ collaboratorId, onClose }: CollaboratorHistoryPro
     if (!collaborator) return null;
 
     // Merge Visits and Notes into a single timeline
-    const timelineItems = [
-        ...(collaborator.collaboratorProfile?.visits || []).map((v: any) => ({
-            type: 'VISIT',
+    const timelineItems: TimelineItem[] = [
+        ...(collaborator.collaboratorProfile?.visits || []).map((v) => ({
+            type: 'VISIT' as const,
             date: new Date(v.date),
             data: v
         })),
-        ...(collaborator.collaboratorProfile?.visitNotes || []).map((n: any) => ({
-            type: 'NOTE',
+        ...(collaborator.collaboratorProfile?.visitNotes || []).map((n) => ({
+            type: 'NOTE' as const,
             date: new Date(n.createdAt),
             data: n
         }))
@@ -178,7 +218,7 @@ const CollaboratorHistory = ({ collaboratorId, onClose }: CollaboratorHistoryPro
                             {collaborator.collaboratorProfile?.pendingItems?.length === 0 && (
                                 <p className="text-center text-gray-500 py-8">Nenhuma pendência registrada.</p>
                             )}
-                            {collaborator.collaboratorProfile?.pendingItems?.map((pendency: any) => (
+                            {collaborator.collaboratorProfile?.pendingItems?.map((pendency) => (
                                 <div key={pendency.id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex items-start space-x-4">
                                     <div className={`p-2 rounded-lg ${pendency.status === 'RESOLVIDA' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
                                         {pendency.status === 'RESOLVIDA' ? <CheckCircle className="h-5 w-5" /> : <AlertCircle className="h-5 w-5" />}

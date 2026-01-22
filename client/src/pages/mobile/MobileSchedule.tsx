@@ -136,8 +136,9 @@ const MobileSchedule = () => {
                 reason
             });
             setSubmitted(true);
-        } catch (error: any) {
-            const msg = error.response?.data?.message || error.response?.data?.error || 'Erro ao agendar.';
+        } catch (error) {
+            const err = error as { response?: { data?: { message?: string; error?: string } } };
+            const msg = err.response?.data?.message || err.response?.data?.error || 'Erro ao agendar.';
             alert(msg);
         } finally {
             setLoading(false);

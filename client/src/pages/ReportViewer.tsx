@@ -2,7 +2,8 @@ import { useEffect, useState, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Printer, TrendingUp, AlertCircle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import type { ReportData } from '../types/report';
+import type { ReportData, AreaMetric, ReportMetric } from '../types/report';
+import type { Visit, Pendency } from '../types/visit';
 import { useCompany } from '../contexts/CompanyContext';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../lib/api';
@@ -103,8 +104,8 @@ const ReportViewer = () => {
                             <h3 className="text-xl font-bold mb-8 border-b pb-2 text-center text-gray-800 uppercase tracking-wide">Detalhamento Completo das Visitas</h3>
                             <div className="space-y-4">
                                 {reportData.visits
-                                    ?.sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())
-                                    .map((visit: any, index: number) => (
+                                    ?.sort((a: Visit, b: Visit) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                                    .map((visit: Visit, index: number) => (
                                         <VisitDetailView key={visit.id} data={visit} index={index + 1} />
                                     ))}
                                 {(!reportData.visits || reportData.visits.length === 0) && (
@@ -209,7 +210,7 @@ const ReportViewer = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {reportData.pendencies.map((p: any) => (
+                                    {reportData.pendencies?.map((p: Pendency) => (
                                         <tr key={p.id} className="border-b">
                                             <td className="p-3 border">{p.description}</td>
                                             <td className="p-3 border">{p.responsible}</td>
@@ -243,7 +244,7 @@ const ReportViewer = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {reportData.visits.map((v: any) => (
+                                    {reportData.visits?.map((v: Visit) => (
                                         <tr key={v.id} className="border-b">
                                             <td className="p-2">{new Date(v.date).toLocaleDateString()}</td>
                                             <td className="p-2">{v.area?.name || '-'}</td>
@@ -377,7 +378,7 @@ const ReportViewer = () => {
 
                         {/* Render dynamic content based on reportData */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {Object.entries(reportData.categories || {}).map(([key, value]: [string, any]) => (
+                            {Object.entries(reportData.categories || {}).map(([key, value]) => (
                                 <div key={key} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                                     <h3 className="text-lg font-bold capitalize mb-2">{key.replace(/_/g, ' ')}</h3>
                                     <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4">
@@ -398,7 +399,7 @@ const ReportViewer = () => {
                 const visitsByAreaCount = useMemo(() => {
                     const counts: Record<string, number> = {};
                     if (reportData.visits) {
-                        reportData.visits.forEach((v: any) => {
+                        reportData.visits.forEach((v: Visit) => {
                             if (v.areaId) {
                                 counts[v.areaId] = (counts[v.areaId] || 0) + 1;
                             }
@@ -427,7 +428,7 @@ const ReportViewer = () => {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {reportData.visits.map((v: any) => (
+                                            {reportData.visits?.map((v: Visit) => (
                                                 <tr key={v.id} className="border-b align-top">
                                                     <td className="p-2 whitespace-nowrap">{new Date(v.date).toLocaleDateString()}</td>
                                                     <td className="p-2 whitespace-nowrap">{v.master?.name || '-'}</td>
@@ -440,7 +441,7 @@ const ReportViewer = () => {
                                                             <div className="mt-1 bg-gray-50 p-2 rounded border border-gray-100">
                                                                 <p className="text-xs font-bold text-gray-500 mb-1">Notas Individuais:</p>
                                                                 <ul className="space-y-1">
-                                                                    {v.notes.map((n: any, i: number) => (
+                                                                    {v.notes.map((n: { collaborator?: { user: { name: string } }; content: string }, i: number) => (
                                                                         <li key={i} className="text-xs text-gray-600">
                                                                             <span className="font-semibold">{n.collaborator?.user?.name}:</span> {n.content}
                                                                         </li>
@@ -481,7 +482,7 @@ const ReportViewer = () => {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {reportData.areas?.map((area: any) => {
+                                            {reportData.areas?.map((area: AreaMetric) => {
                                                 const visitCount = visitsByAreaCount[area.id] || 0;
                                                 return (
                                                     <tr key={area.id} className="border-b">
@@ -503,12 +504,12 @@ const ReportViewer = () => {
                 return (
                     <div className="space-y-8">
                         <h2 className="text-2xl font-bold mb-6">Relatório de Liderança (Por Setor e Área)</h2>
-                        {Object.entries(reportData.groupedData || {}).map(([sectorName, areas]: [string, any]) => (
+                        {Object.entries(reportData.groupedData || {}).map(([sectorName, areas]) => (
                             <div key={sectorName} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                                 <h3 className="text-xl font-bold text-primary mb-4 border-b pb-2">{sectorName}</h3>
                                 <div className="space-y-6">
-                                    {Object.entries(areas).map(([areaName, scores]: [string, any]) => {
-                                        const avgScore = scores.reduce((a: any, b: any) => a + b.score, 0) / scores.length;
+                                    {Object.entries(areas).map(([areaName, scores]) => {
+                                        const avgScore = scores.reduce((acc, curr) => acc + curr.score, 0) / scores.length;
                                         return (
                                             <div key={areaName} className="flex items-center justify-between bg-gray-50 p-4 rounded-lg">
                                                 <div>
@@ -598,7 +599,7 @@ const ReportViewer = () => {
                         <div>
                             <h3 className="text-xl font-bold mb-6 border-b pb-2">Histórico de Visitas e Acompanhamentos</h3>
                             <div className="relative border-l-2 border-gray-200 ml-4 space-y-8">
-                                {reportData.visits?.map((visit: any) => (
+                                {reportData.visits?.map((visit: Visit) => (
                                     <div key={visit.id} className="mb-8 ml-6 relative">
                                         <div className="absolute -left-10 mt-1.5 w-8 h-8 bg-primary rounded-full border-4 border-white flex items-center justify-center shadow-sm">
                                             <div className="w-2 h-2 bg-white rounded-full"></div>
@@ -615,7 +616,7 @@ const ReportViewer = () => {
                                             </div>
 
                                             {/* Context Badge if not direct participant */}
-                                            {!visit.collaborators?.some((c: any) => c.id === reportData.collaborator.id) && (
+                                            {!visit.collaborators?.some((c: { id: string }) => c.id === reportData.collaborator.id) && (
                                                 <div className="mb-4">
                                                     <span className="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded inline-flex items-center gap-1">
                                                         <AlertCircle className="w-3 h-3" />
@@ -727,7 +728,7 @@ const ReportViewer = () => {
                                 {reportData.collaborators?.map((c) => (
                                     <div key={c.id} className="p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
                                         <div className="flex items-center gap-3 mb-2">
-                                            {c.user?.avatar && <img src={c.user.avatar} className="w-10 h-10 rounded-full object-cover" alt="" />}
+                                            {c.user?.avatar && <img src={c.user.avatar} className="w-10 h-10 rounded-full object-cover" alt={`Avatar de ${c.user?.name || 'colaborador'}`} />}
                                             <div>
                                                 <p className="font-bold text-lg">{c.user?.name || 'Colaborador'}</p>
                                                 <p className="text-xs text-gray-400">{c.user?.email}</p>
@@ -833,7 +834,7 @@ const ReportViewer = () => {
                     return (
                         <div className="space-y-8">
                             <div className="grid grid-cols-3 gap-6">
-                                {reportData.metrics.map((m: any, i: number) => (
+                                {reportData.metrics.map((m: ReportMetric, i: number) => (
                                     <div key={i} className="p-6 bg-white rounded-xl border border-gray-200 shadow-sm text-center">
                                         <h3 className="text-sm text-gray-500 uppercase tracking-wider mb-2">{m.label}</h3>
                                         <p className="text-3xl font-bold text-primary">{m.value}</p>

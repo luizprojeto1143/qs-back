@@ -66,7 +66,7 @@ const DecisionTimeline = ({ entityType, entityId }: DecisionTimelineProps) => {
 
     return (
         <div className="relative pl-4 border-l-2 border-gray-100 space-y-6 my-4">
-            {history.map((decision, _) => (
+            {history.map((decision) => (
                 <div key={decision.id} className="relative">
                     {/* Dot */}
                     <div className="absolute -left-[25px] top-1 bg-white p-1 rounded-full border border-gray-200">

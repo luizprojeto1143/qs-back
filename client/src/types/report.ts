@@ -80,7 +80,7 @@ export interface ReportData {
         matricula?: string;
         shift?: string;
     }>;
-    notes?: any[]; // Already in Visit but sometimes top-level in reportData
+    notes?: unknown[]; // Already in Visit but sometimes top-level in reportData
     generatedPendencies?: Pendency[];
     attachments?: Attachment[];
 

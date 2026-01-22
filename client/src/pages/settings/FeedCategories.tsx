@@ -2,10 +2,16 @@ import { useState, useEffect } from 'react';
 import { Plus, Trash2, Tag } from 'lucide-react';
 import { useCompany } from '../../contexts/CompanyContext';
 import { api } from '../../lib/api';
+import { toast } from 'sonner';
+
+interface FeedCategory {
+    id: string;
+    name: string;
+}
 
 const FeedCategories = () => {
     const { selectedCompanyId } = useCompany();
-    const [categories, setCategories] = useState<any[]>([]);
+    const [categories, setCategories] = useState<FeedCategory[]>([]);
     const [newCategory, setNewCategory] = useState('');
     const [loading, setLoading] = useState(true);
 
@@ -36,21 +42,21 @@ const FeedCategories = () => {
             await api.post('/settings/feed-categories', { name: newCategory });
             setNewCategory('');
             fetchCategories();
+            toast.success('Categoria criada com sucesso!');
         } catch (error) {
             console.error('Error creating category', error);
-            alert('Erro ao criar categoria');
+            toast.error('Erro ao criar categoria');
         }
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Tem certeza que deseja remover esta categoria?')) return;
-
         try {
             await api.delete(`/settings/feed-categories/${id}`);
             fetchCategories();
+            toast.success('Categoria removida!');
         } catch (error) {
             console.error('Error deleting category', error);
-            alert('Erro ao remover categoria');
+            toast.error('Erro ao remover categoria');
         }
     };
 

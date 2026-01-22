@@ -1,6 +1,5 @@
 import React from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
 import {
     LayoutDashboard,
     Users,
@@ -29,7 +28,6 @@ import {
 import { useTheme } from '../contexts/ThemeContext';
 import { Bell } from 'lucide-react';
 import { api } from '../lib/api';
-import { useCompany } from '../contexts/CompanyContext';
 import { toast } from 'sonner';
 
 // ... (imports)
@@ -43,25 +41,35 @@ const DashboardLayout = () => {
     const navigate = useNavigate();
 
     // Notification State
-    const [notifications, setNotifications] = React.useState<any[]>([]);
+    // Notification State
+    interface Notification {
+        id: string;
+        title: string;
+        message: string;
+        read: boolean;
+        createdAt: string;
+        link?: string;
+    }
+
+    const [notifications, setNotifications] = React.useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = React.useState(0);
     const [showNotifications, setShowNotifications] = React.useState(false);
 
-    const fetchNotifications = async () => {
+    const fetchNotifications = React.useCallback(async () => {
         try {
             const res = await api.get('/notifications');
             setNotifications(res.data);
-            setUnreadCount(res.data.filter((n: any) => !n.read).length);
+            setUnreadCount(res.data.filter((n: Notification) => !n.read).length);
         } catch (error) {
             console.error('Error fetching notifications', error);
         }
-    };
+    }, []);
 
     React.useEffect(() => {
         fetchNotifications();
         const interval = setInterval(fetchNotifications, 30000); // Poll every 30s
         return () => clearInterval(interval);
-    }, []);
+    }, [fetchNotifications]);
 
     // Libras Call Notification (Master/RH)
     React.useEffect(() => {
@@ -71,7 +79,7 @@ const DashboardLayout = () => {
             try {
                 const user = JSON.parse(userStr);
                 if (user.role === 'MASTER' || user.role === 'RH') isMaster = true;
-            } catch (e) { }
+            } catch { /* Ignore JSON parsing errors for user role check */ }
         }
 
         if (!isMaster) return;
@@ -121,8 +129,8 @@ const DashboardLayout = () => {
         navigate('/');
     };
 
-    const { user } = useAuth();
-    const { company } = useCompany();
+    // const { user } = useAuth(); // Unused
+    // const { company } = useCompany(); // Unused
 
     const menuItems = [
         { icon: LayoutDashboard, label: 'Início', path: '/dashboard' },

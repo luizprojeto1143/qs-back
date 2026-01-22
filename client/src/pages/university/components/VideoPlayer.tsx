@@ -23,7 +23,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, title, onEnded })
 
             // Adiciona rel=0 (videos relacionados do mesmo canal apenas) e enablejsapi=1 para controle futuro
             return `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&enablejsapi=1`;
-        } catch (e) {
+        } catch {
             return null;
         }
     };

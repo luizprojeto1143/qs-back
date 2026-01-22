@@ -7,9 +7,20 @@ import { api } from '../../lib/api';
 import type { VisitFormData } from '../../schemas/visitSchema';
 import { QuickAddModal } from '../modals/QuickAddModal';
 
+interface AreaOption {
+    id: string;
+    name: string;
+    sector?: { companyId: string };
+}
+
+interface CollaboratorOption {
+    id: string;
+    name: string;
+}
+
 interface VisitReportsTabProps {
-    areas: any[];
-    collaborators: any[];
+    areas: AreaOption[];
+    collaborators: CollaboratorOption[];
     onRefreshData?: () => void;
 }
 
@@ -77,7 +88,7 @@ export const VisitReportsTab = ({
             setRecordingTime(0);
             timerRef.current = setInterval(() => setRecordingTime(prev => prev + 1), 1000);
 
-        } catch (err) {
+        } catch {
             toast.error('Erro ao acessar microfone');
         }
     };
@@ -91,13 +102,14 @@ export const VisitReportsTab = ({
         }
     };
 
-    const handleQuickAddSuccess = (newItem: any) => {
+    const handleQuickAddSuccess = (newItem: unknown) => {
+        const item = newItem as { id?: string; user?: { id?: string } };
         if (quickAddType === 'area') {
-            setValue('areaId', newItem.id, { shouldValidate: true, shouldDirty: true });
+            setValue('areaId', item.id, { shouldValidate: true, shouldDirty: true });
         } else if (quickAddType === 'collaborator') {
             // A API retorna { user: {...}, profile: {...} } para colaboradores
             // Precisamos usar o userId que é o identificador correto para o collaboratorIds
-            const newId = newItem.user?.id || newItem.id;
+            const newId = item.user?.id || item.id;
             if (newId) {
                 const updatedIds = [...watchCollaboratorIds, newId];
                 setValue('collaboratorIds', updatedIds, { shouldValidate: true, shouldDirty: true });

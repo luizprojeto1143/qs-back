@@ -9,26 +9,31 @@ interface InstallButtonProps {
     compact?: boolean;
 }
 
+interface BeforeInstallPromptEvent extends Event {
+    prompt: () => Promise<void>;
+    userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
+
 export const InstallButton = ({ className, label = "Baixar App", icon: Icon = Download, compact = false }: InstallButtonProps) => {
-    const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+    const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
     const [isIOS, setIsIOS] = useState(false);
     const [isStandalone, setIsStandalone] = useState(false);
 
     useEffect(() => {
         // Detect if already installed/standalone
-        if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone) {
+        if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as Navigator & { standalone?: boolean }).standalone) {
             setIsStandalone(true);
         }
 
-        const handler = (e: any) => {
+        const handler = (e: Event) => {
             e.preventDefault();
-            setDeferredPrompt(e);
+            setDeferredPrompt(e as BeforeInstallPromptEvent);
             console.log('Install prompt captured');
         };
         window.addEventListener('beforeinstallprompt', handler);
 
         // Check iOS
-        const isIosDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+        const isIosDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as Window & { MSStream?: unknown }).MSStream;
         setIsIOS(isIosDevice);
 
         return () => window.removeEventListener('beforeinstallprompt', handler);

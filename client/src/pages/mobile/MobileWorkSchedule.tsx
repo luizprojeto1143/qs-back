@@ -2,8 +2,22 @@ import { useState, useEffect } from 'react';
 import { Calendar, Clock, Coffee, Sun, Moon, Briefcase } from 'lucide-react';
 import { api } from '../../lib/api';
 
+interface CollaboratorProfile {
+    shift?: string;
+    matricula?: string;
+    nextRestDay?: string;
+    workSchedule?: {
+        type?: string;
+        startTime?: string;
+        endTime?: string;
+        breakStart?: string;
+        breakEnd?: string;
+    };
+    area?: { name: string };
+}
+
 const MobileWorkSchedule = () => {
-    const [profile, setProfile] = useState<any>(null);
+    const [profile, setProfile] = useState<CollaboratorProfile | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {

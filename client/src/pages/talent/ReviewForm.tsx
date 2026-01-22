@@ -38,8 +38,16 @@ const COMPETENCIES = [
     }
 ];
 
+interface Review {
+    id: string;
+    type: string;
+    reviewee: { name: string; role?: string };
+    cycle: { name: string };
+    status: string;
+}
+
 const ReviewForm = ({ reviewId, onBack, onComplete }: ReviewFormProps) => {
-    const [review, setReview] = useState<any>(null);
+    const [review, setReview] = useState<Review | null>(null);
     const [answers, setAnswers] = useState<Record<string, { rating: number, comment: string }>>({});
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -150,8 +158,8 @@ const ReviewForm = ({ reviewId, onBack, onComplete }: ReviewFormProps) => {
                                         key={star}
                                         onClick={() => handleRating(comp.id, star)}
                                         className={`p-2 rounded-lg transition-all ${(answers[comp.id]?.rating || 0) >= star
-                                                ? 'text-yellow-400 bg-yellow-50'
-                                                : 'text-gray-300 hover:text-gray-400'
+                                            ? 'text-yellow-400 bg-yellow-50'
+                                            : 'text-gray-300 hover:text-gray-400'
                                             }`}
                                     >
                                         <Star className={`h-8 w-8 ${(answers[comp.id]?.rating || 0) >= star ? 'fill-current' : ''}`} />

@@ -4,7 +4,7 @@ import {
 } from 'recharts';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 
-export const ScoreEvolutionChart = ({ data }: { data: any[] }) => {
+export const ScoreEvolutionChart = ({ data }: { data: { date: string; score: number }[] }) => {
     return (
         <Card className="col-span-1 md:col-span-2">
             <CardHeader>
@@ -59,7 +59,7 @@ export const ScoreEvolutionChart = ({ data }: { data: any[] }) => {
     );
 };
 
-export const AreaComparisonChart = ({ data }: { data: any[] }) => {
+export const AreaComparisonChart = ({ data }: { data: { name: string; score: number }[] }) => {
     return (
         <Card>
             <CardHeader>

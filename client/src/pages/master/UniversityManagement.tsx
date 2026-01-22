@@ -9,6 +9,30 @@ import { CourseFormModal } from '../../components/master/university/CourseFormMo
 import { ModuleFormModal } from '../../components/master/university/ModuleFormModal';
 import { LessonFormModal } from '../../components/master/university/LessonFormModal';
 
+interface CourseFormData {
+    title: string;
+    description: string;
+    coverUrl?: string;
+    duration?: number;
+    category?: string;
+    difficulty?: string;
+    companyId?: string;
+}
+
+interface LessonFormData {
+    title: string;
+    contentType: string;
+    contentUrl?: string;
+    duration?: number;
+    order?: number;
+}
+
+interface Attachment {
+    name: string;
+    url: string;
+    type: string;
+}
+
 const UniversityManagement = () => {
     const [courses, setCourses] = useState<Course[]>([]);
     const [loading, setLoading] = useState(true);
@@ -52,7 +76,7 @@ const UniversityManagement = () => {
         }
     };
 
-    const handleCreateCourse = async (data: any) => {
+    const handleCreateCourse = async (data: CourseFormData) => {
         try {
             await api.post('/courses', data);
             toast.success('Curso criado com sucesso!');
@@ -75,7 +99,7 @@ const UniversityManagement = () => {
         }
     };
 
-    const handleCreateLesson = async (data: any, attachments: any[]) => {
+    const handleCreateLesson = async (data: LessonFormData, attachments: Attachment[]) => {
         if (!selectedModuleId) return;
         try {
             await api.post('/lessons', { ...data, moduleId: selectedModuleId, attachments });

@@ -62,12 +62,13 @@ const Availability = () => {
                     });
                     setAvailability(normalizedData);
                 }
-            } catch (error: any) {
+            } catch (error) {
                 console.error('Error fetching availability', error);
+                const err = error as { response?: { data?: { message?: string } } };
 
                 // EMERGENCY DEBUG: Show the exact error coming from the server
-                if (error.response?.data) {
-                    const serverError = error.response.data;
+                if (err.response?.data) {
+                    const serverError = err.response.data;
                     const debugMessage = `AVAILABILITY CRASH: ${serverError.message || JSON.stringify(serverError)}`;
                     alert(debugMessage); // Make sure user sees it!
                 }

@@ -4,16 +4,31 @@ import { useCompany } from '../contexts/CompanyContext';
 import { toast } from 'sonner';
 import { api } from '../lib/api';
 
+interface Post {
+    id: string;
+    title: string;
+    description: string;
+    category: string;
+    imageUrl?: string;
+    videoLibrasUrl?: string;
+    createdAt: string;
+}
+
+interface Category {
+    id: string;
+    name: string;
+}
+
 const Feed = () => {
     const { selectedCompanyId } = useCompany();
-    const [posts, setPosts] = useState<any[]>([]);
+    const [posts, setPosts] = useState<Post[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [loading, setLoading] = useState(true);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
     const [isUploading, setIsUploading] = useState(false);
 
-    const [categories, setCategories] = useState<any[]>([]);
+    const [categories, setCategories] = useState<Category[]>([]);
 
     // New Post Form State
     const [newPost, setNewPost] = useState({
@@ -84,7 +99,7 @@ const Feed = () => {
         }
     };
 
-    const handleEdit = (post: any) => {
+    const handleEdit = (post: Post) => {
         setNewPost({
             title: post.title,
             description: post.description,

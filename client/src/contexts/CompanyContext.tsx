@@ -63,11 +63,12 @@ export const CompanyProvider: React.FC<{ children: React.ReactNode }> = ({ child
                 console.error('Invalid companies data format:', data);
                 setCompanies([]);
             }
-        } catch (error: any) {
+        } catch (error) {
             console.error('Error fetching companies for context', error);
             // Don't set global error for auth failures to avoid breaking public pages
-            if (error.message !== 'Sessão expirada') {
-                setError(error.message || 'Unknown error');
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            if (errorMessage !== 'Sessão expirada') {
+                setError(errorMessage);
             }
         } finally {
             setLoading(false);

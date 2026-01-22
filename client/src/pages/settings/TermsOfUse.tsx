@@ -1,6 +1,22 @@
 import { useState, useEffect } from 'react';
 import { Save, Loader } from 'lucide-react';
 import { api } from '../../lib/api';
+import { toast } from 'sonner';
+
+interface ReportItem {
+    id: string;
+    acceptedAt: string;
+    userAgent: string;
+    ipAddress: string;
+    user: {
+        name: string;
+        email: string;
+        role: string;
+    };
+    term: {
+        version: string;
+    };
+}
 
 const TermsOfUse = () => {
     const [content, setContent] = useState('');
@@ -8,7 +24,7 @@ const TermsOfUse = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [activeTab, setActiveTab] = useState<'edit' | 'report'>('edit');
-    const [report, setReport] = useState<any[]>([]);
+    const [report, setReport] = useState<ReportItem[]>([]);
 
     useEffect(() => {
         const fetchTerms = async () => {
@@ -50,9 +66,10 @@ const TermsOfUse = () => {
 
             setVersion(newVersion);
             toast.success('Termos de uso atualizados com sucesso!');
-        } catch (error: any) {
+        } catch (error) {
             console.error('Error saving terms', error);
-            toast.error(error.message || 'Erro ao salvar termos.');
+            const err = error as { message?: string };
+            toast.error(err.message || 'Erro ao salvar termos.');
         } finally {
             setSaving(false);
         }

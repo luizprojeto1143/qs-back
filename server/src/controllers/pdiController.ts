@@ -47,7 +47,11 @@ export const listPDIs = async (req: Request, res: Response) => {
             return res.status(401).json({ error: 'Unauthorized' });
         }
 
-        const companyId = req.headers['x-company-id'] as string || user.companyId;
+        // Para MASTER: pode usar x-company-id para navegar entre empresas
+        // Para outros: SEMPRE usar companyId do token
+        const companyId = user.role === 'MASTER'
+            ? (req.headers['x-company-id'] as string || user.companyId)
+            : user.companyId;
 
         if (!companyId) {
             return res.status(400).json({ error: 'Company context required' });

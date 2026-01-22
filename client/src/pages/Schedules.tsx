@@ -25,6 +25,39 @@ const localizer = dateFnsLocalizer({
     locales,
 });
 
+interface Schedule {
+    id: string;
+    date: string;
+    time: string;
+    reason?: string;
+    status: string;
+    collaborator?: string | { companyId: string };
+    collaboratorId?: string;
+    area?: string;
+}
+
+interface Collaborator {
+    id: string;
+    name: string;
+    companyId: string;
+    collaboratorProfile?: { id: string };
+}
+
+interface CalendarEvent {
+    id: string;
+    title: string;
+    start: Date;
+    end: Date;
+    resource: Schedule;
+}
+
+interface NewScheduleData {
+    date: string;
+    time: string;
+    reason: string;
+    collaboratorId: string;
+}
+
 const Schedules = () => {
     const navigate = useNavigate();
     const { selectedCompanyId } = useCompany();
@@ -60,14 +93,14 @@ const Schedules = () => {
     });
 
     // Filter data based on selectedCompanyId
-    const filteredCollaborators = collaborators.filter((c: any) => !selectedCompanyId || c.companyId === selectedCompanyId);
-    const filteredSchedules = schedules.filter((s: any) => {
+    const filteredCollaborators = (collaborators as Collaborator[]).filter((c) => !selectedCompanyId || c.companyId === selectedCompanyId);
+    const filteredSchedules = (schedules as Schedule[]).filter((s) => {
         if (!selectedCompanyId) return true;
         if (s.collaborator && typeof s.collaborator === 'object' && s.collaborator.companyId) {
             return s.collaborator.companyId === selectedCompanyId;
         }
         if (s.collaboratorId) {
-            return filteredCollaborators.find((c: any) => c.id === s.collaboratorId);
+            return filteredCollaborators.find((c) => c.id === s.collaboratorId);
         }
         return true;
     });
@@ -81,16 +114,17 @@ const Schedules = () => {
             queryClient.invalidateQueries({ queryKey: ['schedules'] });
             toast.success('Status atualizado com sucesso!');
         },
-        onError: (error: any) => {
+        onError: (error) => {
             console.error('Error updating status:', error);
-            const msg = error.response?.data?.error || 'Erro ao atualizar status.';
+            const err = error as { response?: { data?: { error?: string } } };
+            const msg = err.response?.data?.error || 'Erro ao atualizar status.';
             toast.error(msg);
         }
     });
 
     const createScheduleMutation = useMutation({
-        mutationFn: async (newSchedule: any) => {
-            const response = await api.post('/schedules', newSchedule);
+        mutationFn: async (scheduleData: NewScheduleData) => {
+            const response = await api.post('/schedules', scheduleData);
             return response.data;
         },
         onSuccess: () => {
@@ -113,7 +147,7 @@ const Schedules = () => {
         createScheduleMutation.mutate(newSchedule);
     };
 
-    const calendarEvents = filteredSchedules.map((s: any) => ({
+    const calendarEvents: CalendarEvent[] = filteredSchedules.map((s) => ({
         id: s.id,
         title: `${s.reason} - ${s.collaborator || 'Sem colaborador'}`,
         start: new Date(`${s.date.split('T')[0]}T${s.time}`),
@@ -185,7 +219,7 @@ const Schedules = () => {
                             event: "Evento",
                             noEventsInRange: "Sem eventos neste período."
                         }}
-                        onSelectEvent={(event: any) => {
+                        onSelectEvent={(event: CalendarEvent) => {
                             toast.info(`Agendamento: ${event.title}`);
                         }}
                     />
@@ -198,7 +232,7 @@ const Schedules = () => {
                 </div>
             ) : (
                 <div className="grid gap-4">
-                    {filteredSchedules.map((schedule: any) => (
+                    {filteredSchedules.map((schedule) => (
                         <div key={schedule.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <div className="flex items-start space-x-4">
                                 <div className="p-3 bg-blue-50 rounded-lg flex-shrink-0">
@@ -218,7 +252,7 @@ const Schedules = () => {
                                         {schedule.collaborator && (
                                             <span className="flex items-center text-primary">
                                                 <User className="h-3 w-3 mr-1" />
-                                                {schedule.collaborator}
+                                                {typeof schedule.collaborator === 'string' ? schedule.collaborator : 'Colaborador'}
                                             </span>
                                         )}
                                     </div>
@@ -326,7 +360,7 @@ const Schedules = () => {
                                     onChange={e => setNewSchedule({ ...newSchedule, collaboratorId: e.target.value })}
                                 >
                                     <option value="">Selecione...</option>
-                                    {filteredCollaborators.map((c: any) => <option key={c.id} value={c.collaboratorProfile?.id}>{c.name}</option>)}
+                                    {filteredCollaborators.map((c) => <option key={c.id} value={c.collaboratorProfile?.id}>{c.name}</option>)}
                                 </select>
                             </div>
 

@@ -25,7 +25,7 @@ const decrypt = (encoded: string): string => {
 };
 
 export const storage = {
-    set: (key: string, value: any) => {
+    set: (key: string, value: unknown) => {
         try {
             const stringValue = JSON.stringify(value);
             const encrypted = encrypt(stringValue);
