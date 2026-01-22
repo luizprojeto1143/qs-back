@@ -1,160 +1,148 @@
-import { BookOpen, Video, Trash2, ChevronDown, ChevronRight, Layers, FileText, Edit } from 'lucide-react';
+import { BookOpen, Trash2, Edit, PlayCircle, Clock, Users, Building2, MoreVertical, Layout, FileText, CheckCircle2 } from 'lucide-react';
 import type { Course } from '../../../types/university';
+import { useState } from 'react';
 
 interface CourseListProps {
     courses: Course[];
-    expandedCourse: string | null;
-    setExpandedCourse: (id: string | null) => void;
     onDeleteCourse: (id: string) => void;
     onEditCourse: (course: Course) => void;
-    onAddModule: (courseId: string) => void;
-    onDeleteModule: (moduleId: string) => void;
-    onAddLesson: (moduleId: string) => void;
-    onDeleteLesson: (lessonId: string) => void;
-    onCreateQuiz: (moduleId: string, courseId: string) => void;
-    onEditQuiz: (quizId: string) => void;
+    onManageContent: (course: Course) => void;
 }
 
 export const CourseList = ({
     courses,
-    expandedCourse,
-    setExpandedCourse,
     onDeleteCourse,
     onEditCourse,
-    onAddModule,
-    onDeleteModule,
-    onAddLesson,
-    onDeleteLesson,
-    onCreateQuiz,
-    onEditQuiz
+    onManageContent
 }: CourseListProps) => {
+    const [activeMenu, setActiveMenu] = useState<string | null>(null);
+
     return (
-        <div className="grid gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {courses.map(course => (
-                <div key={course.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-                    <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex flex-col md:flex-row justify-between items-start gap-4">
-                        <div className="flex gap-4">
-                            <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg h-fit">
-                                <BookOpen className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                <div key={course.id} className="group bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-md transition-all duration-300 flex flex-col">
+                    {/* Cover Image Area */}
+                    <div className="h-40 bg-gradient-to-br from-blue-500 to-indigo-600 relative overflow-hidden">
+                        {course.coverUrl ? (
+                            <img src={course.coverUrl} alt={course.title} className="w-full h-full object-cover" />
+                        ) : (
+                            <div className="w-full h-full flex items-center justify-center relative">
+                                <div className="absolute inset-0 bg-black/10"></div>
+                                <BookOpen className="h-12 w-12 text-white/80" />
+                                {/* Decorative Circles */}
+                                <div className="absolute top-[-20%] right-[-10%] w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+                                <div className="absolute bottom-[-10%] left-[-10%] w-24 h-24 bg-black/10 rounded-full blur-xl"></div>
                             </div>
-                            <div>
-                                <h3 className="text-lg font-bold text-gray-900 dark:text-white">{course.title}</h3>
-                                <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">{course.description}</p>
-                                <div className="flex gap-3 mt-3">
-                                    <span className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-full text-gray-600 dark:text-gray-300">
-                                        {course.category}
-                                    </span>
-                                    <span className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-full text-gray-600 dark:text-gray-300">
-                                        {course.duration} min
-                                    </span>
-                                    {course.visibleToAll ? (
-                                        <span className="text-xs px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full">
-                                            Todas as Empresas
-                                        </span>
-                                    ) : (
-                                        <span className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-full">
-                                            Empresas Específicas
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
+                        )}
+
+                        {/* Status Badge */}
+                        <div className="absolute top-3 left-3">
+                            <span className={`px-2.5 py-1 rounded-full text-xs font-medium backdrop-blur-md ${course.active
+                                    ? 'bg-green-500/20 text-white border border-white/20'
+                                    : 'bg-gray-500/50 text-white border border-white/20'
+                                }`}>
+                                {course.active ? 'Publicado' : 'Rascunho'}
+                            </span>
                         </div>
-                        <div className="flex gap-2">
-                            <button
-                                onClick={() => onAddModule(course.id)}
-                                className="btn-secondary text-xs"
-                            >
-                                + Módulo
-                            </button>
-                            <button onClick={() => onEditCourse(course)} className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg" aria-label="Editar curso">
-                                <Edit className="h-4 w-4" />
-                            </button>
-                            <button onClick={() => onDeleteCourse(course.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg" aria-label="Excluir curso">
-                                <Trash2 className="h-4 w-4" />
-                            </button>
-                            <button
-                                onClick={() => setExpandedCourse(expandedCourse === course.id ? null : course.id)}
-                                className="p-2 text-gray-500 hover:bg-gray-50 rounded-lg"
-                                aria-label={expandedCourse === course.id ? "Recolher detalhes do curso" : "Expandir detalhes do curso"}
-                            >
-                                {expandedCourse === course.id ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                            </button>
+
+                        {/* Action Menu Button */}
+                        <div className="absolute top-3 right-3">
+                            <div className="relative">
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); setActiveMenu(activeMenu === course.id ? null : course.id); }}
+                                    className="p-1.5 rounded-full bg-black/20 text-white hover:bg-black/40 transition-colors backdrop-blur-sm"
+                                >
+                                    <MoreVertical className="h-4 w-4" />
+                                </button>
+
+                                {activeMenu === course.id && (
+                                    <>
+                                        <div
+                                            className="fixed inset-0 z-10"
+                                            onClick={() => setActiveMenu(null)}
+                                        ></div>
+                                        <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 py-1 z-20 animate-in fade-in zoom-in-95 duration-200">
+                                            <button
+                                                onClick={() => { setActiveMenu(null); onEditCourse(course); }}
+                                                className="w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 flex items-center gap-2"
+                                            >
+                                                <Edit className="h-4 w-4" /> Editar Detalhes
+                                            </button>
+                                            <div className="h-px bg-gray-100 dark:bg-gray-700 my-1"></div>
+                                            <button
+                                                onClick={() => { setActiveMenu(null); onDeleteCourse(course.id); }}
+                                                className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
+                                            >
+                                                <Trash2 className="h-4 w-4" /> Excluir Curso
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
                         </div>
                     </div>
 
-                    {expandedCourse === course.id && (
-                        <div className="bg-gray-50 dark:bg-gray-900/50 p-4 space-y-4">
-                            {course.modules?.map(module => (
-                                <div key={module.id} className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                                    <div className="flex justify-between items-center mb-3">
-                                        <h4 className="font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
-                                            <Layers className="h-4 w-4 text-gray-400" />
-                                            {module.title}
-                                        </h4>
-                                        <div className="flex gap-3 items-center">
-                                            {module.quizzes && module.quizzes.length > 0 ? (
-                                                <button
-                                                    onClick={() => onEditQuiz(module.quizzes[0].id)}
-                                                    className="text-xs text-purple-600 hover:underline flex items-center gap-1"
-                                                >
-                                                    <FileText className="h-3 w-3" />
-                                                    Editar Prova
-                                                </button>
-                                            ) : (
-                                                <button
-                                                    onClick={() => onCreateQuiz(module.id, course.id)}
-                                                    className="text-xs text-purple-600 hover:underline flex items-center gap-1"
-                                                >
-                                                    <FileText className="h-3 w-3" />
-                                                    Criar Prova
-                                                </button>
-                                            )}
-                                            <button
-                                                onClick={() => onAddLesson(module.id)}
-                                                className="text-xs text-blue-600 hover:underline"
-                                            >
-                                                + Adicionar Aula
-                                            </button>
-                                            <button
-                                                onClick={() => onDeleteModule(module.id)}
-                                                className="text-xs text-red-500 hover:text-red-700"
-                                                title="Excluir módulo"
-                                            >
-                                                <Trash2 className="h-3 w-3" />
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-2 pl-4 border-l-2 border-gray-100 dark:border-gray-700">
-                                        {module.lessons?.map(lesson => (
-                                            <div key={lesson.id} className="flex justify-between items-center text-sm group py-1">
-                                                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                                                    <Video className="h-3 w-3" />
-                                                    <span>{lesson.title}</span>
-                                                    <span className="text-xs text-gray-400">({lesson.duration} min)</span>
-                                                </div>
-                                                <button
-                                                    onClick={() => onDeleteLesson(lesson.id)}
-                                                    className="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
-                                                    title="Excluir aula"
-                                                >
-                                                    <Trash2 className="h-3 w-3" />
-                                                </button>
-                                            </div>
-                                        ))}
-                                        {(!module.lessons || module.lessons.length === 0) && (
-                                            <p className="text-xs text-gray-400 italic">Nenhuma aula neste módulo.</p>
-                                        )}
-                                    </div>
-                                </div>
-                            ))}
-                            {(!course.modules || course.modules.length === 0) && (
-                                <p className="text-center text-gray-500 text-sm py-4">Nenhum módulo cadastrado.</p>
-                            )}
+                    {/* Content */}
+                    <div className="p-5 flex-1 flex flex-col">
+                        <div className="mb-4">
+                            <div className="flex gap-2 mb-2 flex-wrap">
+                                <span className="text-[10px] px-2 py-0.5 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded font-bold uppercase tracking-wide">
+                                    {course.category}
+                                </span>
+                                {course.visibleToAll ? (
+                                    <span className="text-[10px] px-2 py-0.5 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 rounded font-bold uppercase tracking-wide flex items-center gap-1">
+                                        <Users className="h-3 w-3" /> Todos
+                                    </span>
+                                ) : (
+                                    <span className="text-[10px] px-2 py-0.5 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 rounded font-bold uppercase tracking-wide flex items-center gap-1">
+                                        <Building2 className="h-3 w-3" /> Empresas
+                                    </span>
+                                )}
+                            </div>
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white leading-tight mb-2 line-clamp-2" title={course.title}>
+                                {course.title}
+                            </h3>
+                            <p className="text-gray-500 dark:text-gray-400 text-sm line-clamp-2">
+                                {course.description}
+                            </p>
                         </div>
-                    )}
+
+                        <div className="mt-auto pt-4 border-t border-gray-100 dark:border-gray-700 space-y-4">
+                            <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                                <div className="flex items-center gap-1.5">
+                                    <Clock className="h-3.5 w-3.5" />
+                                    <span>{course.duration} min</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <Layout className="h-3.5 w-3.5" />
+                                    <span>{course.modules?.length || 0} módulos</span>
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={() => onManageContent(course)}
+                                className="w-full py-2.5 bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 text-primary dark:text-white rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 group-hover:bg-primary group-hover:text-white"
+                            >
+                                <Layout className="h-4 w-4" />
+                                Gerenciar Conteúdo
+                            </button>
+                        </div>
+                    </div>
                 </div>
             ))}
+
+            {/* Empty State Help */}
+            {courses.length === 0 && (
+                <div className="col-span-full py-16 text-center bg-gray-50 dark:bg-gray-800/50 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-700">
+                    <div className="mx-auto w-16 h-16 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center mb-4">
+                        <BookOpen className="h-8 w-8 text-blue-500" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Nenhum curso criado</h3>
+                    <p className="text-gray-500 dark:text-gray-400 max-w-sm mx-auto mb-6">
+                        Comece criando seu primeiro curso para treinar seus colaboradores.
+                    </p>
+                </div>
+            )}
         </div>
     );
 };

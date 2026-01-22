@@ -29,5 +29,7 @@ export interface Course {
     isMandatory: boolean;
     publishedAt: string | null;
     modules: Module[];
-    visibleToAll?: boolean; // Propriedade opcional se não vier sempre do backend
+    visibleToAll?: boolean;
+    coverUrl?: string; // Capa do curso
+    difficulty?: string; // Dificuldade (Iniciante, Intermediário, Avançado)
 }

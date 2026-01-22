@@ -8,6 +8,7 @@ import { CourseList } from '../../components/master/university/CourseList';
 import { CourseFormModal } from '../../components/master/university/CourseFormModal';
 import { ModuleFormModal } from '../../components/master/university/ModuleFormModal';
 import { LessonFormModal } from '../../components/master/university/LessonFormModal';
+import { CourseContentManager } from '../../components/master/university/CourseContentManager';
 
 interface CourseFormData {
     title: string;
@@ -36,13 +37,16 @@ interface Attachment {
 const UniversityManagement = () => {
     const [courses, setCourses] = useState<Course[]>([]);
     const [loading, setLoading] = useState(true);
-    const [expandedCourse, setExpandedCourse] = useState<string | null>(null);
+
 
     // Modals
     const [showCourseModal, setShowCourseModal] = useState(false);
     const [showModuleModal, setShowModuleModal] = useState(false);
     const [showLessonModal, setShowLessonModal] = useState(false);
     const [showQuizEditor, setShowQuizEditor] = useState(false);
+
+    // Content Management
+    const [courseToManage, setCourseToManage] = useState<Course | null>(null);
 
     // Context IDs
     const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
@@ -56,10 +60,18 @@ const UniversityManagement = () => {
         fetchCompanies();
     }, []);
 
+    // ... (fetch functions remain same)
+
     const fetchCourses = async () => {
         try {
             const response = await api.get('/courses');
             setCourses(response.data);
+
+            // If we are managing a course, refresh its data too
+            if (courseToManage) {
+                const updated = response.data.find((c: Course) => c.id === courseToManage.id);
+                if (updated) setCourseToManage(updated);
+            }
         } catch {
             toast.error('Erro ao carregar cursos');
         } finally {
@@ -88,9 +100,11 @@ const UniversityManagement = () => {
     };
 
     const handleCreateModule = async (data: { title: string, order: number }) => {
-        if (!selectedCourseId) return;
+        const cId = selectedCourseId || courseToManage?.id;
+        if (!cId) return;
+
         try {
-            await api.post('/modules', { ...data, courseId: selectedCourseId });
+            await api.post('/modules', { ...data, courseId: cId });
             toast.success('Módulo criado com sucesso!');
             setShowModuleModal(false);
             fetchCourses();
@@ -134,6 +148,7 @@ const UniversityManagement = () => {
         try {
             await api.delete(`/courses/${id}`);
             toast.success('Curso removido!');
+            if (courseToManage?.id === id) setCourseToManage(null);
             fetchCourses();
         } catch {
             toast.error('Erro ao remover curso');
@@ -141,7 +156,6 @@ const UniversityManagement = () => {
     };
 
     const handleEditCourse = (course: Course) => {
-        // For now, just show the modal in edit mode - can be extended later
         toast.info(`Editar curso: ${course.title}`);
         // TODO: Implement edit course modal
     };
@@ -157,6 +171,11 @@ const UniversityManagement = () => {
         }
     };
 
+    // Stub for Edit Module - to be implemented
+    const handleEditModule = (module: any) => {
+        toast.info(`Editar módulo: ${module.title}`);
+    };
+
     const handleDeleteLesson = async (lessonId: string) => {
         if (!confirm('Tem certeza que deseja excluir esta aula?')) return;
         try {
@@ -168,6 +187,11 @@ const UniversityManagement = () => {
         }
     };
 
+    // Stub for Edit Lesson - to be implemented
+    const handleEditLesson = (lesson: any) => {
+        toast.info(`Editar aula: ${lesson.title}`);
+    };
+
     if (loading) return <div>Carregando...</div>;
 
     if (showQuizEditor && selectedQuizId) {
@@ -175,30 +199,55 @@ const UniversityManagement = () => {
     }
 
     return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center">
+        <div className="space-y-8 pb-10">
+            {/* Header Section */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Universidade Corporativa</h1>
-                    <p className="text-gray-500 dark:text-gray-400">Gerencie cursos, módulos e aulas.</p>
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">Universidade Corporativa</h1>
+                    <p className="text-gray-500 dark:text-gray-400 mt-1">Gerencie seus cursos, verifique o progresso dos alunos e crie trilhas de aprendizado.</p>
                 </div>
-                <button onClick={() => setShowCourseModal(true)} className="btn-primary flex items-center gap-2">
-                    <Plus className="h-4 w-4" /> Novo Curso
+                <button
+                    onClick={() => setShowCourseModal(true)}
+                    className="btn-primary flex items-center gap-2 px-6 py-3 shadow-lg hover:shadow-xl transition-all"
+                >
+                    <Plus className="h-5 w-5" /> Novo Curso
                 </button>
             </div>
 
-            <CourseList
-                courses={courses}
-                expandedCourse={expandedCourse}
-                setExpandedCourse={setExpandedCourse}
-                onDeleteCourse={handleDeleteCourse}
-                onEditCourse={handleEditCourse}
-                onAddModule={(id) => { setSelectedCourseId(id); setShowModuleModal(true); }}
-                onDeleteModule={handleDeleteModule}
-                onAddLesson={(id) => { setSelectedModuleId(id); setShowLessonModal(true); }}
-                onDeleteLesson={handleDeleteLesson}
-                onCreateQuiz={handleCreateQuiz}
-                onEditQuiz={(id) => { setSelectedQuizId(id); setShowQuizEditor(true); }}
-            />
+            {/* Stats Cards (Optional Future) */}
+
+            {/* Course Grid */}
+            <div>
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-xl font-bold text-gray-800 dark:text-white">Seus Cursos</h2>
+                    <div className="flex gap-2">
+                        {/* Filters could go here */}
+                    </div>
+                </div>
+
+                <CourseList
+                    courses={courses}
+                    onDeleteCourse={handleDeleteCourse}
+                    onEditCourse={handleEditCourse}
+                    onManageContent={(course) => setCourseToManage(course)}
+                />
+            </div>
+
+            {/* Management Drawer */}
+            {courseToManage && (
+                <CourseContentManager
+                    course={courseToManage}
+                    onClose={() => setCourseToManage(null)}
+                    onAddModule={(courseId: string) => { setSelectedCourseId(courseId); setShowModuleModal(true); }}
+                    onDeleteModule={handleDeleteModule}
+                    onEditModule={handleEditModule}
+                    onAddLesson={(moduleId: string) => { setSelectedModuleId(moduleId); setShowLessonModal(true); }}
+                    onDeleteLesson={handleDeleteLesson}
+                    onEditLesson={handleEditLesson}
+                    onCreateQuiz={handleCreateQuiz}
+                    onEditQuiz={(id: string) => { setSelectedQuizId(id); setShowQuizEditor(true); }}
+                />
+            )}
 
             <CourseFormModal
                 isOpen={showCourseModal}
@@ -221,5 +270,7 @@ const UniversityManagement = () => {
         </div>
     );
 };
+
+
 
 export default UniversityManagement;
