@@ -159,8 +159,10 @@ const CollaboratorsList = () => {
         }
     };
 
-    // Filter collaborators based on selectedCompanyId
-    const filteredCollaborators = collaborators.filter(collab => !selectedCompanyId || collab.companyId === selectedCompanyId);
+    // Collaborators são já filtrados pelo backend baseado no companyId do usuário
+    // Para MASTER, selectedCompanyId é usado via x-company-id header na chamada API
+    // Não precisamos filtrar localmente novamente
+    const filteredCollaborators = collaborators;
 
     return (
         <div className="space-y-6">
