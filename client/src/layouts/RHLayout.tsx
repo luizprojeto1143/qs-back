@@ -11,8 +11,6 @@ import {
     Calendar,
     Video,
     GraduationCap,
-
-    GraduationCap,
     AlertTriangle,
     Activity,
     Megaphone,
