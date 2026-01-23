@@ -14,12 +14,19 @@ interface VisitDetailsModalProps {
 export const VisitDetailsModal = ({ visitId, isOpen, onClose }: VisitDetailsModalProps) => {
     const modalRef = useRef<HTMLDivElement>(null);
 
-    const { data: visit, isLoading } = useQuery({
+    const { data: visit, isLoading, isError, error } = useQuery({
         queryKey: ['visit', visitId],
         queryFn: async () => {
+            console.log('Fetching visit details for:', visitId);
             if (!visitId) return null;
-            const res = await api.get(`/visits/${visitId}`);
-            return res.data;
+            try {
+                const res = await api.get(`/visits/${visitId}`);
+                console.log('Visit details fetched:', res.data);
+                return res.data;
+            } catch (error) {
+                console.error('Error fetching visit details:', error);
+                throw error;
+            }
         },
         enabled: !!visitId && isOpen
     });
@@ -69,6 +76,12 @@ export const VisitDetailsModal = ({ visitId, isOpen, onClose }: VisitDetailsModa
                             <div className="h-20 bg-gray-100 rounded"></div>
                             <div className="h-4 bg-gray-200 rounded w-1/2"></div>
                             <div className="h-20 bg-gray-100 rounded"></div>
+                        </div>
+                    ) : isError ? (
+                        <div className="text-center py-10 text-red-500">
+                            <p>Erro ao carregar detalhes do acompanhamento.</p>
+                            <p className="text-sm text-gray-400 mt-2">{error instanceof Error ? error.message : 'Erro desconhecido'}</p>
+                            <p className="text-xs text-gray-300 mt-1">ID: {visitId}</p>
                         </div>
                     ) : visit ? (
                         <>

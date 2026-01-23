@@ -105,7 +105,18 @@ export const listVisits = async (req: Request, res: Response) => {
 export const getVisit = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const companyId = req.headers['x-company-id'] as string; // Optional security check
+        const user = (req as AuthRequest).user;
+
+        let companyId: string | undefined;
+
+        if (user?.role === 'MASTER') {
+            companyId = req.headers['x-company-id'] as string;
+        } else {
+            // For non-MASTER users, ALWAYS enforce their own companyId
+            // This prevents issues where a stale x-company-id header (from localStorage)
+            // causes a 404 because it doesn't match the record's companyId
+            companyId = user?.companyId;
+        }
 
         const visit = await visitService.getById(id, companyId);
         return res.json(visit);

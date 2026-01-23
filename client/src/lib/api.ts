@@ -22,6 +22,7 @@ const handleResponse = async (response: Response) => {
     if (response.status === 401 && !response.url.includes('/auth/login')) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
+        localStorage.removeItem('selectedCompanyId'); // Clear any stale context
         // Dispatch event instead of hard reload to allow React to handle it
         window.dispatchEvent(new Event('auth:logout'));
         window.location.href = '/login'; // Fallback
