@@ -127,11 +127,11 @@ router.post('/settings/libras', requireRole(['MASTER', 'RH']), librasController.
 router.post('/daily/room', requireRole(['MASTER', 'RH', 'COLABORADOR']), createRoom);
 
 // Libras Call System
-router.post('/libras/calls', librasCallController.requestCall);
+router.post('/libras/calls', requireRole(['MASTER', 'RH', 'LIDER', 'COLABORADOR']), librasCallController.requestCall);
 router.get('/libras/calls/pending', requireRole(['MASTER', 'RH']), librasCallController.listPendingCalls);
-router.get('/libras/calls/:id/status', librasCallController.checkCallStatus);
+router.get('/libras/calls/:id/status', requireRole(['MASTER', 'RH', 'LIDER', 'COLABORADOR']), librasCallController.checkCallStatus);
 router.put('/libras/calls/:id/accept', requireRole(['MASTER', 'RH']), librasCallController.acceptCall);
-router.put('/libras/calls/:id/status', librasCallController.updateCallStatus);
+router.put('/libras/calls/:id/status', requireRole(['MASTER', 'RH', 'LIDER', 'COLABORADOR']), librasCallController.updateCallStatus);
 router.post('/libras/calls/:id/invite', requireRole(['MASTER', 'RH']), librasCallController.inviteToCall);
 
 // Specialist Routes
@@ -155,12 +155,12 @@ router.delete('/pdis/:id', requireRole(['MASTER', 'RH']), pdiController.deletePD
 router.get('/users', requireRole(['MASTER', 'RH', 'LIDER']), userController.listUsers);
 
 // Days Off Routes
-router.post('/days-off', workScheduleController.dayOffController.create);
+router.post('/days-off', requireRole(['MASTER', 'RH', 'LIDER', 'COLABORADOR']), workScheduleController.dayOffController.create);
 router.get('/days-off/my-requests', workScheduleController.dayOffController.myRequests);
 router.get('/days-off/pending', requireRole(['MASTER', 'RH', 'LIDER']), workScheduleController.dayOffController.listPending);
 router.post('/days-off/:id/review', requireRole(['MASTER', 'RH', 'LIDER']), workScheduleController.dayOffController.review);
-router.get('/collaborators/:collaboratorId/days-off', workScheduleController.dayOffController.listByCollaborator);
-router.delete('/days-off/:id', workScheduleController.dayOffController.delete);
+router.get('/collaborators/:collaboratorId/days-off', requireRole(['MASTER', 'RH', 'LIDER', 'COLABORADOR']), workScheduleController.dayOffController.listByCollaborator);
+router.delete('/days-off/:id', requireRole(['MASTER', 'RH', 'LIDER', 'COLABORADOR']), workScheduleController.dayOffController.delete);
 router.post('/users', requireRole(['MASTER']), userController.createUser);
 router.put('/users/:id', requireRole(['MASTER']), userController.updateUser);
 router.delete('/users/:id', requireRole(['MASTER']), userController.deleteUser);
@@ -170,7 +170,7 @@ router.post('/upload', rateLimiter, uploadController.uploadMiddleware, uploadCon
 
 // Notification Routes
 router.get('/notifications', notificationController.listNotifications);
-router.put('/notifications/:id/read', notificationController.markAsRead);
+router.put('/notifications/:id/read', requireRole(['MASTER', 'RH', 'LIDER', 'COLABORADOR']), notificationController.markAsRead);
 router.put('/notifications/read-all', notificationController.markAllAsRead);
 
 // Quiz Routes
@@ -179,8 +179,8 @@ router.delete('/quizzes/:id', requireRole(['MASTER', 'RH']), deleteQuiz);
 router.get('/quizzes/:id/editor', requireRole(['MASTER', 'RH']), getQuizEditor);
 router.post('/quizzes/questions', requireRole(['MASTER', 'RH']), addQuestion);
 router.delete('/quizzes/questions/:id', requireRole(['MASTER', 'RH']), deleteQuestion);
-router.get('/quizzes/:id', getQuiz);
-router.post('/quizzes/:id/submit', submitQuiz);
+router.get('/quizzes/:id', requireRole(['MASTER', 'RH', 'LIDER', 'COLABORADOR']), getQuiz);
+router.post('/quizzes/:id/submit', requireRole(['MASTER', 'RH', 'LIDER', 'COLABORADOR']), submitQuiz);
 
 
 // AI Analysis Routes

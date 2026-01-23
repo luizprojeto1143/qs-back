@@ -184,7 +184,9 @@ const computeScore = (data: AreaScoreInput) => {
                     evalCount++;
                 }
             }
-        } catch { }
+        } catch (e) {
+            console.warn('[QSScore] Error processing visit evaluation:', e instanceof Error ? e.message : e);
+        }
     });
 
     if (evalCount > 0) {

@@ -259,6 +259,25 @@ export const dayOffController = {
     async delete(req: Request, res: Response) {
         try {
             const { id } = req.params;
+            const user = (req as any).user;
+
+            // Find the day off to verify ownership
+            const dayOff = await prisma.dayOff.findUnique({
+                where: { id },
+                include: { collaborator: { select: { userId: true } } }
+            });
+
+            if (!dayOff) {
+                return res.status(404).json({ error: 'Folga não encontrada' });
+            }
+
+            // Only allow delete if user is owner or has elevated role
+            const isOwner = dayOff.collaborator?.userId === user.userId;
+            const hasElevatedRole = ['MASTER', 'RH', 'LIDER'].includes(user.role);
+
+            if (!isOwner && !hasElevatedRole) {
+                return res.status(403).json({ error: 'Sem permissão para deletar esta folga' });
+            }
 
             await prisma.dayOff.delete({ where: { id } });
 

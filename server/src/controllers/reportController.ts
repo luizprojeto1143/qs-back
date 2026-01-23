@@ -239,7 +239,9 @@ const getLeadershipReport = async (companyId: string) => {
                 const avg = total / leadEvals.length;
                 if (avg > 0) groupedData[sectorName][areaName].push({ id: v.date, score: avg });
             }
-        } catch (e) { }
+        } catch (e) {
+            console.warn('[Report] Error processing visit evaluation:', e instanceof Error ? e.message : e);
+        }
     });
 
     return {

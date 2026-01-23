@@ -211,7 +211,7 @@ export const updateCollaborator = async (req: Request, res: Response) => {
         const { id } = req.params;
 
         // Use dedicated update schema for flexible validation
-        console.log('[updateCollaborator] Received body:', JSON.stringify(req.body, null, 2));
+        // Validate with dedicated update schema
         const validation = updateCollaboratorSchema.safeParse(req.body);
         if (!validation.success) {
             console.error('[updateCollaborator] Validation failed:', JSON.stringify(validation.error.format(), null, 2));
