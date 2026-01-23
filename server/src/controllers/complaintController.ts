@@ -23,7 +23,7 @@ export const complaintController = {
                 where: { companyId }
             });
 
-            if (!settings?.complaintsEnabled) {
+            if (settings && !settings.complaintsEnabled) {
                 return res.status(403).json({ error: 'Módulo de denúncias não está habilitado' });
             }
 

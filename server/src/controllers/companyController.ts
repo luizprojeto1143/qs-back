@@ -159,6 +159,7 @@ export const listCompanies = async (req: Request, res: Response) => {
 
         const companies = await prisma.company.findMany({
             where,
+            include: { systemSettings: true },
             orderBy: { name: 'asc' }
         });
 

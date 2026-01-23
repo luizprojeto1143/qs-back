@@ -27,7 +27,7 @@ export const mediationController = {
                 where: { companyId }
             });
 
-            if (!settings?.mediationsEnabled) {
+            if (settings && !settings.mediationsEnabled) {
                 return res.status(403).json({ error: 'Módulo de mediação não está habilitado' });
             }
 

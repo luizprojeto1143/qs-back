@@ -129,8 +129,7 @@ const DashboardLayout = () => {
         navigate('/');
     };
 
-    // const { user } = useAuth(); // Unused
-    // const { company } = useCompany(); // Unused
+    const { company } = useCompany();
 
     const menuItems = [
         { icon: LayoutDashboard, label: 'Início', path: '/dashboard' },
@@ -145,15 +144,19 @@ const DashboardLayout = () => {
         { icon: FileText, label: 'Relatórios', path: '/dashboard/reports' },
     ];
 
-    const qsScoreItems = [
-        { icon: BarChart3, label: 'QS Score', path: '/dashboard/qs-score' },
-        { icon: Brain, label: 'IA Analítica', path: '/dashboard/ai-insights' },
-        { icon: MessageSquare, label: 'Denúncias', path: '/dashboard/complaints' },
-        { icon: Scale, label: 'Mediação', path: '/dashboard/mediations' },
-        { icon: PieChart, label: 'Censo & Indicadores', path: '/dashboard/indicators' },
-        { icon: CalendarDays, label: 'Escalas', path: '/dashboard/work-schedules' },
-        { icon: Cog, label: 'Config. Módulos', path: '/dashboard/system-settings' },
+    const allQsScoreItems = [
+        { icon: BarChart3, label: 'QS Score', path: '/dashboard/qs-score', key: 'qsScoreEnabled' },
+        { icon: Brain, label: 'IA Analítica', path: '/dashboard/ai-insights', key: 'aiAlertsEnabled' },
+        { icon: MessageSquare, label: 'Denúncias', path: '/dashboard/complaints', key: 'complaintsEnabled' },
+        { icon: Scale, label: 'Mediação', path: '/dashboard/mediations', key: 'mediationsEnabled' },
+        { icon: PieChart, label: 'Censo & Indicadores', path: '/dashboard/indicators', key: null }, // Always visible
+        { icon: Cog, label: 'Config. Módulos', path: '/dashboard/system-settings', key: null }, // Always visible
     ];
+
+    const qsScoreItems = allQsScoreItems.filter(item => {
+        if (!company?.systemSettings || item.key === null) return true;
+        return company.systemSettings[item.key as keyof typeof company.systemSettings] !== false;
+    });
 
     const settingsItems = [
         { icon: Settings, label: 'Configurações', path: '/dashboard/settings' },

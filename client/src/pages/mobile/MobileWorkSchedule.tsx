@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Clock, Coffee, Sun, Moon, Briefcase } from 'lucide-react';
+import { Calendar, Briefcase } from 'lucide-react';
 import { api } from '../../lib/api';
 
 interface CollaboratorProfile {
@@ -23,7 +23,8 @@ interface Schedule {
 
 const MobileWorkSchedule = () => {
     const [profile, setProfile] = useState<CollaboratorProfile | null>(null);
-    const [nextSchedule, setNextSchedule] = useState<Schedule | null>(null);
+    const [upcomingSchedules, setUpcomingSchedules] = useState<Schedule[]>([]);
+    const [nextSchedule, setNextSchedule] = useState<Schedule | null>(null); // Keep for main highlight card
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -38,14 +39,18 @@ const MobileWorkSchedule = () => {
                     setProfile(profileRes.data.user.collaboratorProfile);
                 }
 
-                // Find next schedule
+                // Process schedules
                 const schedules = schedulesRes.data as Schedule[];
                 if (Array.isArray(schedules) && schedules.length > 0) {
                     const now = new Date();
-                    const next = schedules
+                    const futureSchedules = schedules
                         .filter((s) => new Date(s.date) > now)
-                        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
-                    if (next) setNextSchedule(next);
+                        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+                    if (futureSchedules.length > 0) {
+                        setNextSchedule(futureSchedules[0]);
+                        setUpcomingSchedules(futureSchedules.slice(0, 3)); // Take top 3
+                    }
                 }
             } catch (error) {
                 console.error('Error fetching schedule', error);
@@ -76,13 +81,6 @@ const MobileWorkSchedule = () => {
     // Fallback info if WorkSchedule is missing but Shift string exists
     const shiftName = schedule?.type || profile.shift || 'Padrão';
 
-    const getShiftIcon = (start?: string) => {
-        if (!start) return <Sun className="h-6 w-6 text-orange-500" />;
-        const hour = parseInt(start.split(':')[0]);
-        if (hour >= 18 || hour < 5) return <Moon className="h-6 w-6 text-indigo-500" />;
-        return <Sun className="h-6 w-6 text-orange-500" />;
-    };
-
     return (
         <div className="space-y-6 animate-in slide-in-from-bottom duration-500 pb-24">
             <div>
@@ -105,31 +103,29 @@ const MobileWorkSchedule = () => {
                         </div>
                     </div>
 
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-                            <div className="flex items-center gap-3">
-                                {getShiftIcon(schedule?.startTime)}
-                                <div>
-                                    <p className="text-xs text-gray-500">Entrada</p>
-                                    <p className="font-bold text-gray-900">{schedule?.startTime || '--:--'}</p>
-                                </div>
-                            </div>
-                            <div className="h-8 w-px bg-gray-200"></div>
-                            <div className="flex items-center gap-3">
-                                <Clock className="h-6 w-6 text-gray-400" />
-                                <div>
-                                    <p className="text-xs text-gray-500">Saída</p>
-                                    <p className="font-bold text-gray-900">{schedule?.endTime || '--:--'}</p>
-                                </div>
-                            </div>
+                    <div className="space-y-3">
+                        <h3 className="text-sm font-semibold text-gray-700 mb-2">Próximos Dias</h3>
+                        <div className="flex flex-col gap-2">
+                            {upcomingSchedules.length > 0 ? (
+                                upcomingSchedules.map((sch) => (
+                                    <div key={sch.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                                        <div className="flex items-center gap-3">
+                                            <Calendar className="h-5 w-5 text-blue-500" />
+                                            <div>
+                                                <p className="font-medium text-gray-900">
+                                                    {new Date(sch.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', weekday: 'short' }).replace('.', '')}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="text-sm font-semibold text-gray-600">
+                                            {sch.time || 'Horário a definir'}
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-sm text-gray-500 italic">Nenhum agendamento futuro encontrado.</p>
+                            )}
                         </div>
-
-                        {schedule?.breakStart && (
-                            <div className="flex items-center gap-2 text-sm text-gray-600 px-2">
-                                <Coffee className="h-4 w-4" />
-                                <span>Intervalo: {schedule.breakStart} - {schedule.breakEnd}</span>
-                            </div>
-                        )}
                     </div>
                 </div>
             </div>

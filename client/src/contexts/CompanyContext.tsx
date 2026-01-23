@@ -11,7 +11,13 @@ interface Company {
     systemSettings?: {
         rhCanSeeQSScore?: boolean;
         rhCanSeeRiskMap?: boolean;
+        rhCanSeeAlerts?: boolean;
         complaintsEnabled?: boolean;
+        mediationsEnabled?: boolean;
+        qsScoreEnabled?: boolean;
+        aiAlertsEnabled?: boolean;
+        riskMapEnabled?: boolean;
+        workScheduleEnabled?: boolean;
     };
 }
 
