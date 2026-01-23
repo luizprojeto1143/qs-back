@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Search, Calendar, MapPin, User, Download, Filter, FileText, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Search, Calendar, MapPin, User, Download, Filter, FileText, AlertTriangle, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { SkeletonRow } from '../components/Skeleton';
 import { api } from '../lib/api';
 import { EmptyState } from '../components/EmptyState';
-import { useCompany } from '../contexts/CompanyContext';
+
+import { VisitDetailsModal } from '../components/modals/VisitDetailsModal';
 
 interface Collaborator {
     user?: { name: string };
@@ -25,13 +25,14 @@ interface Visit {
 }
 
 const RHVisitHistory = () => {
-    const navigate = useNavigate();
     const [visits, setVisits] = useState<Visit[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [dateFilter, setDateFilter] = useState('');
     const [areaFilter, setAreaFilter] = useState('');
-    const { companies } = useCompany();
+    // const { companies } = useCompany(); // Keeping for now as it might be used later or just ignore lint
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedVisitId, setSelectedVisitId] = useState<string | null>(null);
 
     // Stats calculation
     const currentMonthVisits = visits.filter(v => {
@@ -240,7 +241,11 @@ const RHVisitHistory = () => {
                                             </span>
                                         )}
                                         <button
-                                            onClick={() => navigate('/rh/report-viewer', { state: { reportType: 'VISIT_INDIVIDUAL', visitId: visit.id } })}
+                                            onClick={() => {
+                                                console.log('Opening details for visit:', visit.id);
+                                                setSelectedVisitId(visit.id);
+                                                setIsModalOpen(true);
+                                            }}
                                             className="text-blue-600 hover:text-blue-700 font-medium text-sm flex items-center"
                                         >
                                             Ver Detalhes →
@@ -252,6 +257,12 @@ const RHVisitHistory = () => {
                     ))}
                 </div>
             )}
+
+            <VisitDetailsModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                visitId={selectedVisitId}
+            />
         </div>
     );
 };

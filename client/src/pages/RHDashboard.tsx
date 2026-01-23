@@ -71,14 +71,14 @@ const RHDashboard = () => {
     const [sectorEngagement, setSectorEngagement] = useState<SectorEngagement[]>([]);
     const [mostWatchedCourses, setMostWatchedCourses] = useState<CourseWatched[]>([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(false);
+
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedVisitId, setSelectedVisitId] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                setError(false);
+                // setError(false); // Removed
                 const response = await api.get('/dashboard/rh');
                 const data = response.data;
                 if (data.stats) setStats(data.stats);
@@ -86,7 +86,7 @@ const RHDashboard = () => {
                 if (data.sectorEngagement) setSectorEngagement(data.sectorEngagement);
                 if (data.mostWatchedCourses) setMostWatchedCourses(data.mostWatchedCourses);
             } catch {
-                setError(true);
+                // setError(true); // Removed
                 toast.error('Erro ao carregar dados do dashboard');
             } finally {
                 setLoading(false);
@@ -207,6 +207,7 @@ const RHDashboard = () => {
                                 <div
                                     key={item.id}
                                     onClick={() => {
+                                        console.log('Clicked recent activity:', item.id);
                                         setSelectedVisitId(item.id);
                                         setIsModalOpen(true);
                                     }}
