@@ -123,7 +123,17 @@ export const getVisit = async (req: Request, res: Response) => {
     } catch (error: any) {
         // console.error('Error fetching visit:', error); // Silent validation errors
         if (error.message === 'Visita não encontrada') {
-            return res.status(404).json({ error: 'Visit not found' });
+            return res.status(404).json({
+                error: 'Visit not found',
+                debug: {
+                    userId: user?.userId,
+                    userRole: user?.role,
+                    userCompanyId: user?.companyId,
+                    resolvedCompanyId: companyId,
+                    visitId: id,
+                    headerCompanyId: req.headers['x-company-id']
+                }
+            });
         }
         return res.status(500).json({ error: 'Error fetching visit' });
     }
