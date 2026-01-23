@@ -120,18 +120,22 @@ export const createCollaboratorSchema = z.object({
     needsDescription: z.string().optional()
 });
 
+// Helper to convert empty strings to undefined
+const emptyToUndefined = (val: unknown) => (val === '' ? undefined : val);
+
 // Dedicated schema for updates - all fields optional and more flexible
+// Uses preprocess to convert empty strings to undefined (common from HTML forms)
 export const updateCollaboratorSchema = z.object({
-    name: z.string().min(1).optional(),
-    email: z.string().email().optional(),
-    password: z.string().min(6).optional(),
-    companyId: z.string().uuid().optional(),
-    matricula: z.string().optional(),
-    areaId: z.string().uuid().optional().nullable(), // Allow null for area removal
-    shift: z.string().optional().nullable(),
-    nextRestDay: z.string().optional().nullable(),
-    disabilityType: z.enum(['FISICA', 'AUDITIVA', 'VISUAL', 'INTELECTUAL', 'MULTIPLA', 'TEA', 'OUTRA', 'NENHUMA']).optional().nullable(),
-    needsDescription: z.string().optional().nullable()
+    name: z.preprocess(emptyToUndefined, z.string().min(1).optional()),
+    email: z.preprocess(emptyToUndefined, z.string().email().optional()),
+    password: z.preprocess(emptyToUndefined, z.string().min(6).optional()),
+    companyId: z.preprocess(emptyToUndefined, z.string().uuid().optional()),
+    matricula: z.preprocess(emptyToUndefined, z.string().optional()),
+    areaId: z.preprocess(emptyToUndefined, z.string().uuid().optional().nullable()),
+    shift: z.preprocess(emptyToUndefined, z.string().optional().nullable()),
+    nextRestDay: z.preprocess(emptyToUndefined, z.string().optional().nullable()),
+    disabilityType: z.preprocess(emptyToUndefined, z.enum(['FISICA', 'AUDITIVA', 'VISUAL', 'INTELECTUAL', 'MULTIPLA', 'TEA', 'OUTRA', 'NENHUMA']).optional().nullable()),
+    needsDescription: z.preprocess(emptyToUndefined, z.string().optional().nullable())
 });
 
 export const createCompanySchema = z.object({

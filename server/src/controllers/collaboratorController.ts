@@ -211,9 +211,15 @@ export const updateCollaborator = async (req: Request, res: Response) => {
         const { id } = req.params;
 
         // Use dedicated update schema for flexible validation
+        console.log('[updateCollaborator] Received body:', JSON.stringify(req.body, null, 2));
         const validation = updateCollaboratorSchema.safeParse(req.body);
         if (!validation.success) {
-            return res.status(400).json({ error: 'Validation error', details: validation.error.format() });
+            console.error('[updateCollaborator] Validation failed:', JSON.stringify(validation.error.format(), null, 2));
+            return res.status(400).json({
+                error: 'Validation error',
+                details: validation.error.format(),
+                receivedFields: Object.keys(req.body)
+            });
         }
 
         const {
