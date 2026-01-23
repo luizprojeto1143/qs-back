@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+
 import { Users, ClipboardList, AlertTriangle, CheckCircle } from 'lucide-react';
 import { api } from '../lib/api';
 import { SkeletonCard, Skeleton } from '../components/Skeleton';
 import { toast } from 'sonner';
 import { useCompany } from '../contexts/CompanyContext';
+import { VisitDetailsModal } from '../components/modals/VisitDetailsModal';
 
 // Interfaces para tipagem forte
 interface RHStats {
@@ -54,7 +55,6 @@ const StatCard = ({ icon: Icon, label, value, color }: StatCardProps) => (
 );
 
 const RHDashboard = () => {
-    const navigate = useNavigate();
     const { companies } = useCompany();
     const currentCompany = companies[0];
     const isUniversityEnabled = currentCompany?.universityEnabled;
@@ -72,6 +72,8 @@ const RHDashboard = () => {
     const [mostWatchedCourses, setMostWatchedCourses] = useState<CourseWatched[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedVisitId, setSelectedVisitId] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -205,13 +207,8 @@ const RHDashboard = () => {
                                 <div
                                     key={item.id}
                                     onClick={() => {
-                                        // Navigate to ReportViewer
-                                        navigate('/rh/report-viewer', {
-                                            state: {
-                                                reportType: 'VISIT_INDIVIDUAL',
-                                                visitId: item.id
-                                            }
-                                        });
+                                        setSelectedVisitId(item.id);
+                                        setIsModalOpen(true);
                                     }}
                                     className="flex items-start space-x-3 pb-4 border-b border-gray-50 last:border-0 hover:bg-gray-50 p-2 -mx-2 rounded-lg cursor-pointer transition-colors"
                                 >
@@ -227,6 +224,12 @@ const RHDashboard = () => {
                         )}
                     </div>
                 </div>
+
+                <VisitDetailsModal
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    visitId={selectedVisitId}
+                />
 
                 {/* Sector Engagement - Only show if University is enabled */}
                 {isUniversityEnabled && (

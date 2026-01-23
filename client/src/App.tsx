@@ -20,6 +20,7 @@ const RHLayout = lazy(() => import('./layouts/RHLayout'));
 const RHDashboard = lazy(() => import('./pages/RHDashboard'));
 const Reports = lazy(() => import('./pages/Reports'));
 const VisitHistory = lazy(() => import('./pages/VisitHistory'));
+const RHVisitHistory = lazy(() => import('./pages/RHVisitHistory'));
 const MobileLayout = lazy(() => import('./layouts/MobileLayout'));
 const MobileHome = lazy(() => import('./pages/mobile/MobileHome'));
 const MobileWorkSchedule = lazy(() => import('./pages/mobile/MobileWorkSchedule'));
@@ -144,7 +145,7 @@ function App() {
                       <Route path="collaborators" element={<CollaboratorsList />} />
                       <Route path="reports" element={<Reports />} />
                       <Route path="report-viewer" element={<ReportViewer />} />
-                      <Route path="visits" element={<VisitHistory />} />
+                      <Route path="visits" element={<RHVisitHistory />} />
                       <Route path="visits/new" element={<VisitRecording />} />
                       <Route path="schedules" element={<Schedules />} />
                       <Route path="libras" element={<LibrasCentral />} />
