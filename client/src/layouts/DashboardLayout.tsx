@@ -26,6 +26,7 @@ import {
     PieChart
 } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
+import { useCompany } from '../contexts/CompanyContext';
 import { Bell } from 'lucide-react';
 import { api } from '../lib/api';
 import { toast } from 'sonner';
