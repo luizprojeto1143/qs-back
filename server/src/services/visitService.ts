@@ -200,6 +200,37 @@ export class VisitService {
                 }
             }
 
+            // AUTO-GENERATE notes from narratives for each collaborator
+            // This ensures all narratives (Liderança, Colaborador, Consultoria) are saved as individual notes
+            const hasNarratives = safeData.relatos?.lideranca || safeData.relatos?.colaborador || safeData.relatos?.consultoria;
+            if (hasNarratives && collaborators.length > 0) {
+                const narrativeParts: string[] = [];
+
+                if (safeData.relatos?.lideranca?.trim()) {
+                    narrativeParts.push(`📋 **Relato da Liderança:**\n${safeData.relatos.lideranca.trim()}`);
+                }
+                if (safeData.relatos?.colaborador?.trim()) {
+                    narrativeParts.push(`👤 **Relato do Colaborador:**\n${safeData.relatos.colaborador.trim()}`);
+                }
+                if (safeData.relatos?.consultoria?.trim()) {
+                    narrativeParts.push(`💼 **Relato da Consultoria:**\n${safeData.relatos.consultoria.trim()}`);
+                }
+
+                if (narrativeParts.length > 0) {
+                    const combinedNote = narrativeParts.join('\n\n---\n\n');
+
+                    // Create an auto-generated note for EACH collaborator in the visit
+                    await tx.visitNote.createMany({
+                        data: collaborators.map(c => ({
+                            visitId: visit.id,
+                            collaboratorId: c.id,
+                            content: combinedNote
+                        }))
+                    });
+                    console.log(`[VisitService] Auto-generated notes for ${collaborators.length} collaborators`);
+                }
+            }
+
             // Update Schedule if exists
             if (data.scheduleId) {
                 await tx.schedule.update({
