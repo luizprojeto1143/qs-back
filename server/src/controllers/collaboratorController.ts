@@ -8,7 +8,7 @@ const ROLE_COLABORADOR = 'COLABORADOR';
 const DEFAULT_SHIFT = '1_TURNO';
 const DEFAULT_DISABILITY = 'NENHUMA';
 
-import { createCollaboratorSchema } from '../schemas/dataSchemas';
+import { createCollaboratorSchema, updateCollaboratorSchema } from '../schemas/dataSchemas';
 
 export const listCollaborators = async (req: Request, res: Response) => {
     try {
@@ -210,8 +210,8 @@ export const updateCollaborator = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
 
-        // Use Zod for validation (Partial schema for updates)
-        const validation = createCollaboratorSchema.partial().safeParse(req.body);
+        // Use dedicated update schema for flexible validation
+        const validation = updateCollaboratorSchema.safeParse(req.body);
         if (!validation.success) {
             return res.status(400).json({ error: 'Validation error', details: validation.error.format() });
         }
@@ -265,11 +265,11 @@ export const updateCollaborator = async (req: Request, res: Response) => {
                 where: { userId: id },
                 data: {
                     matricula,
-                    areaId,
-                    shift,
+                    areaId: areaId ?? undefined, // Convert null to undefined for Prisma
+                    shift: shift ?? undefined,
                     nextRestDay: nextRestDay ? new Date(nextRestDay) : undefined,
-                    disabilityType,
-                    needsDescription
+                    disabilityType: disabilityType ?? undefined,
+                    needsDescription: needsDescription ?? undefined
                 }
             });
 

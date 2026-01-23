@@ -120,6 +120,20 @@ export const createCollaboratorSchema = z.object({
     needsDescription: z.string().optional()
 });
 
+// Dedicated schema for updates - all fields optional and more flexible
+export const updateCollaboratorSchema = z.object({
+    name: z.string().min(1).optional(),
+    email: z.string().email().optional(),
+    password: z.string().min(6).optional(),
+    companyId: z.string().uuid().optional(),
+    matricula: z.string().optional(),
+    areaId: z.string().uuid().optional().nullable(), // Allow null for area removal
+    shift: z.string().optional().nullable(),
+    nextRestDay: z.string().optional().nullable(),
+    disabilityType: z.enum(['FISICA', 'AUDITIVA', 'VISUAL', 'INTELECTUAL', 'MULTIPLA', 'TEA', 'OUTRA', 'NENHUMA']).optional().nullable(),
+    needsDescription: z.string().optional().nullable()
+});
+
 export const createCompanySchema = z.object({
     name: z.string().min(1, 'Nome é obrigatório'),
     cnpj: z.string()
