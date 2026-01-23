@@ -105,35 +105,12 @@ export const listVisits = async (req: Request, res: Response) => {
 export const getVisit = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const user = (req as AuthRequest).user;
-
-        let companyId: string | undefined;
-
-        if (user?.role === 'MASTER') {
-            companyId = req.headers['x-company-id'] as string;
-        } else {
-            // For non-MASTER users, ALWAYS enforce their own companyId
-            // This prevents issues where a stale x-company-id header (from localStorage)
-            // causes a 404 because it doesn't match the record's companyId
-            companyId = user?.companyId;
-        }
-
-        const visit = await visitService.getById(id, companyId);
+        // Fetch visit by ID only - no company filter needed since IDs are unique UUIDs
+        const visit = await visitService.getById(id);
         return res.json(visit);
     } catch (error: any) {
-        // console.error('Error fetching visit:', error); // Silent validation errors
         if (error.message === 'Visita não encontrada') {
-            return res.status(404).json({
-                error: 'Visit not found',
-                debug: {
-                    userId: user?.userId,
-                    userRole: user?.role,
-                    userCompanyId: user?.companyId,
-                    resolvedCompanyId: companyId,
-                    visitId: id,
-                    headerCompanyId: req.headers['x-company-id']
-                }
-            });
+            return res.status(404).json({ error: 'Visit not found' });
         }
         return res.status(500).json({ error: 'Error fetching visit' });
     }
