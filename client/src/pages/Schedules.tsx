@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Calendar as CalendarIcon, Clock, Plus, X, User, Check, Clipboard, List } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, Plus, X, User, Check, Clipboard, List, MapPin, UserCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
@@ -34,6 +34,7 @@ interface Schedule {
     collaborator?: string | { companyId: string };
     collaboratorId?: string;
     area?: string;
+    requester?: string;
 }
 
 interface Collaborator {
@@ -253,6 +254,20 @@ const Schedules = () => {
                                             <span className="flex items-center text-primary">
                                                 <User className="h-3 w-3 mr-1" />
                                                 {typeof schedule.collaborator === 'string' ? schedule.collaborator : 'Colaborador'}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="flex flex-col md:flex-row md:items-center md:space-x-4 text-sm text-gray-500 mt-1 gap-1 md:gap-0">
+                                        {schedule.requester && (
+                                            <span className="flex items-center text-orange-600">
+                                                <UserCircle className="h-3 w-3 mr-1" />
+                                                <span className="font-medium">Solicitado por:</span>&nbsp;{schedule.requester}
+                                            </span>
+                                        )}
+                                        {schedule.area && (
+                                            <span className="flex items-center text-purple-600">
+                                                <MapPin className="h-3 w-3 mr-1" />
+                                                <span className="font-medium">Área:</span>&nbsp;{schedule.area}
                                             </span>
                                         )}
                                     </div>
