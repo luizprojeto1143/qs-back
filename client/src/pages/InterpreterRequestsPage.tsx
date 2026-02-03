@@ -144,13 +144,6 @@ const InterpreterRequestsPage = () => {
                     <h1 className="text-2xl font-bold text-gray-900">Central de Intérpretes</h1>
                     <p className="text-gray-500">Solicite e acompanhe agendamentos de intérpretes de Libras</p>
                 </div>
-                <button
-                    onClick={() => setIsModalOpen(true)}
-                    className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                    <Plus className="h-5 w-5" />
-                    <span>Nova Solicitação</span>
-                </button>
                 <div className="flex items-center space-x-3">
                     <div className="bg-gray-100 p-1 rounded-lg flex">
                         <button
@@ -275,7 +268,6 @@ const InterpreterRequestsPage = () => {
                             </table>
                         </div>
                     )}
-                )}
                 </div>
             )}
 
