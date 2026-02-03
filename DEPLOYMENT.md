@@ -30,10 +30,11 @@ Este guia detalha como fazer o deploy do **Backend (QS)** no Render e do **Front
         - `CLOUDINARY_CLOUD_NAME`: Seu Cloud Name do Cloudinary.
         - `CLOUDINARY_API_KEY`: Sua API Key do Cloudinary.
         - `CLOUDINARY_API_SECRET`: Seu API Secret do Cloudinary.
-        - `SMTP_HOST`: Host do servidor SMTP (ex: `smtp.gmail.com`).
-        - `SMTP_PORT`: Porta do servidor SMTP (ex: `587`).
+        - `SMTP_HOST`: Host do servidor SMTP (Ex Locaweb: `email-ssl.com.br`).
+        - `SMTP_PORT`: Porta do servidor SMTP (Locaweb: `465` com SSL ou `587` com StartTLS).
         - `SMTP_USER`: Email para envio de notificações.
-        - `SMTP_PASS`: Senha ou App Password do email.
+        - `SMTP_PASS`: Senha do email.
+        - `SMTP_SECURE`: `true` se usar porta 465, caso contrário `false` (O sistema tenta detectar automaticamente pela porta).
 
 4.  **Deploy**:
     - Clique em **Create Web Service**.

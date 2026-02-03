@@ -1,9 +1,12 @@
 import nodemailer from 'nodemailer';
 
+const port = parseInt(process.env.SMTP_PORT || '587');
+const secure = process.env.SMTP_SECURE === 'true' || port === 465;
+
 const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: false, // true for 465, false for other ports
+    host: process.env.SMTP_HOST || 'email-ssl.com.br', // Default Locaweb host as fallback example
+    port: port,
+    secure: secure,
     auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
