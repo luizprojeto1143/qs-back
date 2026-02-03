@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { interpreterController } from '../controllers/interpreterController';
-import { authMiddleware } from '../middleware/authMiddleware';
+import { authenticateToken } from '../middleware/authMiddleware';
 
 const router = Router();
 
@@ -10,7 +10,7 @@ router.get('/public-config/:companyId', interpreterController.getPublicRequestCo
 router.post('/public-request', interpreterController.createRequest);
 
 // Protected Routes
-router.use(authMiddleware);
+router.use(authenticateToken);
 
 router.post('/', interpreterController.createRequest); // Internal creation
 router.get('/', interpreterController.listRequests);

@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { prisma } from '../index';
+import prisma from '../prisma';
 import { z } from 'zod';
 import { sendInterpreterRequestStatusEmail } from '../services/mailService';
 
@@ -130,7 +130,7 @@ export const interpreterController = {
             // User said: "o email, precisa ser enviado para o cliente, que eu cadastrei, no sistema"
             // This implies the registered user (requester) OR the contact person for that company if public.
             if (request.company && request.company.users) {
-                const companyEmails = request.company.users.map(u => u.email);
+                const companyEmails = request.company.users.map((u: any) => u.email);
                 recipients = [...recipients, ...companyEmails];
             }
 
