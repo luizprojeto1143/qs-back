@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Check, X, Calendar, Clock, RefreshCw } from 'lucide-react';
+import { Check, Calendar, RefreshCw } from 'lucide-react';
 import { api } from '../../lib/api';
 import { toast } from 'sonner';
 

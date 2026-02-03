@@ -189,4 +189,8 @@ router.get('/ai/alerts', requireRole(['MASTER', 'RH']), aiController.getSmartAle
 
 router.use('/', qsInclusionRoutes); // Mounts /qs-score, /settings, /complaints, /work-schedule, /days-off
 
+import interpreterRoutes from './routes/interpreterRoutes';
+router.use('/interpreter', interpreterRoutes);
+
+
 export default router;

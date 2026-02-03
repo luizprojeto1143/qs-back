@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Phone, Mail, Calendar } from 'lucide-react';
+import { User, Phone } from 'lucide-react';
 import { api } from '../../lib/api';
 import { toast } from 'sonner';
 

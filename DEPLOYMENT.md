@@ -30,8 +30,10 @@ Este guia detalha como fazer o deploy do **Backend (QS)** no Render e do **Front
         - `CLOUDINARY_CLOUD_NAME`: Seu Cloud Name do Cloudinary.
         - `CLOUDINARY_API_KEY`: Sua API Key do Cloudinary.
         - `CLOUDINARY_API_SECRET`: Seu API Secret do Cloudinary.
-        - `EMAIL_USER`: Email para envio de notificações.
-        - `EMAIL_PASS`: Senha ou App Password do email.
+        - `SMTP_HOST`: Host do servidor SMTP (ex: `smtp.gmail.com`).
+        - `SMTP_PORT`: Porta do servidor SMTP (ex: `587`).
+        - `SMTP_USER`: Email para envio de notificações.
+        - `SMTP_PASS`: Senha ou App Password do email.
 
 4.  **Deploy**:
     - Clique em **Create Web Service**.

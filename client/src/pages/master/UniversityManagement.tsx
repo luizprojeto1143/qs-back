@@ -172,7 +172,7 @@ const UniversityManagement = () => {
     };
 
     // Stub for Edit Module - to be implemented
-    const handleEditModule = (module: any) => {
+    const handleEditModule = (module: { title: string }) => {
         toast.info(`Editar módulo: ${module.title}`);
     };
 
@@ -188,7 +188,7 @@ const UniversityManagement = () => {
     };
 
     // Stub for Edit Lesson - to be implemented
-    const handleEditLesson = (lesson: any) => {
+    const handleEditLesson = (lesson: { title: string }) => {
         toast.info(`Editar aula: ${lesson.title}`);
     };
 

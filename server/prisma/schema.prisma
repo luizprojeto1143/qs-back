@@ -59,6 +59,10 @@ model Company {
   systemSettings   SystemSettings?
   decisionHistory  DecisionHistory[]
   performanceCycles PerformanceCycle[]
+
+  
+  // Interpreter Requests
+  interpreterRequests InterpreterRequest[]
 }
 
 model Sector {
@@ -142,6 +146,8 @@ model User {
   // Talent Management
   reviewsGiven    PerformanceReview[] @relation("Reviewer")
   reviewsReceived PerformanceReview[] @relation("Reviewee")
+  
+  interpreterRequests InterpreterRequest[]
 
   @@index([companyId])
 }
@@ -955,3 +961,35 @@ model ReviewAnswer {
   createdAt DateTime @default(now())
 }
 
+
+// Interpreter Request Center
+model InterpreterRequest {
+  id              String   @id @default(uuid())
+  
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id])
+  
+  requesterId     String?
+  requester       User?    @relation(fields: [requesterId], references: [id])
+  
+  requesterName   String?  // For external requests or fallback
+  
+  date            DateTime
+  startTime       String   // e.g. "14:00"
+  duration        Int      // minutes
+  theme           String
+  modality        String   // ONLINE, PRESENCIAL
+  
+  status          String   @default("PENDENTE") // PENDENTE, APROVADO, REJEITADO, CANCELADO
+  
+  description     String?
+  adminNotes      String?
+  
+  meetingLink     String?  // Link for the meeting if approved/online
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([status])
+}

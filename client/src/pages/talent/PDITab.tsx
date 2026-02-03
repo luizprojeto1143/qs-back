@@ -55,30 +55,26 @@ const PDITab = () => {
             // Wait for state update just in case
             await new Promise(resolve => setTimeout(resolve, 100));
         }
-    } as unknown as { content: () => HTMLDivElement | null }); // Using better casting
+    });
 
     useEffect(() => {
-        fetchPDIs();
-        fetchCollaborators();
+        const fetchData = async () => {
+            try {
+                const [pdiRes, collabRes] = await Promise.all([
+                    api.get('/pdis'),
+                    api.get('/collaborators')
+                ]);
+                setPdis(pdiRes.data.data || pdiRes.data);
+                setCollaborators(collabRes.data.data || collabRes.data);
+            } catch (error) {
+                console.error('Error fetching data', error);
+            }
+        };
+
+        if (selectedCompanyId) {
+            fetchData();
+        }
     }, [selectedCompanyId]);
-
-    const fetchPDIs = async () => {
-        try {
-            const response = await api.get('/pdis');
-            setPdis(response.data.data || response.data);
-        } catch (error) {
-            console.error('Error fetching PDIs', error);
-        }
-    };
-
-    const fetchCollaborators = async () => {
-        try {
-            const response = await api.get('/collaborators');
-            setCollaborators(response.data.data || response.data);
-        } catch (error) {
-            console.error('Error fetching collaborators', error);
-        }
-    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -87,8 +83,11 @@ const PDITab = () => {
             toast.success('PDI criado com sucesso!');
             setIsModalOpen(false);
             setFormData({ userId: '', objective: '', skills: '', actions: '', accessibilityNeeds: '' });
-            fetchPDIs();
-        } catch (error) {
+
+            // Refetch manually - could be optimized but keeping simple matching original logic intent
+            const response = await api.get('/pdis');
+            setPdis(response.data.data || response.data);
+        } catch {
             toast.error('Erro ao criar PDI');
         }
     };

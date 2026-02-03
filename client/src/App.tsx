@@ -66,6 +66,9 @@ const UniversityReports = lazy(() => import('./pages/university/UniversityReport
 const Certificates = lazy(() => import('./pages/university/Certificates'));
 const GamificationPage = lazy(() => import('./pages/university/GamificationPage'));
 const SecuritySettings = lazy(() => import('./pages/settings/SecuritySettings'));
+const InterpreterRequestsPage = lazy(() => import('./pages/InterpreterRequestsPage'));
+const InterpreterCentral = lazy(() => import('./pages/master/InterpreterCentral'));
+const PublicInterpreterRequest = lazy(() => import('./pages/public/PublicInterpreterRequest'));
 
 // Loading Fallback
 const PageLoader = () => (
@@ -92,6 +95,9 @@ function App() {
                   <Route path="/login" element={<Login />} />
                   <Route path="/" element={<Navigate to="/login" replace />} />
 
+                  {/* Public Routes */}
+                  <Route path="/solicitacao-interprete/:companyId" element={<PublicInterpreterRequest />} />
+
                   <Route element={<ProtectedRoute allowedRoles={['MASTER']} />}>
                     <Route path="/dashboard" element={<DashboardLayout />}>
                       <Route index element={<DashboardHome />} />
@@ -107,6 +113,7 @@ function App() {
                       <Route path="inclusion-diagnosis" element={<InclusionDiagnosisEditor />} />
                       <Route path="settings" element={<Settings />} />
                       <Route path="libras" element={<LibrasCentral />} />
+                      <Route path="interpreter-central" element={<InterpreterCentral />} />
 
                       {/* Settings Routes */}
                       <Route path="companies" element={<CompaniesList />} />
@@ -149,6 +156,7 @@ function App() {
                       <Route path="visits/new" element={<VisitRecording />} />
                       <Route path="schedules" element={<Schedules />} />
                       <Route path="libras" element={<LibrasCentral />} />
+                      <Route path="interpreter" element={<InterpreterRequestsPage />} />
                       <Route path="university-reports" element={<UniversityReports />} />
                       <Route path="pendencies" element={<Pendencies />} />
                       <Route path="inclusion" element={<RHInclusion />} />

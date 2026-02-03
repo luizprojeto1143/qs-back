@@ -1,5 +1,5 @@
 import React from 'react';
-import { Monitor, Type, ZoomIn, ZoomOut, Contrast } from 'lucide-react';
+import { Monitor, Type, Contrast } from 'lucide-react';
 
 interface AccessibilityControlsProps {
     focusMode: boolean;

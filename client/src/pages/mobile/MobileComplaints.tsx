@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     ArrowLeft, Send, Video, MessageSquare, EyeOff,
-    AlertTriangle, Camera, X
+    AlertTriangle
 } from 'lucide-react';
 import { api } from '../../lib/api';
 import { toast } from 'sonner';

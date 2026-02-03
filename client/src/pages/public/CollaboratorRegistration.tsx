@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { api } from '../../lib/api';
 import { toast } from 'sonner';
-import { User, Mail, Lock, Briefcase, Building2, CheckCircle, Clock, Accessibility, Calendar } from 'lucide-react';
+import { User, Mail, Lock, Briefcase, Building2, CheckCircle, Clock, Accessibility } from 'lucide-react';
 
 interface Area {
     id: string;

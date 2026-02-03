@@ -65,7 +65,7 @@ export const LessonComments = ({ lessonId }: LessonCommentsProps) => {
             await api.delete(`/comments/${commentId}`);
             fetchComments();
             toast.success('Comentário excluído');
-        } catch (error) {
+        } catch {
             toast.error('Erro ao excluir');
         }
     };

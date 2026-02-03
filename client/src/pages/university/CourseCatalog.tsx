@@ -56,8 +56,6 @@ const CourseCatalog = () => {
 
     // Derived State for Dashboard
     const inProgressCourses = courses.filter(c => c.enrollments && c.enrollments.length > 0 && !c.enrollments[0].completed);
-    const completedCourses = courses.filter(c => c.enrollments && c.enrollments[0]?.completed);
-
     // Simulating "My Current Trail" - taking the first in-progress or first available
     const currentMainCourse = inProgressCourses[0] || courses[0];
 

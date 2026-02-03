@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import {
     BarChart3, TrendingUp, TrendingDown, AlertTriangle,
     CheckCircle, Target, ArrowRight, RefreshCw, Zap,
-    Building2, Users, Activity, Brain
+    Building2, Activity, Brain
 } from 'lucide-react';
 
 interface QSScoreFactors {

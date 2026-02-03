@@ -52,7 +52,7 @@ const MobileSchedule = () => {
 
 
                 setAvailability(normalized);
-            } catch (error) {
+            } catch {
                 // Failed to load availability - continue with empty
             } finally {
                 setLoadingAvailability(false);

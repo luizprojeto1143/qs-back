@@ -100,7 +100,7 @@ export const uploadFile = (req: Request, res: Response) => {
 };
 
 // Error handling middleware for Multer
-export const handleUploadError = (err: any, req: Request, res: Response, next: Function) => {
+export const handleUploadError = (err: any, req: Request, res: Response, next: import('express').NextFunction) => {
     if (err instanceof multer.MulterError) {
         if (err.code === 'LIMIT_FILE_SIZE') {
             return res.status(400).json({ error: 'File too large. Limit is 10MB.' });
