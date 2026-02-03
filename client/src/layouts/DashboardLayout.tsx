@@ -190,6 +190,13 @@ const DashboardLayout = () => {
                         active={location.pathname === '/dashboard/libras'}
                     />
 
+                    <SidebarItem
+                        icon={Calendar}
+                        label="Solicitações de Intérprete"
+                        path="/dashboard/interpreter-central"
+                        active={location.pathname === '/dashboard/interpreter-central'}
+                    />
+
                     {/* QS Score v2.0 */}
                     <div className="pt-4 mt-4 border-t border-gray-700">
                         <p className="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
@@ -295,6 +302,14 @@ const DashboardLayout = () => {
                             label="Central de Libras"
                             path="/dashboard/libras"
                             active={location.pathname === '/dashboard/libras'}
+                            onClick={() => setIsMobileMenuOpen(false)}
+                        />
+
+                        <SidebarItem
+                            icon={Calendar}
+                            label="Solicitações de Intérprete"
+                            path="/dashboard/interpreter-central"
+                            active={location.pathname === '/dashboard/interpreter-central'}
                             onClick={() => setIsMobileMenuOpen(false)}
                         />
 
