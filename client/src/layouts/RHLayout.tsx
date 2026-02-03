@@ -51,6 +51,8 @@ const RHLayout = () => {
     // Assuming single company for RH user
     const currentCompany = companies[0];
     const isUniversityEnabled = currentCompany?.universityEnabled;
+    const isInterpreterEnabled = currentCompany?.interpreterEnabled;
+    const isInterpreterOnly = currentCompany?.interpreterOnly;
 
     const handleLogout = () => {
         localStorage.removeItem('token');
@@ -58,7 +60,7 @@ const RHLayout = () => {
         navigate('/');
     };
 
-    const menuItems = [
+    const allMenuItems = [
         { icon: LayoutDashboard, label: 'Visão Geral', path: '/rh' },
         { icon: Users, label: 'Colaboradores', path: '/rh/collaborators' },
         { icon: ClipboardList, label: 'Histórico de Visitas', path: '/rh/visits' },
@@ -71,7 +73,16 @@ const RHLayout = () => {
 
         { icon: Calendar, label: 'Agendamentos', path: '/rh/schedules' },
         ...(currentCompany?.talentManagementEnabled ? [{ icon: Target, label: 'Gestão de Talentos', path: '/rh/talent' }] : []),
+        ...(isInterpreterEnabled ? [{ icon: Video, label: 'Solicitações de Intérprete', path: '/rh/interpreter' }] : []),
     ];
+
+    const interpreterOnlyItems = [
+        { icon: Video, label: 'Solicitações de Intérprete', path: '/rh/interpreter' },
+    ];
+
+    // Se estiver em modo exclusivo, mostra APENAS o item de intérprete.
+    // Se NÃO estiver em modo exclusivo, mostra tudo (incluindo intérprete se habilitado).
+    const menuItems = isInterpreterOnly ? interpreterOnlyItems : allMenuItems;
 
     return (
         <div className="min-h-screen bg-gray-50 flex">

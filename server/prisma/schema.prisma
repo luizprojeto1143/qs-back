@@ -47,6 +47,8 @@ model Company {
   
   universityEnabled Boolean @default(false)
   talentManagementEnabled Boolean @default(false)
+  interpreterEnabled Boolean @default(false)
+  interpreterOnly Boolean @default(false)
   auditLogs     AuditLog[]
   learningTrails LearningTrail[]
   termsAcceptances UserTermsAcceptance[]

@@ -48,7 +48,7 @@ export const createCompany = async (req: Request, res: Response) => {
         }
 
         const { name, cnpj, email } = validation.data;
-        const { password, universityEnabled, talentManagementEnabled } = req.body;
+        const { password, universityEnabled, talentManagementEnabled, interpreterEnabled, interpreterOnly } = req.body;
 
         // Check for existing CNPJ
         const existingCompany = await prisma.company.findFirst({ where: { cnpj } });
@@ -62,7 +62,9 @@ export const createCompany = async (req: Request, res: Response) => {
                     name,
                     cnpj,
                     universityEnabled: universityEnabled || false,
-                    talentManagementEnabled: talentManagementEnabled || false
+                    talentManagementEnabled: talentManagementEnabled || false,
+                    interpreterEnabled: interpreterEnabled || false,
+                    interpreterOnly: interpreterOnly || false
                 }
             });
 
@@ -254,7 +256,7 @@ export const listAreas = async (req: Request, res: Response) => {
 export const updateCompany = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const { name, cnpj, email, password, universityEnabled, talentManagementEnabled } = req.body;
+        const { name, cnpj, email, password, universityEnabled, talentManagementEnabled, interpreterEnabled, interpreterOnly } = req.body;
         const user = (req as AuthRequest).user;
 
         if (!user) return res.status(401).json({ error: 'Unauthorized' });
@@ -273,6 +275,8 @@ export const updateCompany = async (req: Request, res: Response) => {
             dataToUpdate.cnpj = cnpj;
             dataToUpdate.universityEnabled = universityEnabled;
             dataToUpdate.talentManagementEnabled = talentManagementEnabled;
+            dataToUpdate.interpreterEnabled = interpreterEnabled;
+            dataToUpdate.interpreterOnly = interpreterOnly;
         } else {
             // RH can only update specific settings, not core identity
             // If they try to update restricted fields, we ignore them or throw error.

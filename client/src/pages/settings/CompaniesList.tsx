@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Building, Plus, X, GraduationCap, Trophy } from 'lucide-react';
+import { Building, Plus, X, GraduationCap, Trophy, MessageSquare } from 'lucide-react';
 import { api } from '../../lib/api';
 import { EmptyState } from '../../components/EmptyState';
 import { toast } from 'sonner';
@@ -11,6 +11,8 @@ interface Company {
     email?: string;
     universityEnabled?: boolean;
     talentManagementEnabled?: boolean;
+    interpreterEnabled?: boolean;
+    interpreterOnly?: boolean;
     active?: boolean;
 }
 
@@ -26,6 +28,8 @@ const CompaniesList = () => {
         password: '',
         universityEnabled: false,
         talentManagementEnabled: false,
+        interpreterEnabled: false,
+        interpreterOnly: false,
     });
 
     const fetchCompanies = async () => {
@@ -52,7 +56,7 @@ const CompaniesList = () => {
             await api[method](url, newCompany);
 
             setIsModalOpen(false);
-            setNewCompany({ name: '', cnpj: '', email: '', password: '', universityEnabled: false, talentManagementEnabled: false });
+            setNewCompany({ name: '', cnpj: '', email: '', password: '', universityEnabled: false, talentManagementEnabled: false, interpreterEnabled: false, interpreterOnly: false });
             setEditingId(null);
             fetchCompanies();
             toast.success(editingId ? 'Empresa atualizada com sucesso!' : 'Empresa cadastrada com sucesso!');
@@ -63,14 +67,16 @@ const CompaniesList = () => {
         }
     };
 
-    const handleEdit = (company: { id: string; name: string; cnpj: string; universityEnabled?: boolean; talentManagementEnabled?: boolean }) => {
+    const handleEdit = (company: { id: string; name: string; cnpj: string; universityEnabled?: boolean; talentManagementEnabled?: boolean; interpreterEnabled?: boolean; interpreterOnly?: boolean }) => {
         setNewCompany({
             name: company.name,
             cnpj: company.cnpj,
             email: '', // Don't populate sensitive/unknown data if not needed, or fetch if available
             password: '',
             universityEnabled: company.universityEnabled || false,
-            talentManagementEnabled: company.talentManagementEnabled || false
+            talentManagementEnabled: company.talentManagementEnabled || false,
+            interpreterEnabled: company.interpreterEnabled || false,
+            interpreterOnly: company.interpreterOnly || false
         });
         setEditingId(company.id);
         setIsModalOpen(true);
@@ -83,7 +89,7 @@ const CompaniesList = () => {
                 <button
                     type="button"
                     onClick={() => {
-                        setNewCompany({ name: '', cnpj: '', email: '', password: '', universityEnabled: false, talentManagementEnabled: false });
+                        setNewCompany({ name: '', cnpj: '', email: '', password: '', universityEnabled: false, talentManagementEnabled: false, interpreterEnabled: false, interpreterOnly: false });
                         setEditingId(null);
                         setIsModalOpen(true);
                     }}
@@ -104,7 +110,7 @@ const CompaniesList = () => {
                     action={{
                         label: 'Nova Empresa',
                         onClick: () => {
-                            setNewCompany({ name: '', cnpj: '', email: '', password: '', universityEnabled: false, talentManagementEnabled: false });
+                            setNewCompany({ name: '', cnpj: '', email: '', password: '', universityEnabled: false, talentManagementEnabled: false, interpreterEnabled: false, interpreterOnly: false });
                             setEditingId(null);
                             setIsModalOpen(true);
                         }
@@ -239,6 +245,35 @@ const CompaniesList = () => {
                                     Habilitar Gestão de Talentos
                                 </label>
                             </div>
+
+                            <div className="flex items-center space-x-2 pt-2 border-t border-gray-100 mt-2">
+                                <input
+                                    type="checkbox"
+                                    id="interpreterEnabled"
+                                    checked={newCompany.interpreterEnabled}
+                                    onChange={e => setNewCompany({ ...newCompany, interpreterEnabled: e.target.checked })}
+                                    className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                                />
+                                <label htmlFor="interpreterEnabled" className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                                    <MessageSquare className="h-4 w-4" />
+                                    Habilitar Central de Intérpretes
+                                </label>
+                            </div>
+
+                            {newCompany.interpreterEnabled && (
+                                <div className="flex items-center space-x-2 pt-2 ml-6">
+                                    <input
+                                        type="checkbox"
+                                        id="interpreterOnly"
+                                        checked={newCompany.interpreterOnly}
+                                        onChange={e => setNewCompany({ ...newCompany, interpreterOnly: e.target.checked })}
+                                        className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                                    />
+                                    <label htmlFor="interpreterOnly" className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                                        Modo Exclusivo (Apenas Intérprete)
+                                    </label>
+                                </div>
+                            )}
 
                             <div className="flex justify-end space-x-3 mt-6">
                                 <button

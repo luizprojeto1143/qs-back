@@ -7,7 +7,10 @@ interface Company {
     cnpj: string;
     logo?: string;
     universityEnabled?: boolean;
+    universityEnabled?: boolean;
     talentManagementEnabled?: boolean;
+    interpreterEnabled?: boolean;
+    interpreterOnly?: boolean;
     systemSettings?: {
         rhCanSeeQSScore?: boolean;
         rhCanSeeRiskMap?: boolean;
