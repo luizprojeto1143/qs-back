@@ -35,6 +35,9 @@ const localizer = dateFnsLocalizer({
 
 const InterpreterRequestsPage = () => {
     const { user } = useAuth();
+    const { companies } = useCompany();
+    const currentCompany = companies[0]; // Assuming RH user sees their primary company
+    const companyId = currentCompany?.id || user?.companyId;
     const [requests, setRequests] = useState<InterpreterRequest[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
