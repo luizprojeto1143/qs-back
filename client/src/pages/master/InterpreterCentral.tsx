@@ -38,8 +38,6 @@ interface InterpreterRequest {
 const InterpreterCentral = () => {
     const [requests, setRequests] = useState<InterpreterRequest[]>([]);
     const [loading, setLoading] = useState(true);
-    const [requests, setRequests] = useState<InterpreterRequest[]>([]);
-    const [loading, setLoading] = useState(true);
     const [filterStatus, setFilterStatus] = useState<string>('');
     const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
 
@@ -431,265 +429,264 @@ const InterpreterCentral = () => {
                                 ))}
                             </tbody>
                         </table>
-                    </table>
-                </div>
-            </div>
-    )
-}
-
-{/* Response Modal */ }
-{
-    isResponseModalOpen && selectedRequest && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
-                <div className="p-6 border-b border-gray-100">
-                    <h3 className="text-lg font-bold text-gray-900">
-                        {responseStatus === 'APPROVED' ? 'Aprovar Solicitação' : 'Rejeitar Solicitação'}
-                    </h3>
-                </div>
-                <div className="p-6 space-y-4">
-                    {responseStatus === 'APPROVED' && (
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Link da Reunião (Opcional se presencial)
-                            </label>
-                            <input
-                                type="url"
-                                value={meetingLink}
-                                onChange={(e) => setMeetingLink(e.target.value)}
-                                placeholder="https://meet.google.com/..."
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
-                            />
-                        </div>
-                    )}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Observações {responseStatus === 'REJECTED' && '(Obrigatório)'}
-                        </label>
-                        <textarea
-                            rows={4}
-                            value={adminNotes}
-                            onChange={(e) => setAdminNotes(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
-                            placeholder="Adicione observações para o solicitante..."
-                        />
                     </div>
                 </div>
-                <div className="p-6 border-t border-gray-100 flex justify-end space-x-3">
-                    <button
-                        onClick={() => setIsResponseModalOpen(false)}
-                        className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
-                    >
-                        Cancelar
-                    </button>
-                    <button
-                        onClick={handleSubmitResponse}
-                        className={`px-4 py-2 text-white rounded-lg ${responseStatus === 'APPROVED' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'
-                            }`}
-                    >
-                        Confirmar
-                    </button>
-                </div>
-            </div>
-        </div>
-    )
-}
+            )
+            }
 
-{/* Link Generation Modal */ }
-{
-    isLinkModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
-                <div className="p-6 border-b border-gray-100">
-                    <h3 className="text-lg font-bold text-gray-900">Gerar Link Público</h3>
-                    <p className="text-sm text-gray-500">Selecione a empresa para gerar o link de solicitação</p>
-                </div>
-                <div className="p-6 space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Empresa</label>
-                        <select
-                            value={selectedCompanyId}
-                            onChange={(e) => setSelectedCompanyId(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                        >
-                            <option value="">Selecione uma empresa...</option>
-                            {companies.map(c => (
-                                <option key={c.id} value={c.id}>{c.name}</option>
-                            ))}
-                        </select>
-                    </div>
-                </div>
-                <div className="p-6 border-t border-gray-100 flex justify-end space-x-3">
-                    <button
-                        onClick={() => setIsLinkModalOpen(false)}
-                        className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
-                    >
-                        Fechar
-                    </button>
-                    <button
-                        onClick={generatePublicLink}
-                        className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-                    >
-                        Copiar Link
-                    </button>
-                </div>
-            </div>
-        </div>
-    )
-}
-
-{/* Create Request Modal */ }
-{
-    isCreateModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
-                <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                    <h3 className="text-lg font-bold text-gray-900">Novo Agendamento (Master)</h3>
-                    <button onClick={() => setIsCreateModalOpen(false)} className="text-gray-400 hover:text-gray-500">
-                        <span className="sr-only">Fechar</span>
-                        <X className="h-6 w-6" />
-                    </button>
-                </div>
-                <form onSubmit={handleCreateRequest} className="p-6 space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Empresa</label>
-                        <select
-                            required
-                            value={createFormData.companyId}
-                            onChange={(e) => setCreateFormData({ ...createFormData, companyId: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                        >
-                            <option value="">Selecione a Empresa...</option>
-                            {companies.map(c => (
-                                <option key={c.id} value={c.id}>{c.name}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Data</label>
-                            <input
-                                type="date"
-                                required
-                                value={createFormData.date}
-                                onChange={(e) => setCreateFormData({ ...createFormData, date: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Horário</label>
-                            <input
-                                type="time"
-                                required
-                                value={createFormData.startTime}
-                                onChange={(e) => setCreateFormData({ ...createFormData, startTime: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                            />
+            {/* Response Modal */}
+            {
+                isResponseModalOpen && selectedRequest && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+                        <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+                            <div className="p-6 border-b border-gray-100">
+                                <h3 className="text-lg font-bold text-gray-900">
+                                    {responseStatus === 'APPROVED' ? 'Aprovar Solicitação' : 'Rejeitar Solicitação'}
+                                </h3>
+                            </div>
+                            <div className="p-6 space-y-4">
+                                {responseStatus === 'APPROVED' && (
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            Link da Reunião (Opcional se presencial)
+                                        </label>
+                                        <input
+                                            type="url"
+                                            value={meetingLink}
+                                            onChange={(e) => setMeetingLink(e.target.value)}
+                                            placeholder="https://meet.google.com/..."
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                                        />
+                                    </div>
+                                )}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Observações {responseStatus === 'REJECTED' && '(Obrigatório)'}
+                                    </label>
+                                    <textarea
+                                        rows={4}
+                                        value={adminNotes}
+                                        onChange={(e) => setAdminNotes(e.target.value)}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                                        placeholder="Adicione observações para o solicitante..."
+                                    />
+                                </div>
+                            </div>
+                            <div className="p-6 border-t border-gray-100 flex justify-end space-x-3">
+                                <button
+                                    onClick={() => setIsResponseModalOpen(false)}
+                                    className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={handleSubmitResponse}
+                                    className={`px-4 py-2 text-white rounded-lg ${responseStatus === 'APPROVED' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'
+                                        }`}
+                                >
+                                    Confirmar
+                                </button>
+                            </div>
                         </div>
                     </div>
+                )
+            }
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Duração (min)</label>
-                            <input
-                                type="number"
-                                required
-                                min="15"
-                                step="15"
-                                value={createFormData.duration}
-                                onChange={(e) => setCreateFormData({ ...createFormData, duration: Number(e.target.value) })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                            />
+            {/* Link Generation Modal */}
+            {
+                isLinkModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+                        <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+                            <div className="p-6 border-b border-gray-100">
+                                <h3 className="text-lg font-bold text-gray-900">Gerar Link Público</h3>
+                                <p className="text-sm text-gray-500">Selecione a empresa para gerar o link de solicitação</p>
+                            </div>
+                            <div className="p-6 space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Empresa</label>
+                                    <select
+                                        value={selectedCompanyId}
+                                        onChange={(e) => setSelectedCompanyId(e.target.value)}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                                    >
+                                        <option value="">Selecione uma empresa...</option>
+                                        {companies.map(c => (
+                                            <option key={c.id} value={c.id}>{c.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="p-6 border-t border-gray-100 flex justify-end space-x-3">
+                                <button
+                                    onClick={() => setIsLinkModalOpen(false)}
+                                    className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                                >
+                                    Fechar
+                                </button>
+                                <button
+                                    onClick={generatePublicLink}
+                                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                                >
+                                    Copiar Link
+                                </button>
+                            </div>
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Modalidade</label>
-                            <select
-                                value={createFormData.modality}
-                                onChange={(e) => setCreateFormData({ ...createFormData, modality: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                            >
-                                <option value="ONLINE">Online</option>
-                                <option value="PRESENCIAL">Presencial</option>
-                            </select>
+                    </div>
+                )
+            }
+
+            {/* Create Request Modal */}
+            {
+                isCreateModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+                        <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
+                            <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+                                <h3 className="text-lg font-bold text-gray-900">Novo Agendamento (Master)</h3>
+                                <button onClick={() => setIsCreateModalOpen(false)} className="text-gray-400 hover:text-gray-500">
+                                    <span className="sr-only">Fechar</span>
+                                    <X className="h-6 w-6" />
+                                </button>
+                            </div>
+                            <form onSubmit={handleCreateRequest} className="p-6 space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Empresa</label>
+                                    <select
+                                        required
+                                        value={createFormData.companyId}
+                                        onChange={(e) => setCreateFormData({ ...createFormData, companyId: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                    >
+                                        <option value="">Selecione a Empresa...</option>
+                                        {companies.map(c => (
+                                            <option key={c.id} value={c.id}>{c.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Data</label>
+                                        <input
+                                            type="date"
+                                            required
+                                            value={createFormData.date}
+                                            onChange={(e) => setCreateFormData({ ...createFormData, date: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Horário</label>
+                                        <input
+                                            type="time"
+                                            required
+                                            value={createFormData.startTime}
+                                            onChange={(e) => setCreateFormData({ ...createFormData, startTime: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Duração (min)</label>
+                                        <input
+                                            type="number"
+                                            required
+                                            min="15"
+                                            step="15"
+                                            value={createFormData.duration}
+                                            onChange={(e) => setCreateFormData({ ...createFormData, duration: Number(e.target.value) })}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Modalidade</label>
+                                        <select
+                                            value={createFormData.modality}
+                                            onChange={(e) => setCreateFormData({ ...createFormData, modality: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                        >
+                                            <option value="ONLINE">Online</option>
+                                            <option value="PRESENCIAL">Presencial</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Tema / Assunto</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        placeholder="Ex: Treinamento, Reunião..."
+                                        value={createFormData.theme}
+                                        onChange={(e) => setCreateFormData({ ...createFormData, theme: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+                                    <textarea
+                                        rows={3}
+                                        value={createFormData.description}
+                                        onChange={(e) => setCreateFormData({ ...createFormData, description: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                        placeholder="Detalhes adicionais..."
+                                    />
+                                </div>
+
+                                <div className="flex justify-end pt-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsCreateModalOpen(false)}
+                                        className="mr-3 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                                    >
+                                        Agendar
+                                    </button>
+                                </div>
+                            </form>
                         </div>
                     </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Tema / Assunto</label>
-                        <input
-                            type="text"
-                            required
-                            placeholder="Ex: Treinamento, Reunião..."
-                            value={createFormData.theme}
-                            onChange={(e) => setCreateFormData({ ...createFormData, theme: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                        />
+                )
+            }
+            {/* Delete Confirmation Modal */}
+            {
+                isDeleteModalOpen && requestToDelete && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+                        <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden">
+                            <div className="p-6 text-center">
+                                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <Trash2 className="h-6 w-6 text-red-600" />
+                                </div>
+                                <h3 className="text-lg font-bold text-gray-900 mb-2">Excluir Agendamento?</h3>
+                                <p className="text-gray-500 mb-6">
+                                    Tem certeza que deseja excluir este agendamento? Esta ação não pode ser desfeita.
+                                </p>
+                                <div className="flex space-x-3 justify-center">
+                                    <button
+                                        onClick={() => setIsDeleteModalOpen(false)}
+                                        className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 font-medium"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        onClick={handleDelete}
+                                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium"
+                                    >
+                                        Excluir
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
-                        <textarea
-                            rows={3}
-                            value={createFormData.description}
-                            onChange={(e) => setCreateFormData({ ...createFormData, description: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="Detalhes adicionais..."
-                        />
-                    </div>
-
-                    <div className="flex justify-end pt-4">
-                        <button
-                            type="button"
-                            onClick={() => setIsCreateModalOpen(false)}
-                            className="mr-3 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
-                        >
-                            Cancelar
-                        </button>
-                        <button
-                            type="submit"
-                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                        >
-                            Agendar
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    )
-}
-{/* Delete Confirmation Modal */ }
-{
-    isDeleteModalOpen && requestToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden">
-                <div className="p-6 text-center">
-                    <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Trash2 className="h-6 w-6 text-red-600" />
-                    </div>
-                    <h3 className="text-lg font-bold text-gray-900 mb-2">Excluir Agendamento?</h3>
-                    <p className="text-gray-500 mb-6">
-                        Tem certeza que deseja excluir este agendamento? Esta ação não pode ser desfeita.
-                    </p>
-                    <div className="flex space-x-3 justify-center">
-                        <button
-                            onClick={() => setIsDeleteModalOpen(false)}
-                            className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 font-medium"
-                        >
-                            Cancelar
-                        </button>
-                        <button
-                            onClick={handleDelete}
-                            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium"
-                        >
-                            Excluir
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    )
-}
+                )
+            }
         </div >
     );
 };
