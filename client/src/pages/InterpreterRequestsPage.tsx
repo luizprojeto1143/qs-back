@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Filter, Calendar as CalendarIcon, Clock, Video, Users, List, ArrowLeft } from 'lucide-react';
+import { Plus, Search, Filter, Calendar as CalendarIcon, Clock, Video, Users, List, ArrowLeft, Pencil } from 'lucide-react';
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -44,6 +44,7 @@ const InterpreterRequestsPage = () => {
     const [requests, setRequests] = useState<InterpreterRequest[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingRequest, setEditingRequest] = useState<InterpreterRequest | null>(null);
     const [viewMode, setViewMode] = useState<'list' | 'calendar'>('calendar');
 
     // Form States
@@ -74,12 +75,22 @@ const InterpreterRequestsPage = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await api.post('/interpreter', {
-                ...formData,
-                companyId: user?.companyId
-            });
-            toast.success('Solicitação enviada com sucesso!');
+            if (editingRequest) {
+                await api.put(`/interpreter/${editingRequest.id}`, {
+                    ...formData,
+                    companyId: user?.companyId
+                });
+                toast.success('Solicitação atualizada com sucesso!');
+            } else {
+                await api.post('/interpreter', {
+                    ...formData,
+                    companyId: user?.companyId
+                });
+                toast.success('Solicitação enviada com sucesso!');
+            }
+
             setIsModalOpen(false);
+            setEditingRequest(null);
             setFormData({
                 date: '',
                 startTime: '',
@@ -90,8 +101,21 @@ const InterpreterRequestsPage = () => {
             });
             fetchRequests();
         } catch (error) {
-            toast.error('Erro ao enviar solicitação');
+            toast.error(editingRequest ? 'Erro ao atualizar solicitação' : 'Erro ao enviar solicitação');
         }
+    };
+
+    const handleEdit = (req: InterpreterRequest) => {
+        setEditingRequest(req);
+        setFormData({
+            date: req.date.split('T')[0],
+            startTime: req.startTime,
+            duration: req.duration,
+            theme: req.theme,
+            modality: req.modality,
+            description: req.description || ''
+        });
+        setIsModalOpen(true);
     };
 
     const getStatusColor = (status: string) => {
@@ -238,6 +262,7 @@ const InterpreterRequestsPage = () => {
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Modalidade</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Detalhes</th>
+                                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
@@ -277,6 +302,15 @@ const InterpreterRequestsPage = () => {
                                                     </a>
                                                 )}
                                             </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                <button
+                                                    onClick={() => handleEdit(req)}
+                                                    className="text-blue-600 hover:text-blue-900 bg-blue-50 p-2 rounded-full hover:bg-blue-100 transition-colors"
+                                                    title="Editar solicitação"
+                                                >
+                                                    <Pencil className="h-4 w-4" />
+                                                </button>
+                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -291,8 +325,10 @@ const InterpreterRequestsPage = () => {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
                     <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
                         <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                            <h3 className="text-lg font-bold text-gray-900">Solicitar Intérprete</h3>
-                            <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-500">
+                            <h3 className="text-lg font-bold text-gray-900">
+                                {editingRequest ? 'Editar Solicitação' : 'Solicitar Intérprete'}
+                            </h3>
+                            <button onClick={() => { setIsModalOpen(false); setEditingRequest(null); }} className="text-gray-400 hover:text-gray-500">
                                 <span className="sr-only">Fechar</span>
                                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -375,7 +411,7 @@ const InterpreterRequestsPage = () => {
                             <div className="flex justify-end pt-4">
                                 <button
                                     type="button"
-                                    onClick={() => setIsModalOpen(false)}
+                                    onClick={() => { setIsModalOpen(false); setEditingRequest(null); }}
                                     className="mr-3 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
                                 >
                                     Cancelar
@@ -384,7 +420,7 @@ const InterpreterRequestsPage = () => {
                                     type="submit"
                                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                                 >
-                                    Enviar Solicitação
+                                    {editingRequest ? 'Salvar Alterações' : 'Enviar Solicitação'}
                                 </button>
                             </div>
                         </form>

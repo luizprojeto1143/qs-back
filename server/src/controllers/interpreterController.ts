@@ -174,6 +174,49 @@ export const interpreterController = {
         }
     },
 
+    updateRequest: async (req: Request, res: Response) => {
+        try {
+            const { id } = req.params;
+            const {
+                date,
+                startTime,
+                duration,
+                theme,
+                modality,
+                description,
+                meetingLink
+            } = req.body;
+
+            // Optional: Check current status? For now we allow editing details.
+            // Converting date string to Date object
+            let parsedDate;
+            if (date) {
+                parsedDate = new Date(date);
+                if (isNaN(parsedDate.getTime())) {
+                    return res.status(400).json({ error: 'Invalid date format' });
+                }
+            }
+
+            const request = await prisma.interpreterRequest.update({
+                where: { id },
+                data: {
+                    date: parsedDate,
+                    startTime,
+                    duration: duration ? Number(duration) : undefined,
+                    theme,
+                    modality,
+                    description,
+                    meetingLink
+                }
+            });
+
+            return res.json(request);
+        } catch (error) {
+            console.error('Error updating interpreter request details:', error);
+            return res.status(500).json({ error: 'Failed to update request' });
+        }
+    },
+
     getPublicRequestConfig: async (req: Request, res: Response) => {
         try {
             const { companyId } = req.params;
