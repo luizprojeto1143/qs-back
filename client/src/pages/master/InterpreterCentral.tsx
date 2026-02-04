@@ -1,7 +1,23 @@
 import { useState, useEffect } from 'react';
-import { Search, Filter, Check, X, Link as LinkIcon, Building, Plus, Trash2 } from 'lucide-react';
+import { Search, Filter, Check, X, Link as LinkIcon, Building, Plus, Trash2, Calendar as CalendarIcon, List } from 'lucide-react';
+import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
+import { format, parse, startOfWeek, getDay } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { api } from '../../lib/api';
 import { toast } from 'sonner';
+
+const locales = {
+    'pt-BR': ptBR,
+};
+
+const localizer = dateFnsLocalizer({
+    format,
+    parse,
+    startOfWeek,
+    getDay,
+    locales,
+});
 
 interface InterpreterRequest {
     id: string;
@@ -22,7 +38,10 @@ interface InterpreterRequest {
 const InterpreterCentral = () => {
     const [requests, setRequests] = useState<InterpreterRequest[]>([]);
     const [loading, setLoading] = useState(true);
+    const [requests, setRequests] = useState<InterpreterRequest[]>([]);
+    const [loading, setLoading] = useState(true);
     const [filterStatus, setFilterStatus] = useState<string>('');
+    const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
 
     // Modal States
     const [selectedRequest, setSelectedRequest] = useState<InterpreterRequest | null>(null);
@@ -175,6 +194,55 @@ const InterpreterCentral = () => {
         return new Intl.DateTimeFormat('pt-BR').format(adjustedDate);
     };
 
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case 'APPROVED': return 'bg-green-100 text-green-800';
+            case 'REJECTED': return 'bg-red-100 text-red-800';
+            case 'PENDING': return 'bg-yellow-100 text-yellow-800';
+            default: return 'bg-gray-100 text-gray-800';
+        }
+    };
+
+    const getStatusLabel = (status: string) => {
+        switch (status) {
+            case 'APPROVED': return 'Aprovado';
+            case 'REJECTED': return 'Rejeitado';
+            case 'PENDING': return 'Pendente';
+            default: return status;
+        }
+    };
+
+    const calendarEvents = requests.map(req => {
+        const start = new Date(`${req.date.split('T')[0]}T${req.startTime}`);
+        const end = new Date(start.getTime() + req.duration * 60000);
+        return {
+            id: req.id,
+            title: `${req.company?.name || 'Empresa'} - ${req.theme} (${getStatusLabel(req.status)})`,
+            start,
+            end,
+            resource: req,
+            status: req.status
+        };
+    });
+
+    const eventStyleGetter = (event: any) => {
+        let backgroundColor = '#3788d8';
+        if (event.status === 'APPROVED') backgroundColor = '#10B981';
+        if (event.status === 'PENDING') backgroundColor = '#F59E0B';
+        if (event.status === 'REJECTED') backgroundColor = '#EF4444';
+
+        return {
+            style: {
+                backgroundColor,
+                borderRadius: '4px',
+                opacity: 0.8,
+                color: 'white',
+                border: '0px',
+                display: 'block'
+            }
+        };
+    };
+
     return (
         <div className="space-y-8">
             <div className="flex items-center justify-between">
@@ -189,6 +257,22 @@ const InterpreterCentral = () => {
                     <LinkIcon className="h-5 w-5" />
                     <span>Gerar Link Público</span>
                 </button>
+                <div className="flex bg-gray-100 p-1 rounded-lg ml-3">
+                    <button
+                        onClick={() => setViewMode('list')}
+                        className={`p-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-white shadow text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                        title="Lista"
+                    >
+                        <List className="h-5 w-5" />
+                    </button>
+                    <button
+                        onClick={() => setViewMode('calendar')}
+                        className={`p-2 rounded-md transition-all ${viewMode === 'calendar' ? 'bg-white shadow text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                        title="Calendário"
+                    >
+                        <CalendarIcon className="h-5 w-5" />
+                    </button>
+                </div>
                 <button
                     onClick={() => setIsCreateModalOpen(true)}
                     className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors ml-3"
@@ -213,354 +297,400 @@ const InterpreterCentral = () => {
                 </select>
             </div>
 
-            {/* List */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Empresa / Solicitante</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data/Hora</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Detalhes</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {requests.map((req) => (
-                                <tr key={req.id} className="hover:bg-gray-50">
-                                    <td className="px-6 py-4">
-                                        <div className="text-sm font-bold text-gray-900">{req.company?.name || 'Empresa Desconhecida'}</div>
-                                        <div className="text-sm text-gray-500">
-                                            {req.requester?.name || req.requesterName || 'Externo'}
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm font-medium text-gray-900">
-                                            {formatDate(req.date)}
-                                        </div>
-                                        <div className="text-sm text-gray-500">
-                                            {req.startTime} ({req.duration} min)
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="text-sm text-gray-900 max-w-xs truncate" title={req.theme}>
-                                            <span className="font-medium">Tema:</span> {req.theme}
-                                        </div>
-                                        <div className="text-xs text-gray-500 mt-1">
-                                            {req.modality}
-                                        </div>
-                                        {req.meetingLink && (
-                                            <div className="text-xs text-blue-600 mt-1 truncate max-w-xs">{req.meetingLink}</div>
-                                        )}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${req.status === 'APPROVED' ? 'bg-green-100 text-green-800' :
-                                            req.status === 'REJECTED' ? 'bg-red-100 text-red-800' :
-                                                req.status === 'PENDENTE' ? 'bg-yellow-100 text-yellow-800' :
-                                                    'bg-gray-100 text-gray-800'
-                                            }`}>
-                                            {req.status === 'PENDING' || req.status === 'PENDENTE' ? 'Pendente' :
-                                                req.status === 'APPROVED' ? 'Aprovado' :
-                                                    req.status === 'REJECTED' ? 'Rejeitado' : req.status}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        {req.status !== 'APPROVED' && req.status !== 'REJECTED' ? (
-                                            <div className="flex justify-end space-x-2">
-                                                <button
-                                                    onClick={() => handleOpenResponseModal(req, 'APPROVED')}
-                                                    className="text-green-600 hover:text-green-900 bg-green-50 p-1 rounded"
-                                                    title="Aprovar"
-                                                >
-                                                    <Check className="h-5 w-5" />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleOpenResponseModal(req, 'REJECTED')}
-                                                    className="text-red-600 hover:text-red-900 bg-red-50 p-1 rounded"
-                                                    title="Rejeitar"
-                                                >
-                                                    <X className="h-5 w-5" />
-                                                </button>
-                                                <button
-                                                    onClick={() => confirmDelete(req)}
-                                                    className="text-gray-400 hover:text-red-600 bg-gray-50 hover:bg-red-50 p-1 rounded transition-colors"
-                                                    title="Excluir"
-                                                >
-                                                    <Trash2 className="h-5 w-5" />
-                                                </button>
-                                            </div>
-                                        ) : (
-                                            <div className="flex justify-end space-x-2">
-                                                <button
-                                                    onClick={() => handleOpenResponseModal(req, req.status as 'APPROVED' | 'REJECTED')}
-                                                    className="text-gray-400 hover:text-gray-600"
-                                                >
-                                                    Editar
-                                                </button>
-                                                <button
-                                                    onClick={() => confirmDelete(req)}
-                                                    className="text-gray-400 hover:text-red-600 bg-gray-50 hover:bg-red-50 p-1 rounded transition-colors"
-                                                    title="Excluir"
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </button>
-                                            </div>
-                                        )}
-                                    </td>
+            {/* Content: List or Calendar */}
+            {viewMode === 'calendar' ? (
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-[700px]">
+                    <Calendar
+                        localizer={localizer}
+                        events={calendarEvents}
+                        startAccessor="start"
+                        endAccessor="end"
+                        style={{ height: '100%' }}
+                        culture='pt-BR'
+                        eventPropGetter={eventStyleGetter}
+                        messages={{
+                            next: "Próximo",
+                            previous: "Anterior",
+                            today: "Hoje",
+                            month: "Mês",
+                            week: "Semana",
+                            day: "Dia",
+                            agenda: "Agenda",
+                            date: "Data",
+                            time: "Hora",
+                            event: "Evento",
+                            noEventsInRange: "Sem eventos neste período."
+                        }}
+                        onSelectEvent={(event) => {
+                            if (event.resource) {
+                                // Master can edit any request? Yes, ideally. Or view details.
+                                // For now, let's open response modal or just toast info
+                                // Opening response modal to allow approving/rejecting from calendar
+                                handleOpenResponseModal(event.resource, event.resource.status as 'APPROVED' | 'REJECTED' || 'APPROVED');
+                            }
+                        }}
+                    />
+                </div>
+            ) : (
+                /* List */
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full">
+                            <thead className="bg-gray-50">
+                                <tr>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Empresa / Solicitante</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data/Hora</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Detalhes</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
                                 </tr>
-                            ))}
-                        </tbody>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                                {requests.map((req) => (
+                                    <tr key={req.id} className="hover:bg-gray-50">
+                                        <td className="px-6 py-4">
+                                            <div className="text-sm font-bold text-gray-900">{req.company?.name || 'Empresa Desconhecida'}</div>
+                                            <div className="text-sm text-gray-500">
+                                                {req.requester?.name || req.requesterName || 'Externo'}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="text-sm font-medium text-gray-900">
+                                                {formatDate(req.date)}
+                                            </div>
+                                            <div className="text-sm text-gray-500">
+                                                {req.startTime} ({req.duration} min)
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="text-sm text-gray-900 max-w-xs truncate" title={req.theme}>
+                                                <span className="font-medium">Tema:</span> {req.theme}
+                                            </div>
+                                            <div className="text-xs text-gray-500 mt-1">
+                                                {req.modality}
+                                            </div>
+                                            {req.meetingLink && (
+                                                <div className="text-xs text-blue-600 mt-1 truncate max-w-xs">{req.meetingLink}</div>
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${req.status === 'APPROVED' ? 'bg-green-100 text-green-800' :
+                                                req.status === 'REJECTED' ? 'bg-red-100 text-red-800' :
+                                                    req.status === 'PENDENTE' ? 'bg-yellow-100 text-yellow-800' :
+                                                        'bg-gray-100 text-gray-800'
+                                                }`}>
+                                                {req.status === 'PENDING' || req.status === 'PENDENTE' ? 'Pendente' :
+                                                    req.status === 'APPROVED' ? 'Aprovado' :
+                                                        req.status === 'REJECTED' ? 'Rejeitado' : req.status}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            {req.status !== 'APPROVED' && req.status !== 'REJECTED' ? (
+                                                <div className="flex justify-end space-x-2">
+                                                    <button
+                                                        onClick={() => handleOpenResponseModal(req, 'APPROVED')}
+                                                        className="text-green-600 hover:text-green-900 bg-green-50 p-1 rounded"
+                                                        title="Aprovar"
+                                                    >
+                                                        <Check className="h-5 w-5" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleOpenResponseModal(req, 'REJECTED')}
+                                                        className="text-red-600 hover:text-red-900 bg-red-50 p-1 rounded"
+                                                        title="Rejeitar"
+                                                    >
+                                                        <X className="h-5 w-5" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => confirmDelete(req)}
+                                                        className="text-gray-400 hover:text-red-600 bg-gray-50 hover:bg-red-50 p-1 rounded transition-colors"
+                                                        title="Excluir"
+                                                    >
+                                                        <Trash2 className="h-5 w-5" />
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <div className="flex justify-end space-x-2">
+                                                    <button
+                                                        onClick={() => handleOpenResponseModal(req, req.status as 'APPROVED' | 'REJECTED')}
+                                                        className="text-gray-400 hover:text-gray-600"
+                                                    >
+                                                        Editar
+                                                    </button>
+                                                    <button
+                                                        onClick={() => confirmDelete(req)}
+                                                        className="text-gray-400 hover:text-red-600 bg-gray-50 hover:bg-red-50 p-1 rounded transition-colors"
+                                                        title="Excluir"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </table>
                 </div>
             </div>
+    )
+}
 
-            {/* Response Modal */}
-            {isResponseModalOpen && selectedRequest && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
-                        <div className="p-6 border-b border-gray-100">
-                            <h3 className="text-lg font-bold text-gray-900">
-                                {responseStatus === 'APPROVED' ? 'Aprovar Solicitação' : 'Rejeitar Solicitação'}
-                            </h3>
+{/* Response Modal */ }
+{
+    isResponseModalOpen && selectedRequest && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+                <div className="p-6 border-b border-gray-100">
+                    <h3 className="text-lg font-bold text-gray-900">
+                        {responseStatus === 'APPROVED' ? 'Aprovar Solicitação' : 'Rejeitar Solicitação'}
+                    </h3>
+                </div>
+                <div className="p-6 space-y-4">
+                    {responseStatus === 'APPROVED' && (
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Link da Reunião (Opcional se presencial)
+                            </label>
+                            <input
+                                type="url"
+                                value={meetingLink}
+                                onChange={(e) => setMeetingLink(e.target.value)}
+                                placeholder="https://meet.google.com/..."
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                            />
                         </div>
-                        <div className="p-6 space-y-4">
-                            {responseStatus === 'APPROVED' && (
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Link da Reunião (Opcional se presencial)
-                                    </label>
-                                    <input
-                                        type="url"
-                                        value={meetingLink}
-                                        onChange={(e) => setMeetingLink(e.target.value)}
-                                        placeholder="https://meet.google.com/..."
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
-                                    />
-                                </div>
-                            )}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Observações {responseStatus === 'REJECTED' && '(Obrigatório)'}
-                                </label>
-                                <textarea
-                                    rows={4}
-                                    value={adminNotes}
-                                    onChange={(e) => setAdminNotes(e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
-                                    placeholder="Adicione observações para o solicitante..."
-                                />
-                            </div>
-                        </div>
-                        <div className="p-6 border-t border-gray-100 flex justify-end space-x-3">
-                            <button
-                                onClick={() => setIsResponseModalOpen(false)}
-                                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                onClick={handleSubmitResponse}
-                                className={`px-4 py-2 text-white rounded-lg ${responseStatus === 'APPROVED' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'
-                                    }`}
-                            >
-                                Confirmar
-                            </button>
-                        </div>
+                    )}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Observações {responseStatus === 'REJECTED' && '(Obrigatório)'}
+                        </label>
+                        <textarea
+                            rows={4}
+                            value={adminNotes}
+                            onChange={(e) => setAdminNotes(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                            placeholder="Adicione observações para o solicitante..."
+                        />
                     </div>
                 </div>
-            )}
-
-            {/* Link Generation Modal */}
-            {isLinkModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
-                        <div className="p-6 border-b border-gray-100">
-                            <h3 className="text-lg font-bold text-gray-900">Gerar Link Público</h3>
-                            <p className="text-sm text-gray-500">Selecione a empresa para gerar o link de solicitação</p>
-                        </div>
-                        <div className="p-6 space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Empresa</label>
-                                <select
-                                    value={selectedCompanyId}
-                                    onChange={(e) => setSelectedCompanyId(e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                                >
-                                    <option value="">Selecione uma empresa...</option>
-                                    {companies.map(c => (
-                                        <option key={c.id} value={c.id}>{c.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-                        <div className="p-6 border-t border-gray-100 flex justify-end space-x-3">
-                            <button
-                                onClick={() => setIsLinkModalOpen(false)}
-                                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
-                            >
-                                Fechar
-                            </button>
-                            <button
-                                onClick={generatePublicLink}
-                                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-                            >
-                                Copiar Link
-                            </button>
-                        </div>
-                    </div>
+                <div className="p-6 border-t border-gray-100 flex justify-end space-x-3">
+                    <button
+                        onClick={() => setIsResponseModalOpen(false)}
+                        className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                    >
+                        Cancelar
+                    </button>
+                    <button
+                        onClick={handleSubmitResponse}
+                        className={`px-4 py-2 text-white rounded-lg ${responseStatus === 'APPROVED' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'
+                            }`}
+                    >
+                        Confirmar
+                    </button>
                 </div>
-            )}
-
-            {/* Create Request Modal */}
-            {isCreateModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
-                        <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                            <h3 className="text-lg font-bold text-gray-900">Novo Agendamento (Master)</h3>
-                            <button onClick={() => setIsCreateModalOpen(false)} className="text-gray-400 hover:text-gray-500">
-                                <span className="sr-only">Fechar</span>
-                                <X className="h-6 w-6" />
-                            </button>
-                        </div>
-                        <form onSubmit={handleCreateRequest} className="p-6 space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Empresa</label>
-                                <select
-                                    required
-                                    value={createFormData.companyId}
-                                    onChange={(e) => setCreateFormData({ ...createFormData, companyId: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                                >
-                                    <option value="">Selecione a Empresa...</option>
-                                    {companies.map(c => (
-                                        <option key={c.id} value={c.id}>{c.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Data</label>
-                                    <input
-                                        type="date"
-                                        required
-                                        value={createFormData.date}
-                                        onChange={(e) => setCreateFormData({ ...createFormData, date: e.target.value })}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Horário</label>
-                                    <input
-                                        type="time"
-                                        required
-                                        value={createFormData.startTime}
-                                        onChange={(e) => setCreateFormData({ ...createFormData, startTime: e.target.value })}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Duração (min)</label>
-                                    <input
-                                        type="number"
-                                        required
-                                        min="15"
-                                        step="15"
-                                        value={createFormData.duration}
-                                        onChange={(e) => setCreateFormData({ ...createFormData, duration: Number(e.target.value) })}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Modalidade</label>
-                                    <select
-                                        value={createFormData.modality}
-                                        onChange={(e) => setCreateFormData({ ...createFormData, modality: e.target.value })}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                                    >
-                                        <option value="ONLINE">Online</option>
-                                        <option value="PRESENCIAL">Presencial</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Tema / Assunto</label>
-                                <input
-                                    type="text"
-                                    required
-                                    placeholder="Ex: Treinamento, Reunião..."
-                                    value={createFormData.theme}
-                                    onChange={(e) => setCreateFormData({ ...createFormData, theme: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
-                                <textarea
-                                    rows={3}
-                                    value={createFormData.description}
-                                    onChange={(e) => setCreateFormData({ ...createFormData, description: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                                    placeholder="Detalhes adicionais..."
-                                />
-                            </div>
-
-                            <div className="flex justify-end pt-4">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsCreateModalOpen(false)}
-                                    className="mr-3 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
-                                >
-                                    Cancelar
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                                >
-                                    Agendar
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-            {/* Delete Confirmation Modal */}
-            {isDeleteModalOpen && requestToDelete && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden">
-                        <div className="p-6 text-center">
-                            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <Trash2 className="h-6 w-6 text-red-600" />
-                            </div>
-                            <h3 className="text-lg font-bold text-gray-900 mb-2">Excluir Agendamento?</h3>
-                            <p className="text-gray-500 mb-6">
-                                Tem certeza que deseja excluir este agendamento? Esta ação não pode ser desfeita.
-                            </p>
-                            <div className="flex space-x-3 justify-center">
-                                <button
-                                    onClick={() => setIsDeleteModalOpen(false)}
-                                    className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 font-medium"
-                                >
-                                    Cancelar
-                                </button>
-                                <button
-                                    onClick={handleDelete}
-                                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium"
-                                >
-                                    Excluir
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
+            </div>
         </div>
+    )
+}
+
+{/* Link Generation Modal */ }
+{
+    isLinkModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+                <div className="p-6 border-b border-gray-100">
+                    <h3 className="text-lg font-bold text-gray-900">Gerar Link Público</h3>
+                    <p className="text-sm text-gray-500">Selecione a empresa para gerar o link de solicitação</p>
+                </div>
+                <div className="p-6 space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Empresa</label>
+                        <select
+                            value={selectedCompanyId}
+                            onChange={(e) => setSelectedCompanyId(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                        >
+                            <option value="">Selecione uma empresa...</option>
+                            {companies.map(c => (
+                                <option key={c.id} value={c.id}>{c.name}</option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
+                <div className="p-6 border-t border-gray-100 flex justify-end space-x-3">
+                    <button
+                        onClick={() => setIsLinkModalOpen(false)}
+                        className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                    >
+                        Fechar
+                    </button>
+                    <button
+                        onClick={generatePublicLink}
+                        className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                    >
+                        Copiar Link
+                    </button>
+                </div>
+            </div>
+        </div>
+    )
+}
+
+{/* Create Request Modal */ }
+{
+    isCreateModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
+                <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+                    <h3 className="text-lg font-bold text-gray-900">Novo Agendamento (Master)</h3>
+                    <button onClick={() => setIsCreateModalOpen(false)} className="text-gray-400 hover:text-gray-500">
+                        <span className="sr-only">Fechar</span>
+                        <X className="h-6 w-6" />
+                    </button>
+                </div>
+                <form onSubmit={handleCreateRequest} className="p-6 space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Empresa</label>
+                        <select
+                            required
+                            value={createFormData.companyId}
+                            onChange={(e) => setCreateFormData({ ...createFormData, companyId: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                        >
+                            <option value="">Selecione a Empresa...</option>
+                            {companies.map(c => (
+                                <option key={c.id} value={c.id}>{c.name}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Data</label>
+                            <input
+                                type="date"
+                                required
+                                value={createFormData.date}
+                                onChange={(e) => setCreateFormData({ ...createFormData, date: e.target.value })}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Horário</label>
+                            <input
+                                type="time"
+                                required
+                                value={createFormData.startTime}
+                                onChange={(e) => setCreateFormData({ ...createFormData, startTime: e.target.value })}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Duração (min)</label>
+                            <input
+                                type="number"
+                                required
+                                min="15"
+                                step="15"
+                                value={createFormData.duration}
+                                onChange={(e) => setCreateFormData({ ...createFormData, duration: Number(e.target.value) })}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Modalidade</label>
+                            <select
+                                value={createFormData.modality}
+                                onChange={(e) => setCreateFormData({ ...createFormData, modality: e.target.value })}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                            >
+                                <option value="ONLINE">Online</option>
+                                <option value="PRESENCIAL">Presencial</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Tema / Assunto</label>
+                        <input
+                            type="text"
+                            required
+                            placeholder="Ex: Treinamento, Reunião..."
+                            value={createFormData.theme}
+                            onChange={(e) => setCreateFormData({ ...createFormData, theme: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+                        <textarea
+                            rows={3}
+                            value={createFormData.description}
+                            onChange={(e) => setCreateFormData({ ...createFormData, description: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Detalhes adicionais..."
+                        />
+                    </div>
+
+                    <div className="flex justify-end pt-4">
+                        <button
+                            type="button"
+                            onClick={() => setIsCreateModalOpen(false)}
+                            className="mr-3 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            type="submit"
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                        >
+                            Agendar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    )
+}
+{/* Delete Confirmation Modal */ }
+{
+    isDeleteModalOpen && requestToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden">
+                <div className="p-6 text-center">
+                    <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Trash2 className="h-6 w-6 text-red-600" />
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">Excluir Agendamento?</h3>
+                    <p className="text-gray-500 mb-6">
+                        Tem certeza que deseja excluir este agendamento? Esta ação não pode ser desfeita.
+                    </p>
+                    <div className="flex space-x-3 justify-center">
+                        <button
+                            onClick={() => setIsDeleteModalOpen(false)}
+                            className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 font-medium"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            onClick={handleDelete}
+                            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium"
+                        >
+                            Excluir
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    )
+}
+        </div >
     );
 };
 
