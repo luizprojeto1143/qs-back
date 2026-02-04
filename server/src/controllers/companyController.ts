@@ -273,14 +273,13 @@ export const updateCompany = async (req: Request, res: Response) => {
         if (user.role === 'MASTER') {
             dataToUpdate.name = name;
             dataToUpdate.cnpj = cnpj;
-            dataToUpdate.universityEnabled = universityEnabled;
-            dataToUpdate.talentManagementEnabled = talentManagementEnabled;
-            dataToUpdate.interpreterEnabled = interpreterEnabled;
-            dataToUpdate.interpreterOnly = interpreterOnly;
+            // Explicit casting to ensure Boolean format
+            if (universityEnabled !== undefined) dataToUpdate.universityEnabled = Boolean(universityEnabled);
+            if (talentManagementEnabled !== undefined) dataToUpdate.talentManagementEnabled = Boolean(talentManagementEnabled);
+            if (interpreterEnabled !== undefined) dataToUpdate.interpreterEnabled = Boolean(interpreterEnabled);
+            if (interpreterOnly !== undefined) dataToUpdate.interpreterOnly = Boolean(interpreterOnly);
         } else {
-            // RH can only update specific settings, not core identity
-            // If they try to update restricted fields, we ignore them or throw error.
-            // For now, we just ignore them in the data object.
+            // RH can only update active status of modules if needed, or nothing
         }
 
         const result = await prisma.$transaction(async (prisma) => {
@@ -317,8 +316,16 @@ export const updateCompany = async (req: Request, res: Response) => {
         });
 
         res.json(result);
-    } catch (error) {
-        sendError500(res, ERROR_CODES.COMP_UPDATE, error);
+    } catch (error: any) {
+        console.error('Error updating company:', error);
+        // Expose error details safely for debugging
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const errorDetails = error?.meta || error?.code || null;
+        res.status(500).json({
+            error: 'Failed to update company',
+            details: errorMessage,
+            code: errorDetails
+        });
     }
 };
 
