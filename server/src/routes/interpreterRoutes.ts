@@ -17,5 +17,6 @@ router.get('/', interpreterController.listRequests);
 router.get('/requests', interpreterController.listRequests); // Alias for Dashboard
 router.put('/:id/status', interpreterController.updateRequestStatus);
 router.put('/:id', interpreterController.updateRequest); // General update (date, theme, etc.)
+router.delete('/:id', interpreterController.deleteRequest); // Delete request
 
 export default router;

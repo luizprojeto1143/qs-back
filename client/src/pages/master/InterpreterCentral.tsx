@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Filter, Check, X, Link as LinkIcon, Building, Plus } from 'lucide-react';
+import { Search, Filter, Check, X, Link as LinkIcon, Building, Plus, Trash2 } from 'lucide-react';
 import { api } from '../../lib/api';
 import { toast } from 'sonner';
 
@@ -47,6 +47,10 @@ const InterpreterCentral = () => {
         modality: 'ONLINE',
         description: ''
     });
+
+    // Delete Confirmation State
+    const [requestToDelete, setRequestToDelete] = useState<InterpreterRequest | null>(null);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
     const fetchRequests = async () => {
         try {
@@ -128,6 +132,24 @@ const InterpreterCentral = () => {
             fetchRequests();
         } catch (error) {
             toast.error('Erro ao criar solicitação');
+        }
+    };
+
+    const confirmDelete = (req: InterpreterRequest) => {
+        setRequestToDelete(req);
+        setIsDeleteModalOpen(true);
+    };
+
+    const handleDelete = async () => {
+        if (!requestToDelete) return;
+        try {
+            await api.delete(`/interpreter/${requestToDelete.id}`);
+            toast.success('Solicitação excluída com sucesso');
+            fetchRequests();
+            setIsDeleteModalOpen(false);
+            setRequestToDelete(null);
+        } catch (error) {
+            toast.error('Erro ao excluir solicitação');
         }
     };
 
@@ -260,14 +282,30 @@ const InterpreterCentral = () => {
                                                 >
                                                     <X className="h-5 w-5" />
                                                 </button>
+                                                <button
+                                                    onClick={() => confirmDelete(req)}
+                                                    className="text-gray-400 hover:text-red-600 bg-gray-50 hover:bg-red-50 p-1 rounded transition-colors"
+                                                    title="Excluir"
+                                                >
+                                                    <Trash2 className="h-5 w-5" />
+                                                </button>
                                             </div>
                                         ) : (
-                                            <button
-                                                onClick={() => handleOpenResponseModal(req, req.status as 'APPROVED' | 'REJECTED')}
-                                                className="text-gray-400 hover:text-gray-600"
-                                            >
-                                                Editar
-                                            </button>
+                                            <div className="flex justify-end space-x-2">
+                                                <button
+                                                    onClick={() => handleOpenResponseModal(req, req.status as 'APPROVED' | 'REJECTED')}
+                                                    className="text-gray-400 hover:text-gray-600"
+                                                >
+                                                    Editar
+                                                </button>
+                                                <button
+                                                    onClick={() => confirmDelete(req)}
+                                                    className="text-gray-400 hover:text-red-600 bg-gray-50 hover:bg-red-50 p-1 rounded transition-colors"
+                                                    title="Excluir"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </button>
+                                            </div>
                                         )}
                                     </td>
                                 </tr>
@@ -489,6 +527,36 @@ const InterpreterCentral = () => {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+            {/* Delete Confirmation Modal */}
+            {isDeleteModalOpen && requestToDelete && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden">
+                        <div className="p-6 text-center">
+                            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Trash2 className="h-6 w-6 text-red-600" />
+                            </div>
+                            <h3 className="text-lg font-bold text-gray-900 mb-2">Excluir Agendamento?</h3>
+                            <p className="text-gray-500 mb-6">
+                                Tem certeza que deseja excluir este agendamento? Esta ação não pode ser desfeita.
+                            </p>
+                            <div className="flex space-x-3 justify-center">
+                                <button
+                                    onClick={() => setIsDeleteModalOpen(false)}
+                                    className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 font-medium"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={handleDelete}
+                                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium"
+                                >
+                                    Excluir
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}

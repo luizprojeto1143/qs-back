@@ -217,6 +217,19 @@ export const interpreterController = {
         }
     },
 
+    deleteRequest: async (req: Request, res: Response) => {
+        try {
+            const { id } = req.params;
+            await prisma.interpreterRequest.delete({
+                where: { id }
+            });
+            return res.json({ message: 'Request deleted successfully' });
+        } catch (error) {
+            console.error('Error deleting interpreter request:', error);
+            return res.status(500).json({ error: 'Failed to delete request' });
+        }
+    },
+
     getPublicRequestConfig: async (req: Request, res: Response) => {
         try {
             const { companyId } = req.params;
