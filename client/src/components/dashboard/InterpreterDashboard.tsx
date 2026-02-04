@@ -47,9 +47,17 @@ export const InterpreterDashboard = ({ navigate }: { navigate: (path: string) =>
     const nextEvent = requests
         .filter((r: any) => {
             if (r.status !== 'APPROVED') return false;
-            const eventDate = new Date(r.date);
-            // If date is "today" or future
-            return eventDate >= today;
+
+            // Construct precise Event Date Object for comparison
+            // Assuming r.date is ISO string "YYYY-MM-DD..."
+            const dateStr = r.date.split('T')[0];
+            const [year, month, day] = dateStr.split('-').map(Number);
+            const [hours, minutes] = r.startTime.split(':').map(Number);
+
+            const eventDate = new Date(year, month - 1, day, hours, minutes);
+            const now = new Date();
+
+            return eventDate > now;
         })
         .sort((a: any, b: any) => {
             const dateA = new Date(a.date).getTime();
