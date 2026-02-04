@@ -18,8 +18,16 @@ export const interpreterController = {
                 description
             } = req.body;
 
-            if (!companyId) {
-                return res.status(400).json({ error: 'Company ID is required' });
+            const user = (req as any).user;
+            console.log('Create Interpreter Request Payload:', JSON.stringify(req.body));
+            console.log('Authenticated User:', JSON.stringify(user));
+
+            // Fallback to user's companyId if not provided in body (SAFE for RH/Standard users)
+            const targetCompanyId = companyId || user?.companyId;
+
+            if (!targetCompanyId) {
+                console.error('Missing Company ID. Body:', req.body, 'User:', user);
+                return res.status(400).json({ error: 'Company ID is required (not found in body or token)' });
             }
 
             if (!date || !startTime || !theme || !modality) {
@@ -33,9 +41,9 @@ export const interpreterController = {
 
             const request = await prisma.interpreterRequest.create({
                 data: {
-                    companyId,
-                    requesterId: requesterId || null,
-                    requesterName,
+                    companyId: targetCompanyId,
+                    requesterId: requesterId || user?.userId || null, // Also clean up requester logic
+                    requesterName: requesterName || user?.name,
                     date: parsedDate,
                     startTime,
                     duration: Number(duration),
