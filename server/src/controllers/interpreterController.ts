@@ -18,12 +18,25 @@ export const interpreterController = {
                 description
             } = req.body;
 
+            if (!companyId) {
+                return res.status(400).json({ error: 'Company ID is required' });
+            }
+
+            if (!date || !startTime || !theme || !modality) {
+                return res.status(400).json({ error: 'Missing required fields (date, startTime, theme, modality)' });
+            }
+
+            const parsedDate = new Date(date);
+            if (isNaN(parsedDate.getTime())) {
+                return res.status(400).json({ error: 'Invalid date format' });
+            }
+
             const request = await prisma.interpreterRequest.create({
                 data: {
                     companyId,
                     requesterId: requesterId || null,
                     requesterName,
-                    date: new Date(date),
+                    date: parsedDate,
                     startTime,
                     duration: Number(duration),
                     theme,
@@ -39,7 +52,9 @@ export const interpreterController = {
             return res.status(201).json(request);
         } catch (error) {
             console.error('Error creating interpreter request:', error);
-            return res.status(500).json({ error: 'Failed to create request' });
+            // Better error message
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            return res.status(500).json({ error: 'Failed to create request', details: errorMessage });
         }
     },
 

@@ -14,6 +14,7 @@ router.use(authenticateToken);
 
 router.post('/', interpreterController.createRequest); // Internal creation
 router.get('/', interpreterController.listRequests);
+router.get('/requests', interpreterController.listRequests); // Alias for Dashboard
 router.put('/:id/status', interpreterController.updateRequestStatus);
 
 export default router;
