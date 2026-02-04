@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Filter, Check, X, Link as LinkIcon, Building } from 'lucide-react';
+import { Search, Filter, Check, X, Link as LinkIcon, Building, Plus } from 'lucide-react';
 import { api } from '../../lib/api';
 import { toast } from 'sonner';
 
@@ -35,6 +35,18 @@ const InterpreterCentral = () => {
     const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
     const [companies, setCompanies] = useState<{ id: string, name: string }[]>([]);
     const [selectedCompanyId, setSelectedCompanyId] = useState('');
+
+    // Create Request Modal (Master)
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [createFormData, setCreateFormData] = useState({
+        companyId: '',
+        date: '',
+        startTime: '',
+        duration: 60,
+        theme: '',
+        modality: 'ONLINE',
+        description: ''
+    });
 
     const fetchRequests = async () => {
         try {
@@ -89,6 +101,36 @@ const InterpreterCentral = () => {
         }
     };
 
+    const handleCreateRequest = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            if (!createFormData.companyId) {
+                toast.error('Selecione uma empresa');
+                return;
+            }
+
+            await api.post('/interpreter', {
+                ...createFormData,
+                // requesterName will be inferred as user name (Master Name) or we could add a field
+            });
+
+            toast.success('Solicitação criada com sucesso!');
+            setIsCreateModalOpen(false);
+            setCreateFormData({
+                companyId: '',
+                date: '',
+                startTime: '',
+                duration: 60,
+                theme: '',
+                modality: 'ONLINE',
+                description: ''
+            });
+            fetchRequests();
+        } catch (error) {
+            toast.error('Erro ao criar solicitação');
+        }
+    };
+
     const generatePublicLink = () => {
         if (!selectedCompanyId) {
             toast.error('Selecione uma empresa');
@@ -114,6 +156,13 @@ const InterpreterCentral = () => {
                 >
                     <LinkIcon className="h-5 w-5" />
                     <span>Gerar Link Público</span>
+                </button>
+                <button
+                    onClick={() => setIsCreateModalOpen(true)}
+                    className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors ml-3"
+                >
+                    <Plus className="h-5 w-5" />
+                    <span>Novo Agendamento</span>
                 </button>
             </div>
 
@@ -175,9 +224,9 @@ const InterpreterCentral = () => {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${req.status === 'APPROVED' ? 'bg-green-100 text-green-800' :
-                                                req.status === 'REJECTED' ? 'bg-red-100 text-red-800' :
-                                                    req.status === 'PENDENTE' ? 'bg-yellow-100 text-yellow-800' :
-                                                        'bg-gray-100 text-gray-800'
+                                            req.status === 'REJECTED' ? 'bg-red-100 text-red-800' :
+                                                req.status === 'PENDENTE' ? 'bg-yellow-100 text-yellow-800' :
+                                                    'bg-gray-100 text-gray-800'
                                             }`}>
                                             {req.status === 'PENDING' || req.status === 'PENDENTE' ? 'Pendente' :
                                                 req.status === 'APPROVED' ? 'Aprovado' :
@@ -311,6 +360,125 @@ const InterpreterCentral = () => {
                                 Copiar Link
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Create Request Modal */}
+            {isCreateModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
+                        <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+                            <h3 className="text-lg font-bold text-gray-900">Novo Agendamento (Master)</h3>
+                            <button onClick={() => setIsCreateModalOpen(false)} className="text-gray-400 hover:text-gray-500">
+                                <span className="sr-only">Fechar</span>
+                                <X className="h-6 w-6" />
+                            </button>
+                        </div>
+                        <form onSubmit={handleCreateRequest} className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Empresa</label>
+                                <select
+                                    required
+                                    value={createFormData.companyId}
+                                    onChange={(e) => setCreateFormData({ ...createFormData, companyId: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                >
+                                    <option value="">Selecione a Empresa...</option>
+                                    {companies.map(c => (
+                                        <option key={c.id} value={c.id}>{c.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Data</label>
+                                    <input
+                                        type="date"
+                                        required
+                                        value={createFormData.date}
+                                        onChange={(e) => setCreateFormData({ ...createFormData, date: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Horário</label>
+                                    <input
+                                        type="time"
+                                        required
+                                        value={createFormData.startTime}
+                                        onChange={(e) => setCreateFormData({ ...createFormData, startTime: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Duração (min)</label>
+                                    <input
+                                        type="number"
+                                        required
+                                        min="15"
+                                        step="15"
+                                        value={createFormData.duration}
+                                        onChange={(e) => setCreateFormData({ ...createFormData, duration: Number(e.target.value) })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Modalidade</label>
+                                    <select
+                                        value={createFormData.modality}
+                                        onChange={(e) => setCreateFormData({ ...createFormData, modality: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                    >
+                                        <option value="ONLINE">Online</option>
+                                        <option value="PRESENCIAL">Presencial</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Tema / Assunto</label>
+                                <input
+                                    type="text"
+                                    required
+                                    placeholder="Ex: Treinamento, Reunião..."
+                                    value={createFormData.theme}
+                                    onChange={(e) => setCreateFormData({ ...createFormData, theme: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+                                <textarea
+                                    rows={3}
+                                    value={createFormData.description}
+                                    onChange={(e) => setCreateFormData({ ...createFormData, description: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                    placeholder="Detalhes adicionais..."
+                                />
+                            </div>
+
+                            <div className="flex justify-end pt-4">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsCreateModalOpen(false)}
+                                    className="mr-3 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                                >
+                                    Agendar
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}
