@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-
 import { Users, ClipboardList, AlertTriangle, CheckCircle } from 'lucide-react';
 import { api } from '../lib/api';
 import { SkeletonCard, Skeleton } from '../components/Skeleton';
 import { toast } from 'sonner';
 import { useCompany } from '../contexts/CompanyContext';
 import { VisitDetailsModal } from '../components/modals/VisitDetailsModal';
+import { useNavigate } from 'react-router-dom';
+import { InterpreterDashboard } from '../components/dashboard/InterpreterDashboard';
 
 // Interfaces para tipagem forte
 interface RHStats {
@@ -55,9 +56,11 @@ const StatCard = ({ icon: Icon, label, value, color }: StatCardProps) => (
 );
 
 const RHDashboard = () => {
+    const navigate = useNavigate();
     const { companies } = useCompany();
     const currentCompany = companies[0];
     const isUniversityEnabled = currentCompany?.universityEnabled;
+    const isInterpreterOnly = currentCompany?.interpreterOnly;
 
     const [stats, setStats] = useState<RHStats>({
         totalCollaborators: 0,
@@ -76,6 +79,12 @@ const RHDashboard = () => {
     const [selectedVisitId, setSelectedVisitId] = useState<string | null>(null);
 
     useEffect(() => {
+        // Skip stats fetch if interpreter only
+        if (isInterpreterOnly) {
+            setLoading(false);
+            return;
+        }
+
         const fetchStats = async () => {
             try {
                 // setError(false); // Removed
@@ -93,7 +102,7 @@ const RHDashboard = () => {
             }
         };
         fetchStats();
-    }, []);
+    }, [isInterpreterOnly]);
 
     if (loading) {
         return (
@@ -138,6 +147,20 @@ const RHDashboard = () => {
                         </div>
                     ))}
                 </div>
+            </div>
+        );
+    }
+
+    if (isInterpreterOnly) {
+        return (
+            <div className="space-y-8">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900">Central de Libras</h1>
+                        <p className="text-gray-500">Acompanhamento e solicitações de intérpretes</p>
+                    </div>
+                </div>
+                <InterpreterDashboard navigate={navigate} />
             </div>
         );
     }
