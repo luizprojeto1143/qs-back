@@ -201,10 +201,11 @@ const CompaniesList = () => {
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email do Responsável (RH)</label>
                                 <input
                                     type="email"
-                                    required
+                                    required={!editingId}
                                     className="input-field dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                     value={newCompany.email}
                                     onChange={e => setNewCompany({ ...newCompany, email: e.target.value })}
+                                    placeholder={editingId ? "Deixe em branco para manter" : ""}
                                 />
                             </div>
                             <div>
