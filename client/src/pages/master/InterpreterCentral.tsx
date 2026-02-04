@@ -143,6 +143,16 @@ const InterpreterCentral = () => {
         toast.success('Link copiado para a área de transferência!');
     };
 
+    // Helper to format date correctly ignoring timezone shifts
+    const formatDate = (dateString: string) => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        // Adjust for timezone offset to ensure we display the correct day
+        const userTimezoneOffset = date.getTimezoneOffset() * 60000;
+        const adjustedDate = new Date(date.getTime() + userTimezoneOffset);
+        return new Intl.DateTimeFormat('pt-BR').format(adjustedDate);
+    };
+
     return (
         <div className="space-y-8">
             <div className="flex items-center justify-between">
@@ -205,7 +215,7 @@ const InterpreterCentral = () => {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="text-sm font-medium text-gray-900">
-                                            {new Date(req.date).toLocaleDateString()}
+                                            {formatDate(req.date)}
                                         </div>
                                         <div className="text-sm text-gray-500">
                                             {req.startTime} ({req.duration} min)

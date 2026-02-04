@@ -68,6 +68,24 @@ export const InterpreterDashboard = ({ navigate }: { navigate: (path: string) =>
             return dateA - dateB;
         })[0];
 
+    // Helper to format date correctly ignoring timezone shifts
+    const formatDate = (dateString: string) => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        // Adjust for timezone offset to ensure we display the correct day
+        const userTimezoneOffset = date.getTimezoneOffset() * 60000;
+        const adjustedDate = new Date(date.getTime() + userTimezoneOffset);
+        return format(adjustedDate, "dd/MM", { locale: ptBR });
+    };
+
+    const formatDateFull = (dateString: string) => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        const userTimezoneOffset = date.getTimezoneOffset() * 60000;
+        const adjustedDate = new Date(date.getTime() + userTimezoneOffset);
+        return format(adjustedDate, "dd/MM/yyyy", { locale: ptBR });
+    };
+
     return (
         <div className="space-y-6">
             {/* Quick Action & Next Event */}
@@ -96,7 +114,7 @@ export const InterpreterDashboard = ({ navigate }: { navigate: (path: string) =>
                                 </div>
                                 <div>
                                     <p className="text-2xl font-bold text-gray-900">
-                                        {format(new Date(nextEvent.date), "dd/MM", { locale: ptBR })}
+                                        {formatDate(nextEvent.date)}
                                     </p>
                                     <p className="text-gray-500">
                                         às {nextEvent.startTime}
@@ -154,7 +172,7 @@ export const InterpreterDashboard = ({ navigate }: { navigate: (path: string) =>
                                 <div>
                                     <p className="font-medium text-sm text-gray-900">{req.theme}</p>
                                     <p className="text-xs text-gray-500">
-                                        {format(new Date(req.date), "dd/MM/yyyy", { locale: ptBR })}
+                                        {formatDateFull(req.date)}
                                     </p>
                                 </div>
                             </div>
