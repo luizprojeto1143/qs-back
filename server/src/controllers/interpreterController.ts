@@ -101,7 +101,10 @@ export const interpreterController = {
                         select: { name: true, email: true }
                     }
                 },
-                orderBy: { createdAt: 'desc' }
+                orderBy: [
+                    { date: 'asc' },
+                    { startTime: 'asc' }
+                ]
             });
 
             return res.json(requests);

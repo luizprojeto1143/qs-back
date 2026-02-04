@@ -40,10 +40,25 @@ export const InterpreterDashboard = ({ navigate }: { navigate: (path: string) =>
     const pendingCount = requests.filter((r: any) => r.status === 'PENDING').length;
     const approvedCount = requests.filter((r: any) => r.status === 'APPROVED').length;
 
-    // Find next approved event
+    // Find next approved event (future or today)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Ignore time for date comparison base
+
     const nextEvent = requests
-        .filter((r: any) => r.status === 'APPROVED' && new Date(r.date) >= new Date())
-        .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
+        .filter((r: any) => {
+            if (r.status !== 'APPROVED') return false;
+            const eventDate = new Date(r.date);
+            // If date is "today" or future
+            return eventDate >= today;
+        })
+        .sort((a: any, b: any) => {
+            const dateA = new Date(a.date).getTime();
+            const dateB = new Date(b.date).getTime();
+            if (dateA === dateB) {
+                return a.startTime.localeCompare(b.startTime);
+            }
+            return dateA - dateB;
+        })[0];
 
     return (
         <div className="space-y-6">
