@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Plus, Search, Filter, Calendar as CalendarIcon, Clock, Video, Users, List } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, Search, Filter, Calendar as CalendarIcon, Clock, Video, Users, List, ArrowLeft } from 'lucide-react';
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -35,6 +36,7 @@ const localizer = dateFnsLocalizer({
 });
 
 const InterpreterRequestsPage = () => {
+    const navigate = useNavigate();
     const { user } = useAuth();
     const { companies } = useCompany();
     const currentCompany = companies[0]; // Assuming RH user sees their primary company
@@ -144,9 +146,18 @@ const InterpreterRequestsPage = () => {
     return (
         <div className="space-y-8">
             <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Central de Intérpretes</h1>
-                    <p className="text-gray-500">Solicite e acompanhe agendamentos de intérpretes de Libras</p>
+                <div className="flex items-center space-x-4">
+                    <button
+                        onClick={() => navigate('/rh')}
+                        className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                        title="Voltar para o Painel"
+                    >
+                        <ArrowLeft className="h-6 w-6 text-gray-500" />
+                    </button>
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900">Central de Intérpretes</h1>
+                        <p className="text-gray-500">Solicite e acompanhe agendamentos de intérpretes de Libras</p>
+                    </div>
                 </div>
                 <div className="flex items-center space-x-3">
                     <div className="bg-gray-100 p-1 rounded-lg flex">
