@@ -102,7 +102,14 @@ const Pendencies = () => {
             const url = editingId ? `/pendencies/${editingId}` : '/pendencies';
             const method = editingId ? 'put' : 'post';
 
-            await api[method](url, newPendency);
+            const payload = {
+                ...newPendency,
+                deadline: newPendency.deadline ? new Date(newPendency.deadline + 'T12:00:00').toISOString() : null, // Ensure midday to avoid timezone shifts
+                areaId: newPendency.areaId || null,
+                collaboratorId: newPendency.collaboratorId || null
+            };
+
+            await api[method](url, payload);
 
             setIsModalOpen(false);
             setNewPendency({

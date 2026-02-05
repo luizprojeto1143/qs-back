@@ -182,11 +182,11 @@ export const createPendencySchema = z.object({
     description: z.string().min(1, 'Descrição é obrigatória'),
     responsible: z.string().min(1, 'Responsável é obrigatório'),
     priority: z.enum(['BAIXA', 'MEDIA', 'ALTA']),
-    deadline: z.string().datetime().optional().nullable(),
+    deadline: z.preprocess(emptyToUndefined, z.union([z.string().datetime(), z.string()]).optional().nullable()), // Allow simple string (YYYY-MM-DD) or datetime
     companyId: z.string().uuid(),
-    areaId: z.string().uuid().optional().nullable(),
-    collaboratorId: z.string().uuid().optional().nullable(),
-    visitId: z.string().uuid().optional().nullable()
+    areaId: z.preprocess(emptyToUndefined, z.string().uuid().optional().nullable()),
+    collaboratorId: z.preprocess(emptyToUndefined, z.string().uuid().optional().nullable()),
+    visitId: z.preprocess(emptyToUndefined, z.string().uuid().optional().nullable())
 });
 
 export const updatePendencySchema = z.object({
