@@ -42,7 +42,7 @@ const StatCard = ({ icon: Icon, label, value, color, onClick }: StatCardProps) =
 );
 
 // General Dashboard Component (Regular/Master View)
-const GeneralDashboard = ({ stats, recentActivity, navigate, loading }: any) => (
+const GeneralDashboard = ({ stats, recentActivity, navigate, loading, onActivityClick }: any) => (
     <>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {loading ? (
@@ -94,6 +94,7 @@ const GeneralDashboard = ({ stats, recentActivity, navigate, loading }: any) => 
                         recentActivity.map((activity: Activity) => (
                             <div
                                 key={activity.id}
+                                onClick={() => onActivityClick && onActivityClick(activity.id)}
                                 className="flex items-start space-x-3 pb-3 border-b border-gray-50 last:border-0 last:pb-0 hover:bg-gray-50 p-2 -mx-2 rounded-lg cursor-pointer transition-colors"
                             >
                                 <div className="mt-1 bg-blue-50 p-2 rounded-full">
@@ -269,6 +270,10 @@ const DashboardHome = () => {
                     recentActivity={recentActivity}
                     navigate={navigate}
                     loading={loading}
+                    onActivityClick={(id: string) => {
+                        setSelectedVisitId(id);
+                        setIsDetailsModalOpen(true);
+                    }}
                 />
             )}
 
