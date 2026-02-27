@@ -1,0 +1,997 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // directUrl = env("DIRECT_URL") // Required for migrations with Supabase pooler
+}
+
+// Enums are not supported in SQLite, so we use String with validation in code
+
+// Core Models
+
+model Company {
+  id        String   @id @default(uuid())
+  name      String
+  cnpj      String   @unique
+  logo      String?
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users         User[]
+  sectors       Sector[]
+  visits        Visit[]
+  pendingItems  PendingItem[]
+  feedPosts     FeedPost[]
+  feedCategories FeedCategory[]
+  schedules     Schedule[]
+  shifts        Shift[]
+  availability  Json?    // JSON for availability settings
+  librasAvailability Json? // JSON for Libras Central availability settings
+  inclusionDiagnosis Json? // JSON for Inclusion Diagnosis data
+  librasCalls   LibrasCall[]
+  specialists   Specialist[]
+  pdis          PDI[]
+  specialties   Specialty[]
+  courses       Course[]
+  
+  // Courses this company is allowed to see (if restricted)
+  allowedCourses    Course[] @relation("CourseVisibility")
+  
+  active        Boolean  @default(true)
+  deletedAt     DateTime?
+  
+  
+  universityEnabled Boolean @default(false)
+  talentManagementEnabled Boolean @default(false)
+  interpreterEnabled Boolean @default(false)
+  interpreterOnly Boolean @default(false)
+  auditLogs     AuditLog[]
+  learningTrails LearningTrail[]
+  termsAcceptances UserTermsAcceptance[]
+  
+  // QS Inclusão v2.0 - Novas relações
+  qsScores         QSScore[]
+  complaints       Complaint[]
+  mediations       Mediation[]
+  smartAlerts      SmartAlert[]
+  systemSettings   SystemSettings?
+  decisionHistory  DecisionHistory[]
+  performanceCycles PerformanceCycle[]
+
+  
+  // Interpreter Requests
+  interpreterRequests InterpreterRequest[]
+}
+
+model Sector {
+  id        String   @id @default(uuid())
+  name      String
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id])
+  areas     Area[]
+}
+
+model Area {
+  id        String   @id @default(uuid())
+  name      String
+  sectorId  String
+  sector    Sector   @relation(fields: [sectorId], references: [id])
+  
+  collaborators CollaboratorProfile[]
+  pendingItems  PendingItem[]
+  visits        Visit[]
+  users         User[]
+  
+  // QS Inclusão v2.0 - Novas relações
+  qsScores      QSScore[]
+  complaints    Complaint[]
+  mediations    Mediation[]
+  smartAlerts   SmartAlert[]
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   // MASTER, RH, LIDER, COLABORADOR
+  avatar    String?
+  
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
+
+  areaId    String?
+  area      Area?    @relation(fields: [areaId], references: [id])
+
+  collaboratorProfile CollaboratorProfile?
+
+  createdVisits     Visit[] @relation("MasterVisits")
+  requestedSchedules Schedule[] @relation("RequestedSchedules")
+  requestedCalls    LibrasCall[] @relation("RequestedCalls")
+  notifications     Notification[]
+  pdis              PDI[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  twoFactorEnabled Boolean @default(false)
+  twoFactorSecret  String?
+
+  active    Boolean  @default(true)
+  deletedAt DateTime?
+
+  enrollments Enrollment[]
+  lessonProgress LessonProgress[]
+  certificates Certificate[]
+  auditLogs     AuditLog[]
+  quizAttempts  UserQuizAttempt[]
+  termsAcceptances UserTermsAcceptance[]
+  
+  // QS Inclusão v2.0 - Novas relações
+  complaintsReported    Complaint[]     @relation("ComplaintReporter")
+  complaintsValidated   Complaint[]     @relation("ComplaintValidator")
+  mediationsCreated     Mediation[]     @relation("MediationCreator")
+  mediationsLed         Mediation[]     @relation("MediationLeader")
+  alertsValidated       SmartAlert[]    @relation("AlertValidator")
+  dayOffsApproved       DayOff[]        @relation("DayOffApprover")
+  decisionsHistory      DecisionHistory[] @relation("DecisionMaker")
+
+  // University 2.0 - Gamification & Social
+  xp            Int      @default(0)
+  level         Int      @default(1)
+  comments      LessonComment[]
+
+  // Talent Management
+  reviewsGiven    PerformanceReview[] @relation("Reviewer")
+  reviewsReceived PerformanceReview[] @relation("Reviewee")
+  
+  interpreterRequests InterpreterRequest[]
+
+  @@index([companyId])
+}
+
+model LibrasCall {
+  id        String   @id @default(uuid())
+  status    String   @default("WAITING") // WAITING, IN_PROGRESS, FINISHED, CANCELED
+  
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id])
+  
+  requesterId String
+  requester   User     @relation("RequestedCalls", fields: [requesterId], references: [id])
+  
+  createdAt DateTime @default(now())
+  acceptedAt DateTime?
+  finishedAt DateTime?
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([read])
+}
+
+model CollaboratorProfile {
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id])
+  
+  matricula      String
+  areaId         String
+  area           Area     @relation(fields: [areaId], references: [id])
+  
+  shift          String   // 1_TURNO, 2_TURNO, 3_TURNO, ESCALA_12X36, PERSONALIZADO
+  nextRestDay    DateTime? // Data da próxima folga (para cálculo de escalas rotativas)
+  disabilityType String
+  needsDescription String?
+  
+  // Dados Demográficos (Censo)
+  gender         String?  // MASCULINO, FEMININO, OUTRO, NAO_DECLARADO
+  ethnicity      String?  // BRANCA, PRETA, PARDA, AMARELA, INDIGENA, NAO_DECLARADO
+  birthDate      DateTime?
+  admissionDate  DateTime?
+  terminationDate DateTime?
+  isActive       Boolean  @default(true)
+  
+  visits         Visit[] @relation("CollaboratorVisits")
+  pendingItems   PendingItem[]
+  schedules      Schedule[] @relation("CollaboratorSchedules")
+  visitNotes     VisitNote[]
+  
+  // QS Inclusão v2.0 - Novas relações
+  workSchedule   WorkSchedule?
+  daysOff        DayOff[]
+}
+
+model Visit {
+  id        String   @id @default(uuid())
+  date      DateTime @default(now())
+  time      String?
+  
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  
+  areaId    String?
+  area      Area?   @relation(fields: [areaId], references: [id])
+  
+  masterId  String
+  master    User    @relation("MasterVisits", fields: [masterId], references: [id])
+
+  collaborators CollaboratorProfile[] @relation("CollaboratorVisits")
+
+  relatoConsultoria    String?
+  relatoLideranca      String?
+  audioLiderancaUrl    String?
+  relatoColaborador    String?
+  audioColaboradorUrl  String?
+  observacoesMaster    String?
+
+  // Normalization: Replaced JSON columns with Relation
+  evaluations          VisitEvaluation[]
+
+  generatedPendencies  PendingItem[]
+  attachments          VisitAttachment[]
+  notes                VisitNote[]
+  schedules            Schedule[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model VisitEvaluation {
+  id        String   @id @default(uuid())
+  visitId   String
+  visit     Visit    @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  
+  type      String   // AREA, LIDERANCA, COLABORADOR
+  criteria  String   // Nome do critério (ex: Pontualidade, Organização)
+  rating    Float    // Nota (pode ser 0-5, 0-10, ou booleano 0/1)
+  comment   String?
+  
+  createdAt DateTime @default(now())
+}
+
+model VisitNote {
+  id             String   @id @default(uuid())
+  content        String
+  
+  visitId        String
+  visit          Visit    @relation(fields: [visitId], references: [id])
+  
+  collaboratorId String
+  collaborator   CollaboratorProfile @relation(fields: [collaboratorId], references: [id])
+  
+  createdAt      DateTime @default(now())
+}
+
+model VisitAttachment {
+  id        String   @id @default(uuid())
+  visitId   String
+  visit     Visit    @relation(fields: [visitId], references: [id])
+  type      String   // PHOTO, VIDEO, DOCUMENT, AUDIO
+  url       String
+  name      String?
+}
+
+model PendingItem {
+  id          String   @id @default(uuid())
+  description String
+  responsible String
+  priority    String   // BAIXA, MEDIA, ALTA
+  deadline    DateTime?
+  status      String   @default("PENDENTE") // PENDENTE, RESOLVIDA, CONCLUIDA
+  
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
+  
+  areaId      String?
+  area        Area?    @relation(fields: [areaId], references: [id])
+  
+  collaboratorId String?
+  collaborator   CollaboratorProfile? @relation(fields: [collaboratorId], references: [id])
+
+  visitId     String?
+  visit       Visit?   @relation(fields: [visitId], references: [id])
+
+  createdAt   DateTime @default(now())
+  resolvedAt  DateTime?
+
+  @@index([companyId])
+  @@index([status])
+  @@index([responsible])
+}
+
+model Schedule {
+  id        String   @id @default(uuid())
+  date      DateTime
+  status    String   // PENDENTE, APROVADO, RECUSADO, REMARCADO, REALIZADO, CANCELADO
+  
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id])
+  
+  requesterId String
+  requester   User     @relation("RequestedSchedules", fields: [requesterId], references: [id])
+  
+  collaboratorId String?
+  collaborator   CollaboratorProfile? @relation("CollaboratorSchedules", fields: [collaboratorId], references: [id])
+  
+  visitId   String?
+  visit     Visit?   @relation(fields: [visitId], references: [id])
+
+  notes     String?
+  createdAt DateTime @default(now())
+
+  @@index([companyId])
+}
+
+model FeedPost {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  category    String   // CARDAPIO, VAGA, AVISO, BENEFICIO, CAMPANHA, OUTRO
+  imageUrl    String?
+  videoLibrasUrl String?
+  
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
+  
+  createdAt   DateTime @default(now())
+}
+
+model FeedCategory {
+  id        String   @id @default(uuid())
+  name      String
+  active    Boolean  @default(true)
+  
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+
+model TermOfUse {
+  id        String   @id @default(uuid())
+  version   String
+  content   String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  
+  acceptances UserTermsAcceptance[]
+}
+
+model UserTermsAcceptance {
+  id        String   @id @default(uuid())
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  
+  termId    String
+  term      TermOfUse @relation(fields: [termId], references: [id])
+  
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
+  
+  acceptedAt DateTime @default(now())
+  ipAddress  String?
+  userAgent  String?  // Browser/Device info
+  
+  @@unique([userId, termId]) // User accepts a specific version only once
+}
+
+model Shift {
+  id        String   @id @default(uuid())
+  name      String
+  type      String   @default("5X2") // 5X2, 6X1, 12X36, 4X3, PERSONALIZADO
+  active    Boolean  @default(true)
+  
+  // Horários
+  startTime   String?  // Ex: "08:00"
+  endTime     String?  // Ex: "17:00"
+  breakStart  String?  // Início do intervalo
+  breakEnd    String?  // Fim do intervalo
+  
+  // Dias (JSON array de 0-6, onde 0=Domingo, 6=Sábado)
+  workDays    Json?    @default("[1,2,3,4,5]") // Seg a Sex por padrão
+  restDays    Json?    @default("[0,6]") // Sáb e Dom por padrão
+  
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Specialist {
+  id        String   @id @default(uuid())
+  name      String
+  email     String
+  type      String   // PSICOLOGO, ASSISTENTE_SOCIAL, ADVOGADO, OUTRO
+  
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PDI {
+  id          String   @id @default(uuid())
+  
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
+
+  // Questions
+  objective   String   // "Qual é o meu principal objetivo..."
+  skills      String   // "Quais habilidades..."
+  actions     String   // "Quais ações práticas..."
+  
+  status      String   @default("DRAFT") // DRAFT, ACTIVE, COMPLETED
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  active    Boolean  @default(true)
+  deletedAt DateTime?
+}
+
+model Specialty {
+  id        String   @id @default(uuid())
+  name      String
+  
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// University Models
+
+model Course {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  coverUrl    String?
+  duration    Int      // in minutes
+  category    String   // e.g., "Inclusão", "Técnico", "Soft Skills"
+  difficulty  String   @default("Iniciante") // Iniciante, Intermediário, Avançado
+
+  active      Boolean  @default(true)
+  
+  companyId   String?
+  company     Company? @relation(fields: [companyId], references: [id])
+  
+  modules     Module[]
+  enrollments Enrollment[]
+  certificates Certificate[]
+
+  isMandatory Boolean  @default(false)
+  publishedAt DateTime?
+  
+  trailId     String?
+  trail       LearningTrail? @relation(fields: [trailId], references: [id])
+
+  quizzes     Quiz[]
+
+  // Visibility Settings
+  visibleToAll     Boolean   @default(false)
+  allowedCompanies Company[] @relation("CourseVisibility")
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model LearningTrail {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  active      Boolean  @default(true)
+  
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
+  
+  courses     Course[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Module {
+  id        String   @id @default(uuid())
+  title     String
+  order     Int
+  
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  
+  lessons   Lesson[]
+  quizzes   Quiz[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Lesson {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  videoUrl    String
+  transcription String? // Text content for accessibility
+  videoLibrasUrl String? // URL for the sign language interpreter video
+  duration    Int      // in minutes
+  order       Int
+  
+  moduleId    String
+  module      Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  
+  progress    LessonProgress[]
+  attachments LessonAttachment[]
+  comments    LessonComment[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model LessonAttachment {
+  id        String   @id @default(uuid())
+  name      String
+  url       String
+  type      String   // PDF, DOC, etc.
+  
+  lessonId  String
+  lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+}
+
+model Enrollment {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id])
+  
+  progress  Int      @default(0) // Percentage 0-100
+  completed Boolean  @default(false)
+  completedAt DateTime?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, courseId])
+}
+
+model LessonProgress {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  
+  lessonId  String
+  lesson    Lesson   @relation(fields: [lessonId], references: [id])
+  
+  completed Boolean  @default(false)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, lessonId])
+}
+
+model Certificate {
+  id        String   @id @default(uuid())
+  code      String   @unique // Unique code for validation
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id])
+  
+  issuedAt  DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  action    String   // LOGIN, LOGIN_FAIL, CREATE_USER, etc.
+  resource  String?  // Target resource ID or name
+  details   Json?    // JSON details
+  ipAddress String?
+  userAgent String?
+  
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
+  
+  createdAt DateTime @default(now())
+}
+
+// Quiz System Models
+
+model Quiz {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  
+  courseId    String?
+  course      Course?  @relation(fields: [courseId], references: [id])
+  
+  moduleId    String?
+  module      Module?  @relation(fields: [moduleId], references: [id])
+  
+  questions   Question[]
+  attempts    UserQuizAttempt[]
+  
+  minScore    Int      @default(60) // Minimum percentage to pass
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Question {
+  id          String   @id @default(uuid())
+  text        String
+  type        String   // MULTIPLE_CHOICE, TRUE_FALSE
+  
+  quizId      String
+  quiz        Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  
+  options     Option[]
+  answers     UserAnswer[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Option {
+  id          String   @id @default(uuid())
+  text        String
+  isCorrect   Boolean  @default(false)
+  
+  questionId  String
+  question    Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  
+  answers     UserAnswer[]
+}
+
+model UserQuizAttempt {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  
+  quizId      String
+  quiz        Quiz     @relation(fields: [quizId], references: [id])
+  
+  score       Int      // Percentage
+  passed      Boolean
+  
+  answers     UserAnswer[]
+  
+  createdAt   DateTime @default(now())
+}
+
+model UserAnswer {
+  id          String   @id @default(uuid())
+  attemptId   String
+  attempt     UserQuizAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  
+  questionId  String
+  question    Question @relation(fields: [questionId], references: [id])
+  
+  optionId    String
+  option      Option   @relation(fields: [optionId], references: [id])
+}
+
+// ============================================
+// QS INCLUSÃO v2.0 - NOVOS MÓDULOS
+// ============================================
+
+// QS Score de Inclusão (0-1000)
+model QSScore {
+  id              String   @id @default(uuid())
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id])
+  areaId          String?
+  area            Area?    @relation(fields: [areaId], references: [id])
+  score           Int      // 0-1000
+  classification  String   // EXCELENTE, BOM, ATENCAO, RISCO, CRITICO
+  factors         Json     // JSON com fatores do cálculo
+  breakdown       Json?    // JSON com detalhamento (inclusão, acessibilidade, conflitos, gestão, educação)
+  trend           String?  // MELHORANDO, ESTAVEL, PIORANDO
+  calculatedAt    DateTime @default(now())
+  
+  @@index([companyId])
+  @@index([areaId])
+}
+
+// Denúncias (inclui vídeo LIBRAS)
+model Complaint {
+  id              String   @id @default(uuid())
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id])
+  areaId          String?
+  area            Area?    @relation(fields: [areaId], references: [id])
+  reporterId      String?
+  reporter        User?    @relation("ComplaintReporter", fields: [reporterId], references: [id])
+  type            String   // VIDEO_LIBRAS, TEXTO, ANONIMO
+  videoUrl        String?
+  content         String?
+  translation     String?  // Tradução feita pela QS
+  category        String?  // ASSEDIO, DISCRIMINACAO, ACESSIBILIDADE, COMUNICACAO, OUTROS
+  severity        String   @default("MEDIO") // BAIXO, MEDIO, ALTO, CRITICO
+  status          String   @default("PENDENTE") // PENDENTE, EM_ANALISE, VALIDADO, ENCAMINHADO_RH, RESOLVIDO, DESCARTADO
+  confidentiality String   @default("CONFIDENCIAL") // CONFIDENCIAL, RESTRITO, COMPARTILHAVEL
+  validatedAt     DateTime?
+  validatedById   String?
+  validatedBy     User?    @relation("ComplaintValidator", fields: [validatedById], references: [id])
+  sentToRHAt      DateTime?
+  resolvedAt      DateTime?
+  resolution      String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([companyId])
+  @@index([status])
+}
+
+// Mediações
+model Mediation {
+  id              String   @id @default(uuid())
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id])
+  areaId          String?
+  area            Area?    @relation(fields: [areaId], references: [id])
+  leaderId        String?
+  leader          User?    @relation("MediationLeader", fields: [leaderId], references: [id])
+  date            DateTime
+  theme           String
+  description     String?
+  participants    Json     // JSON com participantes e nível de sigilo
+  result          String   // ACORDO, ENCAMINHAMENTO, PENDENTE, SEM_ACORDO
+  resultDetails   String?
+  notes           String?
+  attachments     Json?    // JSON com URLs de anexos
+  confidentiality String   @default("RESTRITO")
+  createdById     String
+  createdBy       User     @relation("MediationCreator", fields: [createdById], references: [id])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([companyId])
+}
+
+// Alertas Inteligentes (gerados pela IA)
+model SmartAlert {
+  id              String   @id @default(uuid())
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id])
+  areaId          String?
+  area            Area?    @relation(fields: [areaId], references: [id])
+  type            String   // RISCO, PADRAO, SILENCIO, MELHORIA, REINCIDENCIA, PRAZO
+  title           String
+  description     String
+  aiAnalysis      Json?    // JSON com análise detalhada da IA
+  recommendation  String?  // Recomendação da IA
+  severity        String   @default("INFO") // INFO, WARNING, CRITICAL
+  status          String   @default("PENDENTE") // PENDENTE, VALIDADO, ENVIADO_RH, DESCARTADO
+  validatedAt     DateTime?
+  validatedById   String?
+  validatedBy     User?    @relation("AlertValidator", fields: [validatedById], references: [id])
+  sentToRHAt      DateTime?
+  rhNotes         String?  // Notas enviadas junto ao RH
+  createdAt       DateTime @default(now())
+  
+  @@index([companyId])
+  @@index([status])
+  @@index([severity])
+}
+
+// Escala de Trabalho (expandido)
+model WorkSchedule {
+  id              String   @id @default(uuid())
+  collaboratorId  String   @unique
+  collaborator    CollaboratorProfile @relation(fields: [collaboratorId], references: [id])
+  type            String   // 5X2, 6X1, 12X36, 4X3, PERSONALIZADO
+  workDays        Json     // JSON array [0,1,2,3,4] (dom=0, seg=1...)
+
+  startTime       String?  // "08:00"
+  endTime         String?  // "17:00"
+  breakStart      String?  // "12:00"
+  breakEnd        String?  // "13:00"
+  restDays        Json     // JSON array [5,6]
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// Folgas e Ausências
+model DayOff {
+  id              String   @id @default(uuid())
+  collaboratorId  String
+  collaborator    CollaboratorProfile @relation(fields: [collaboratorId], references: [id])
+  date            DateTime
+  endDate         DateTime? // Para períodos (férias)
+  type            String   // FOLGA, FERIAS, LICENCA, FERIADO, ATESTADO, COMPENSACAO
+  reason          String?
+  approved        Boolean  @default(true)
+  approvedById    String?
+  approvedBy      User?    @relation("DayOffApprover", fields: [approvedById], references: [id])
+  createdAt       DateTime @default(now())
+  
+  @@index([collaboratorId])
+  @@index([date])
+}
+
+// Configurações do Sistema (toggle de funcionalidades)
+model SystemSettings {
+  id              String   @id @default(uuid())
+  companyId       String   @unique
+  company         Company  @relation(fields: [companyId], references: [id])
+  
+  // Toggles de funcionalidades
+  qsScoreEnabled        Boolean @default(false)
+  riskMapEnabled        Boolean @default(false)
+  aiAlertsEnabled       Boolean @default(false)
+  complaintsEnabled     Boolean @default(false)
+  mediationsEnabled     Boolean @default(false)
+  workScheduleEnabled   Boolean @default(false)
+  
+  // Configurações de visibilidade
+  rhCanSeeQSScore       Boolean @default(false)
+  rhCanSeeRiskMap       Boolean @default(false)
+  rhCanSeeAlerts        Boolean @default(false)
+  
+  // Configurações de IA
+  openAIEnabled         Boolean @default(false)
+  autoAnalysisInterval  Int     @default(7) // dias
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// Histórico de Decisões (auditoria jurídica)
+model DecisionHistory {
+  id              String   @id @default(uuid())
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id])
+  entityType      String   // COMPLAINT, MEDIATION, ALERT, SCORE
+  entityId        String
+  action          String   // ENCAMINHADO_RH, NAO_ENCAMINHADO, VALIDADO, DESCARTADO
+  reason          String
+  details         Json?    // JSON com detalhes
+  decidedById     String
+  decidedBy       User     @relation("DecisionMaker", fields: [decidedById], references: [id])
+  decidedAt       DateTime @default(now())
+  
+  @@index([companyId])
+  @@index([entityType])
+}
+
+
+model LessonComment {
+  id        String   @id @default(uuid())
+  content   String
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  
+  lessonId  String
+  lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  
+  parentId  String?  // For replies
+  parent    LessonComment? @relation("CommentReplies", fields: [parentId], references: [id])
+  replies   LessonComment[] @relation("CommentReplies")
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([lessonId])
+  @@index([userId])
+}
+
+// ============================================
+// TALENT MANAGEMENT (PERFORMANCE & FEEDBACK)
+// ============================================
+
+model PerformanceCycle {
+  id        String   @id @default(uuid())
+  name      String
+  startDate DateTime
+  endDate   DateTime
+  status    String   @default("DRAFT") // DRAFT, ACTIVE, CLOSED
+  
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id])
+  
+  reviews   PerformanceReview[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PerformanceReview {
+  id        String   @id @default(uuid())
+  
+  cycleId   String
+  cycle     PerformanceCycle @relation(fields: [cycleId], references: [id])
+  
+  reviewerId String
+  reviewer   User     @relation("Reviewer", fields: [reviewerId], references: [id])
+  
+  revieweeId String
+  reviewee   User     @relation("Reviewee", fields: [revieweeId], references: [id])
+  
+  type      String   // SELF, MANAGER, PEER
+  status    String   @default("PENDING") // PENDING, SUBMITTED
+  
+  answers   ReviewAnswer[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([cycleId, reviewerId, revieweeId])
+}
+
+model ReviewAnswer {
+  id        String   @id @default(uuid())
+  
+  reviewId  String
+  review    PerformanceReview @relation(fields: [reviewId], references: [id])
+  
+  competency String
+  rating     Int?   // 1-5
+  comment    String?
+  
+  createdAt DateTime @default(now())
+}
+
+
+// Interpreter Request Center
+model InterpreterRequest {
+  id              String   @id @default(uuid())
+  
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id])
+  
+  requesterId     String?
+  requester       User?    @relation(fields: [requesterId], references: [id])
+  
+  requesterName   String?  // For external requests or fallback
+  
+  date            DateTime
+  startTime       String   // e.g. "14:00"
+  duration        Int      // minutes
+  theme           String
+  modality        String   // ONLINE, PRESENCIAL
+  
+  status          String   @default("PENDENTE") // PENDENTE, APROVADO, REJEITADO, CANCELADO
+  
+  description     String?
+  adminNotes      String?
+  
+  meetingLink     String?  // Link for the meeting if approved/online
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([status])
+}

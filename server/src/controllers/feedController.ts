@@ -1,0 +1,181 @@
+import { Request, Response } from 'express';
+import prisma from '../prisma';
+import { AuthRequest } from '../middleware/authMiddleware';
+import { sendError500, ERROR_CODES } from '../utils/errorUtils';
+import { createFeedPostSchema } from '../schemas/dataSchemas';
+import { sanitizeHTML } from '../utils/validators';
+import cloudinary from '../config/cloudinary';
+
+export const createPost = async (req: Request, res: Response) => {
+    try {
+        const validation = createFeedPostSchema.safeParse(req.body);
+        if (!validation.success) {
+            return res.status(400).json({ error: 'Validation error', details: validation.error.format() });
+        }
+        const { title, description, category, imageUrl, videoLibrasUrl } = validation.data;
+        const user = (req as AuthRequest).user;
+
+        if (!user || !user.companyId) {
+            return res.status(400).json({ error: 'User or Company not found' });
+        }
+
+        // Integrity Check: Validate Category
+        const categoryExists = await prisma.feedCategory.findFirst({
+            where: { name: category, companyId: user.companyId }
+        });
+
+        if (!categoryExists) {
+            return res.status(400).json({ error: 'Invalid category. Please select an existing category.' });
+        }
+
+        // Helper function moved to utils
+        const sanitizedTitle = sanitizeHTML(title);
+        const sanitizedDescription = description ? sanitizeHTML(description) : '';
+
+        const post = await prisma.feedPost.create({
+            data: {
+                title: sanitizedTitle,
+                description: sanitizedDescription,
+                category,
+                imageUrl,
+                videoLibrasUrl,
+                companyId: user.companyId
+            }
+        });
+
+        res.status(201).json(post);
+    } catch (error) {
+        sendError500(res, ERROR_CODES.FEED_CREATE, error);
+    }
+};
+
+export const listPosts = async (req: Request, res: Response) => {
+    try {
+        const user = (req as AuthRequest).user;
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 10;
+        const skip = (page - 1) * limit;
+
+        if (!user || !user.companyId) {
+            return res.status(400).json({ error: 'User or Company not found' });
+        }
+
+        const [posts, total] = await Promise.all([
+            prisma.feedPost.findMany({
+                where: {
+                    companyId: user.companyId
+                },
+                orderBy: {
+                    createdAt: 'desc'
+                },
+                take: limit,
+                skip: skip
+            }),
+            prisma.feedPost.count({ where: { companyId: user.companyId } })
+        ]);
+
+        res.json({
+            data: posts,
+            meta: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit)
+            }
+        });
+    } catch (error) {
+        sendError500(res, ERROR_CODES.FEED_LIST, error);
+    }
+};
+
+export const updatePost = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const validation = createFeedPostSchema.partial().safeParse(req.body);
+        if (!validation.success) {
+            return res.status(400).json({ error: 'Validation error', details: validation.error.format() });
+        }
+        const { title, description, category, imageUrl, videoLibrasUrl } = validation.data;
+        const user = (req as AuthRequest).user;
+
+        if (!user || !user.companyId) {
+            return res.status(400).json({ error: 'User or Company not found' });
+        }
+
+        // Ensure post belongs to user's company
+        const existingPost = await prisma.feedPost.findFirst({
+            where: { id, companyId: user.companyId }
+        });
+
+        if (!existingPost) {
+            return res.status(404).json({ error: 'Post not found or access denied' });
+        }
+
+        // XSS Mitigation: Enhanced sanitization (same as createPost)
+        // Helper function moved to utils
+
+        const post = await prisma.feedPost.update({
+            where: { id },
+            data: {
+                title: title ? sanitizeHTML(title) : undefined,
+                description: description ? sanitizeHTML(description) : undefined,
+                category,
+                imageUrl,
+                videoLibrasUrl
+            }
+        });
+
+        res.json(post);
+    } catch (error) {
+        sendError500(res, ERROR_CODES.FEED_UPDATE, error);
+    }
+};
+
+export const deletePost = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const user = (req as AuthRequest).user;
+
+        if (!user || !user.companyId) {
+            return res.status(400).json({ error: 'User or Company not found' });
+        }
+
+        // Ensure post belongs to user's company
+        const existingPost = await prisma.feedPost.findFirst({
+            where: { id, companyId: user.companyId }
+        });
+
+        if (!existingPost) {
+            return res.status(404).json({ error: 'Post not found or access denied' });
+        }
+
+        // Delete Image from Cloudinary if exists
+        if (existingPost.imageUrl && existingPost.imageUrl.includes('cloudinary.com')) {
+            try {
+                // Extract public_id: supports various Cloudinary URL formats
+                // Matches: /upload/(v123...)/(folder/filename).ext
+                // Group 1: Optional version
+                // Group 2: Public ID (including folders)
+                const regex = /\/upload\/(?:v\d+\/)?([^\.]+)\.\w+$/;
+                const match = existingPost.imageUrl.match(regex);
+                if (match && match[1]) {
+                    const publicId = match[1];
+                    await cloudinary.uploader.destroy(publicId);
+                } else {
+                    console.warn('Could not extract public_id from Cloudinary URL:', existingPost.imageUrl);
+                }
+            } catch (err) {
+                console.error('Error deleting image from Cloudinary', err);
+                // Continue to delete post even if image deletion fails
+            }
+        }
+
+        await prisma.feedPost.delete({
+            where: { id }
+        });
+
+        res.status(204).send();
+    } catch (error) {
+        sendError500(res, ERROR_CODES.FEED_DELETE, error);
+    }
+};
