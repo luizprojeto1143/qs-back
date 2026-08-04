@@ -32,7 +32,6 @@ const MobileLayout = () => {
     const navItems = isLeader ? [
         { icon: Home, label: 'Início', path: '/app' },
         { icon: User, label: 'Equipe', path: '/app/team', primary: true }, // Leader specific
-        { icon: Calendar, label: 'Folgas', path: '/app/approvals' },
         { icon: User, label: 'Perfil', path: '/app/profile' },
     ] : [
         { icon: Home, label: 'Início', path: '/app' },
